@@ -21,7 +21,7 @@ namespace Escenografia
         }
         public override Matrix getWorldMatrix()
         {
-           Console.WriteLine("Cono:" + refACuerpo.Pose.Position);
+           //Console.WriteLine("Cono:" + refACuerpo.Pose.Position);
            
            return Matrix.CreateScale(scale) * Matrix.CreateTranslation(refACuerpo.Pose.Position);
            

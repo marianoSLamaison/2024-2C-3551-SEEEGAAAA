@@ -32,6 +32,12 @@
 /processorParam:TextureFormat=Compressed
 /build:Effects/debugFont.spritefont
 
+#begin Effects/TerrenoShader.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/TerrenoShader.fx
+
 #begin Effects/VehicleShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -296,6 +302,18 @@
 /processorParam:TextureFormat=Color
 /build:Models/Plataforma/WoodTexture.png
 
+#begin Models/Terreno/cement diffuse map.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/Terreno/cement diffuse map.png
+
 #begin Models/Terreno/diffuseColor.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -355,6 +373,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Models/Terreno/OrangeRockTexture.png
+
+#begin Models/Terreno/terrainDiffuse.webp
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/Terreno/terrainDiffuse.webp
 
 #begin Models/tgc-logo/tgc-logo.fbx
 /importer:FbxImporter

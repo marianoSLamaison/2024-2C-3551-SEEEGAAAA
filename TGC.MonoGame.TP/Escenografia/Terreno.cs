@@ -33,7 +33,7 @@ namespace Escenografia
         {
             // Cargar el heightmap como textura
             heightMapTexture = content.Load<Texture2D>(heightMapPath);
-            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"diffuseColor");
+            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
             terrenoTextureHeight = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
             terrenoTextureNormal = content.Load<Texture2D>("Models/Terreno/"+"normal");
             width = heightMapTexture.Width;
@@ -173,9 +173,10 @@ namespace Escenografia
         /// </summary>
         public override void dibujar(Matrix view, Matrix projection, Color color)
         {
-            efecto.Parameters["View"].SetValue(view);
-            efecto.Parameters["Projection"].SetValue(projection);
+            efecto.Parameters["View"]?.SetValue(view);
+            efecto.Parameters["Projection"]?.SetValue(projection);
             efecto.Parameters["DiffuseColor"]?.SetValue(color.ToVector3());
+            efecto.Parameters["SamplerType+diffuse"]?.SetValue(terrenoTextureDiffuse);
 
             efecto.Parameters["World"].SetValue(getWorldMatrix());
 

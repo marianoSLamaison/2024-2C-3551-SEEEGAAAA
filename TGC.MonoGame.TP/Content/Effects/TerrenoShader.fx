@@ -14,6 +14,8 @@ float4x4 Projection;
 
 float3 CameraPosition;
 
+Texture2D diffuse;
+
 // Texturas
 
 
@@ -21,10 +23,7 @@ texture TerrenoTexture;
 // Sampler para las texturas
 SamplerState SamplerType
 {
-    texture = (TerrenoTexture);
-    magfilter = LINEAR;
-    minfilter = LINEAR;
-    mipfilter = LINEAR;
+    Filter = Anisotropic;
     AddressU = Wrap;
     AddressV = Wrap;
 };
@@ -34,32 +33,39 @@ SamplerState SamplerType
 struct VertexShaderInput
 {
     float4 Position : POSITION0;   // La posición inicial del vértice
+    float2 TexCoord : TEXCOORD0;  // Coordenadas de textura
 };
 
 // Salida del vértice
 struct VertexShaderOutput
 {
-    float4 Position : POSITION0;    // Posición final que necesita el rasterizador
-    float3 TextureCoordinate : TEXCOORD0;      // Coordenadas de textura
+    float4 Position : SV_Position;    // Posición final que necesita el rasterizador
+    float2 TexCoord : TEXCOORD0;      // Coordenadas de textura
+    float4 worldPosition : TEXCOORD1;    // POS EN LA MATRIZ DE MUNDO
 };
 
-VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
+VertexShaderOutput VS(VertexShaderInput input)
 {
-    VertexShaderOutput output;
-    
+    VertexShaderOutput output = (VertexShaderOutput)0;
+
+    // Transformar la posición del vértice a espacio del mundo y luego a espacio de clip
     float4 worldPosition = mul(input.Position, World);
-    float4 viewPosition = mul(worldPosition, View);
+    // World space to View space
+    float4 viewPosition = mul(worldPosition, View);	
+	// View space to Projection space
     output.Position = mul(viewPosition, Projection);
 
-    float4 VertexPosition = mul(input.Position, World);
-    output.TextureCoordinate = VertexPosition.xyz - CameraPosition;
+    output.worldPosition = input.Position;
+
+    output.TexCoord = input.Position.xz;
 
     return output;
 }
 
-float4 PixelShaderFunction(VertexShaderOutput input) : COLOR
+float4 PS(VertexShaderOutput input) : COLOR
 {
-    float4 color = tex2D(SamplerType, input.TextureCoordinate);
+    //float4 color = diffuse.Sample(SamplerType, input.TexCoord);
+    float4 color = float4(input.worldPosition.y*0.1,input.worldPosition.y*0.1,input.worldPosition.y*0.1, 1.0);
     //return float4(texCUBE(SamplerType, normalize(input.TextureCoordinate)).rgb,1);
     return color;
 }
@@ -69,7 +75,7 @@ technique TerrenoTechnique
 {
     pass Pass1
     {
-        VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
-        PixelShader = compile PS_SHADERMODEL PixelShaderFunction();
+        VertexShader = compile vs_3_0 VS();
+        PixelShader = compile ps_3_0 PS();
     }
 }

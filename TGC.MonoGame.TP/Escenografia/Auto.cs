@@ -133,7 +133,7 @@ namespace Escenografia
         /// </summary>
         float comportamientoDeVelocidad;
         public TypedIndex referenciaAFigura;
-        public float escalarDeVelocidad = 15f;
+        public float escalarDeVelocidad = 60f;
 
         public Misil Misil;
 
@@ -179,12 +179,16 @@ namespace Escenografia
                 if (Keyboard.GetState().IsKeyDown(Keys.W))
                 {
                     comportamientoDeVelocidad += 1f;
-                    refACuerpo.Velocity.Linear += orientacion.Backward.ToNumerics() * escalarDeVelocidad;
+                    //refACuerpo.Velocity.Linear += orientacion.Backward.ToNumerics() * escalarDeVelocidad;
+                    //refACuerpo.ApplyImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad, Vector3.Zero.ToNumerics());
+                    refACuerpo.ApplyLinearImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad);
                 }
                 else if (Keyboard.GetState().IsKeyDown(Keys.S))
                 {
                     comportamientoDeVelocidad += -1f;
-                    refACuerpo.Velocity.Linear += orientacion.Backward.ToNumerics() * -escalarDeVelocidad;
+                    //refACuerpo.Velocity.Linear += orientacion.Backward.ToNumerics() * -escalarDeVelocidad;
+                    //refACuerpo.ApplyImpulse(orientacion.Forward.ToNumerics() * escalarDeVelocidad , Vector3.Zero.ToNumerics());
+                    refACuerpo.ApplyLinearImpulse(orientacion.Forward.ToNumerics() * escalarDeVelocidad);
                 }
                 else
                 {

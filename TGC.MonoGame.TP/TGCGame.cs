@@ -1,13 +1,16 @@
 ﻿using System;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using BepuPhysics.Constraints;
 using BepuUtilities.Memory;
 using Control;
 using Escenografia;
+using TGC.MonoGame.Samples.Physics.Bepu;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
 
 
 namespace TGC.MonoGame.TP
@@ -79,9 +82,9 @@ namespace TGC.MonoGame.TP
             bufferPool= new BufferPool();
 
             _simulacion = Simulation.Create(bufferPool, 
-                                            new Control.AyudanteSimulacion.NarrowPhaseCallbacks(), 
+                                            new NarrowPhaseCallbacks(new SpringSettings(30f,1f)), 
                                             new Control.AyudanteSimulacion.PoseIntegratorCallbacks(new Vector3(0f, -1000f, 0f).ToNumerics()),
-                                            new SolveDescription(5,1));
+                                            new SolveDescription(8,1));
 
             AyudanteSimulacion.simulacion = _simulacion;
 
@@ -91,8 +94,17 @@ namespace TGC.MonoGame.TP
             auto.Misil = new Misil();
             //seteamos una figura para el auto
             Box figuraAuto = new BepuPhysics.Collidables.Box(300f, 250f, 500f);
+            BodyInertia autoInertia = figuraAuto.ComputeInertia(2f);
             TypedIndex referenciaAFigura = _simulacion.Shapes.Add(figuraAuto);
-            BodyHandle handlerDeCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose( new Vector3(1f,0.5f,0f).ToNumerics() * 1500f),10f,referenciaAFigura,10f);
+            //BodyHandle handlerDeCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose( new Vector3(1f,0.5f,0f).ToNumerics() * 1500f),2f,referenciaAFigura,0.01f);
+            BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(
+                new RigidPose( new Vector3(1f,1f,0f).ToNumerics() * 1500f),
+                autoInertia,
+                new CollidableDescription(referenciaAFigura, 0.1f),
+                new BodyActivityDescription(0.01f)
+            ));
+            //SEGUI LOS SAMPLES para agregar el auto, y comenzo a rotar segun el terreno
+
             auto.darCuerpo(handlerDeCuerpo);
 
             Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
@@ -124,14 +136,14 @@ namespace TGC.MonoGame.TP
 
             _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
-            _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
             _plane.SetEffect(_basicShader);
             
             Plataforma.setGScale(15f);
             Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
 
-            terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 15f);
-            terreno.SetEffect(_basicShader);
+            terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
+            terreno.SetEffect(_terrenoShader);
 
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
             Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
