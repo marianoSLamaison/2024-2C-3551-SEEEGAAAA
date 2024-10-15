@@ -92,20 +92,8 @@ namespace TGC.MonoGame.TP
 
             auto = new Escenografia.AutoJugador( Vector3.Backward,Convert.ToSingle(Math.PI)/2f, 15f);
             auto.Misil = new Misil();
-            //seteamos una figura para el auto
-            Box figuraAuto = new BepuPhysics.Collidables.Box(300f, 250f, 500f);
-            BodyInertia autoInertia = figuraAuto.ComputeInertia(2f);
-            TypedIndex referenciaAFigura = _simulacion.Shapes.Add(figuraAuto);
-            //BodyHandle handlerDeCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose( new Vector3(1f,0.5f,0f).ToNumerics() * 1500f),2f,referenciaAFigura,0.01f);
-            BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(
-                new RigidPose( new Vector3(1f,1f,0f).ToNumerics() * 1500f),
-                autoInertia,
-                new CollidableDescription(referenciaAFigura, 0.1f),
-                new BodyActivityDescription(0.01f)
-            ));
-            //SEGUI LOS SAMPLES para agregar el auto, y comenzo a rotar segun el terreno
-
-            auto.darCuerpo(handlerDeCuerpo);
+            //seteamos un colisionador para el auto
+            auto.CrearCollider(_simulacion, bufferPool);
 
             Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
             AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
@@ -116,7 +104,7 @@ namespace TGC.MonoGame.TP
 
             generadorConos = new AdministradorConos();
             generadorConos.generarConos(Vector3.Zero, 11000f, 150, 1100f);
-            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1500f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
+            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
             Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*10000f, new Vector3(1f,0f,1f)*10000f);
             _plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 

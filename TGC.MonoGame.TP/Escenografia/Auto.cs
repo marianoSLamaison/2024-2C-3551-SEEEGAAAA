@@ -8,6 +8,7 @@ using Control;
 using Escenografia;
 using System;
 using System.Collections.Generic;
+using BepuUtilities.Memory;
 
 
 namespace Escenografia
@@ -83,10 +84,10 @@ namespace Escenografia
         protected Texture2D aoTexture;
         protected Texture2D emissionTexture;
 
-        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-0.5f, -0.2f, 1.0f); // Ajusta según tu modelo
-        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(0.5f, -0.2f, 1.0f);
-        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-0.5f, -0.2f, -1.0f);
-        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(0.5f, -0.2f, -1.0f);
+        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-140f, -20f, 220f); // Ajusta según tu modelo
+        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(140f, -20f, 220f);
+        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-140f, -20f, -220f);
+        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(140f, -20f, -220f);
 
 
 
@@ -133,7 +134,7 @@ namespace Escenografia
         /// </summary>
         float comportamientoDeVelocidad;
         public TypedIndex referenciaAFigura;
-        public float escalarDeVelocidad = 60f;
+        public float escalarDeVelocidad = 300f;
 
         public Misil Misil;
 
@@ -148,7 +149,7 @@ namespace Escenografia
             this.velocidadAngular = velocidadGiro;
         }
 
-        public override Matrix getWorldMatrix() => orientacion * Matrix.CreateTranslation(Posicion);
+        public override Matrix getWorldMatrix() =>  orientacion * Matrix.CreateTranslation(Posicion);
 
         private float duracionTurbo = 0f;  // Variable para controlar la duración del turbo
         private bool turboActivo = false; 
@@ -175,6 +176,10 @@ namespace Escenografia
                 
                 //Uso la orientacion para tener cubierto el temita de que posiblemente
                 //los choques con otros autos puedan alterar la rotacion del modelo durante la partida
+
+                if(Keyboard.GetState().IsKeyDown(Keys.R)){
+                    refACuerpo.Pose.Orientation = Quaternion.Identity.ToNumerics();
+                }
 
                 if (Keyboard.GetState().IsKeyDown(Keys.W))
                 {
@@ -245,6 +250,67 @@ namespace Escenografia
             
         }
 
+    /*public void CrearCollider(Simulation _simulacion){
+
+        Box figuraCuerpoAuto = new BepuPhysics.Collidables.Box(280f, 100f, 500f);
+
+        //Capsule figuraCuerpoAuto = new Capsule(100f,500f);
+        BodyInertia autoInertia = figuraCuerpoAuto.ComputeInertia(1.5f); // Este float es la masa del auto entiendo
+        TypedIndex referenciaAFigura = _simulacion.Shapes.Add(figuraCuerpoAuto);
+
+        //BodyHandle handlerDeCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose( new Vector3(1f,0.5f,0f).ToNumerics() * 1500f),2f,referenciaAFigura,0.01f);
+
+        //Quaternion rotacion = Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f);
+
+        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(
+            //new RigidPose( new Vector3(0f,1f,0f).ToNumerics() * 1500f, rotacion.ToNumerics()),
+            new RigidPose( new Vector3(0f,1f,0f).ToNumerics() * 1500f),
+            autoInertia,
+            new CollidableDescription(referenciaAFigura, 0.1f),
+            new BodyActivityDescription(0.01f)
+        ));
+
+        //SEGUI LOS SAMPLES para agregar el auto, y comenzo a rotar segun el terreno
+
+        this.darCuerpo(handlerDeCuerpo);
+    }*/
+
+    public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool){
+
+        var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
+
+        //var boxMainShape = new Box(280f, 100f, 500f);
+        var capsuleMainShape = new Capsule(100, 480f);
+        
+        var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+
+        var ruedaDelanteraIzquierdaShape = new Sphere(10f);
+        var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics());
+
+        var ruedaDelanteraDerechaShape = new Sphere(10f);
+        var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics());
+
+        var ruedaTraseraIzquierdaShape = new Sphere(10f);
+        var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics());
+
+        var ruedaTraseraDerechaShape = new Sphere(10f);
+        var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics());
+
+        compoundBuilder.Add(capsuleMainShape, capsuleMainLocalPose, 5f);
+        compoundBuilder.Add(ruedaDelanteraIzquierdaShape, ruedaDelanteraIzquierdaLocalPose, 1f);
+        compoundBuilder.Add(ruedaDelanteraDerechaShape, ruedaDelanteraDerechaLocalPose, 1f);
+        compoundBuilder.Add(ruedaTraseraIzquierdaShape, ruedaTraseraIzquierdaLocalPose, 1f);
+        compoundBuilder.Add(ruedaTraseraDerechaShape, ruedaTraseraDerechaLocalPose, 1f);
+
+        compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
+        compoundBuilder.Reset();
+
+        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1500f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        this.darCuerpo(handlerDeCuerpo);
+    }
+
+
+
     public void ApplyTexturesToShader()
         {
             efecto.Parameters["SamplerType+BaseColorTexture"].SetValue(baseColorTexture);
@@ -298,7 +364,9 @@ namespace Escenografia
             foreach( ModelMesh mesh in modelo.Meshes)
             {
                 if(mesh.Name == "Car")
-                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * getWorldMatrix());
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
 
                 if (mesh.Name.StartsWith("Wheel"))
                 {
@@ -325,11 +393,12 @@ namespace Escenografia
                     }
                     // Calcular la matriz de transformación para la rueda
                     Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
-                                        Matrix.CreateTranslation(Posicion + posicionRueda); // cargamos su posicion con respcto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
         
                     efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
                                                         Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
                                                         mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
                                                         wheelWorld); // pos ultimo
                 }
                 mesh.Draw();    
@@ -402,67 +471,3 @@ namespace Escenografia
 
     }
 }
-
-//Esto antes estaba en AutoJugador
-        /*public void moverConFisicas(float deltaTime)
-        {
-            // Obtiene el cuerpo de Bepu
-            BodyReference referenciaACuerpo = AyudanteSimulacion.simulacion.Bodies.GetBodyReference(cuerpoAsociado);
-            System.Numerics.Vector3 pos = referenciaACuerpo.Pose.Position;
-            posicion = new Vector3(pos.X, pos.Y, pos.Z);
-            referenciaACuerpo.Activity.SleepThreshold = -1f; // Evitar que se duerma
-            referenciaACuerpo.Activity.SleepCandidate = false;
-
-            // Variables de impulso y velocidad de giro ajustadas
-            float velocidadMovimiento = 100f; // Ajusta esta magnitud si es necesario
-            float velocidadGiro = 0.02f;   // Ajusta la velocidad de giro
-
-            // Calcular la rotación de la dirección basándote en rotacionY
-
-            velocidad = referenciaACuerpo.Velocity.Linear.Length();
-            bool haciaAtras;
-
-            // Aplicar movimiento hacia adelante y hacia atrás
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
-            {
-                //referenciaACuerpo.Velocity.Linear += Vector3.Normalize(Vector3.Transform(direccion, Matrix.CreateRotationY(rotacionY))).ToNumerics() * velocidadMovimiento;
-                referenciaACuerpo.ApplyLinearImpulse(Vector3.Normalize(Vector3.Transform(direccion, Matrix.CreateRotationY(rotacionY))).ToNumerics() * velocidadMovimiento);
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                //referenciaACuerpo.Velocity.Linear -= Vector3.Normalize(Vector3.Transform(direccion, Matrix.CreateRotationY(rotacionY))).ToNumerics() * (velocidadMovimiento * 0.1f);
-                referenciaACuerpo.ApplyLinearImpulse(Vector3.Normalize(Vector3.Transform(-direccion, Matrix.CreateRotationY(rotacionY))).ToNumerics() * velocidadMovimiento * 0.5f);
-                haciaAtras = true;
-            }
-            if(Keyboard.GetState().IsKeyDown(Keys.Space)){
-                referenciaACuerpo.ApplyLinearImpulse(Vector3.Up.ToNumerics()*velocidadMovimiento);
-            }
-            else 
-            {
-                referenciaACuerpo.Velocity.Linear *= 0.96f;
-                haciaAtras = false;
-            }
-
-            if ( Keyboard.GetState().IsKeyDown(Keys.A))
-            {
-                //rotacionY += (velocidad >= 0 ? velocidadGiro : -velocidadGiro) * deltaTime;
-                rotacionRuedasDelanteras += velocidadGiro;
-            }
-            if ( Keyboard.GetState().IsKeyDown(Keys.D))
-            {
-                //rotacionY += (velocidad >= 0 ? -velocidadGiro : velocidadGiro) * deltaTime;
-                rotacionRuedasDelanteras -= velocidadGiro;
-            }
-
-            rotacionX += velocidad * 0.001f;
-            
-            float escalarDeDerrape = Math.Clamp(velocidad * 0.000025f, 0.0001f, 0.05f);
-
-            if(velocidad >= 1f){
-                rotacionY += rotacionRuedasDelanteras * escalarDeDerrape; // Gira normalmente
-                referenciaACuerpo.ApplyAngularImpulse(Vector3.UnitY.ToNumerics() * rotacionY * escalarDeDerrape);
-            }
-            
-            rotacionRuedasDelanteras = (float)Math.Clamp(rotacionRuedasDelanteras, -Math.PI/4, Math.PI/4);
-            rotacionRuedasDelanteras *= 0.98f;
-        }*/

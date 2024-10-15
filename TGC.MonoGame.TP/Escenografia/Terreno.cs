@@ -53,6 +53,20 @@ namespace Escenografia
                 }
             }
 
+            // Suavizar los datos de altura
+            for (int x = 1; x < width - 1; x++)
+            {
+                for (int y = 1; y < height - 1; y++)
+                {
+                    // Promediar la altura con los píxeles vecinos
+                    heightData[x, y] = (heightData[x, y] + 
+                                        heightData[x - 1, y] + heightData[x + 1, y] + 
+                                        heightData[x, y - 1] + heightData[x, y + 1] + 
+                                        heightData[x + 1, y + 1] + heightData[x - 1, y + 1] +
+                                        heightData[x - 1, y - 1] + heightData[x + 1, y - 1]) / 9.0f;
+                }
+            }
+
             // Crear el mesh (malla) del terreno
             GenerarVertices();
             GenerarIndices();
