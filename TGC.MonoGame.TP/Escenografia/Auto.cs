@@ -134,7 +134,7 @@ namespace Escenografia
         /// </summary>
         float comportamientoDeVelocidad;
         public TypedIndex referenciaAFigura;
-        public float escalarDeVelocidad = 300f;
+        public float escalarDeVelocidad = 600f;
 
         public Misil Misil;
 
@@ -142,7 +142,7 @@ namespace Escenografia
         {
             this.direccion = direccion;
             this.velocidadAngular = velocidadGiro;
-            this.fuerzaDireccional = fuerzaDireccional;
+            this.fuerzaDireccional = 500f;
         }
         public void setVelocidadGiro(float velocidadGiro)
         {
@@ -165,9 +165,16 @@ namespace Escenografia
         /// </summary>
         override public void Mover(float deltaTime)
         {
-            if ( !estaSaltando )
-            {
+                if ( !estaSaltando )
+                {
+                
                 float vAngularInst = velocidadAngular * deltaTime;
+                
+                if (refACuerpo.Velocity.Linear.Length() > maximaVelocidadPosible)
+                {
+                    var velocidadLimitada = System.Numerics.Vector3.Normalize(refACuerpo.Velocity.Linear) * maximaVelocidadPosible;
+                    refACuerpo.Velocity.Linear = velocidadLimitada;
+                }
                 float velocidadGRuedas = vAngularInst * 2.00f;//es solo un poco mas rapida que el giro del auto
                 //si estamos en la 
                 float sentidoMov = comportamientoDeVelocidad > 0 ? 1 : -1;
@@ -176,6 +183,12 @@ namespace Escenografia
                 
                 //Uso la orientacion para tener cubierto el temita de que posiblemente
                 //los choques con otros autos puedan alterar la rotacion del modelo durante la partida
+
+                if (turboActivo)
+                {
+                    refACuerpo.ApplyLinearImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad * 5f); // Turbo multiplicador
+                }
+
 
                 if(Keyboard.GetState().IsKeyDown(Keys.R)){
                     refACuerpo.Pose.Orientation = Quaternion.Identity.ToNumerics();
@@ -215,7 +228,11 @@ namespace Escenografia
                 if (Keyboard.GetState().IsKeyDown(Keys.T))
                 {
                     Turbo turbo = new Turbo();
+                    turboActivo = true;
                     RecogerPowerUp(turbo);
+                }
+                else{
+                    turboActivo= false;
                 }
                 if (Keyboard.GetState().IsKeyDown(Keys.M))
                 {
