@@ -7,6 +7,10 @@ using Escenografia;
 using BepuPhysics.Collidables;
 using System;
 using BepuUtilities.Memory;
+using BepuUtilities;
+using System.Security.Cryptography.X509Certificates;
+using System.Runtime.InteropServices;
+using Microsoft.VisualBasic;
 
 namespace Escenografia
 {
@@ -18,6 +22,8 @@ namespace Escenografia
         private Texture2D terrenoTextureDiffuse;
         private Texture2D terrenoTextureNormal;
         private Texture2D terrenoTextureHeight;
+
+        StaticHandle handlerTerreno;
 
         private float[,] heightData;
         private int width, height;
@@ -143,6 +149,62 @@ namespace Escenografia
             AyudanteSimulacion.agregarCuerpoEstatico(simulation, new RigidPose(posicion.ToNumerics()), figuraTerreno);
         }
 
+        public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher){
+            var planeWidth = 500;
+            var scale = 35;
+            Vector2 terrainPosition = new Vector2(1 - planeWidth, 1 - planeWidth) * scale * 0.5f;
+
+            var planeMesh = DemoMeshHelper.CreateDeformedPlane(planeWidth, planeWidth,
+                (int vX, int vY) =>
+                {
+                    // Alturas basadas en combinaciones de funciones seno y coseno
+                    var octave1 = MathF.Sin(vX * 0.05f) * MathF.Cos(vY * 0.05f) * 50;   // Primer octava
+                    var octave2 = MathF.Sin(vX * 0.1f) * MathF.Cos(vY * 0.1f) * 10;     // Segunda octava
+                    var octave3 = MathF.Sin(vX * 0.02f) * MathF.Cos(vY * 0.02f) * 50;  // Tercera octava
+
+                    
+                    //var noise = (float)(random.NextDouble() * 2.0 - 1.0) * 5; // Ruido aleatorio
+
+                    // Sumar diferentes contribuciones para lograr más irregularidad
+                    var totalHeight = octave1 + octave2 + octave3;
+
+                    var vertexPosition = new Vector2(vX * scale, vY * scale) + terrainPosition;
+
+                    // Devolver la posición del vértice con la altura calculada
+                    return new Vector3(vertexPosition.X, totalHeight * 2.5f, vertexPosition.Y).ToNumerics();
+
+
+                }, new Vector3(1, 1, 1).ToNumerics(), bufferPool, ThreadDispatcher);
+            
+            // Asumimos que el mesh tiene la propiedad Triangles (puntero a triángulos)
+            var triangles = planeMesh.Triangles;
+            int triangleCount = triangles.Length; // Número de triángulos en el mesh
+
+             // Crear arrays para almacenar los vértices e índices
+            vertices = new VertexPosition[triangleCount * 3];
+            indices = new int[triangleCount * 3];
+
+            // Recorrer cada triángulo y extraer los vértices
+            for (int i = 0; i < triangleCount; i++)
+            {
+                var triangle = triangles[i];
+
+                // Cada triángulo tiene tres vértices: A, B, C
+                vertices[i * 3] = new VertexPosition(new Vector3(triangle.A.X, triangle.A.Y, triangle.A.Z));
+                vertices[i * 3 + 1] = new VertexPosition(new Vector3(triangle.B.X, triangle.B.Y, triangle.B.Z));
+                vertices[i * 3 + 2] = new VertexPosition(new Vector3(triangle.C.X, triangle.C.Y, triangle.C.Z));
+
+                // Los índices apuntan a los tres vértices de cada triángulo
+                indices[i * 3] = i * 3;
+                indices[i * 3 + 1] = i * 3 + 1;
+                indices[i * 3 + 2] = i * 3 + 2;
+            }
+                    
+            
+            AyudanteSimulacion.agregarCuerpoEstatico(_simulacion, new RigidPose(new Vector3(0, -15, 0).ToNumerics()), _simulacion.Shapes.Add(planeMesh));
+            //handlerTerreno = _simulacion.Statics.Add(new StaticDescription(new Vector3(0, -15, 0).ToNumerics(), _simulacion.Shapes.Add(planeMesh)));
+        }
+
         public Buffer<Triangle> CrearBufferDeTriangulos(BufferPool bufferPool)
         {
             // Crear un buffer para almacenar los triángulos, el tamaño es la cantidad de triángulos
@@ -172,23 +234,23 @@ namespace Escenografia
         /// <summary>
         /// Devuelve la matriz de transformación mundial del terreno.
         /// </summary>
-        public override Matrix getWorldMatrix()
+        public override Microsoft.Xna.Framework.Matrix getWorldMatrix()
         {
             return
-                Matrix.CreateRotationX(rotacionX) *
-                Matrix.CreateRotationY(rotacionY) *
-                Matrix.CreateRotationZ(rotacionZ) * 
-                Matrix.CreateScale(40f) *
-                Matrix.CreateTranslation(posicion);
+                //Microsoft.Xna.Framework.Matrix.CreateRotationY(rotacionY) *
+                //Microsoft.Xna.Framework.Matrix.CreateRotationZ(rotacionZ) * 
+                //Microsoft.Xna.Framework.Matrix.CreateScale(40f) *
+                //Microsoft.Xna.Framework.Matrix.CreateTranslation(posicion);
+                Microsoft.Xna.Framework.Matrix.CreateTranslation(0, -15, 0);
         }
 
         /// <summary>
         /// Sobreescribe el método para dibujar el terreno.
         /// </summary>
-        public override void dibujar(Matrix view, Matrix projection, Color color)
+        public override void dibujar(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Color color)
         {
-            efecto.Parameters["View"]?.SetValue(view);
-            efecto.Parameters["Projection"]?.SetValue(projection);
+            efecto.Parameters["View"].SetValue(view);
+            efecto.Parameters["Projection"].SetValue(projection);
             efecto.Parameters["DiffuseColor"]?.SetValue(color.ToVector3());
             efecto.Parameters["SamplerType+diffuse"]?.SetValue(terrenoTextureDiffuse);
 

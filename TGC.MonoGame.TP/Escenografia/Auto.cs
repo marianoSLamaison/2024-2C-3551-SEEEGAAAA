@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using BepuPhysics.Constraints;
 using Control;
 using Escenografia;
 using System;
@@ -51,7 +52,7 @@ namespace Escenografia
         /// <summary>
         /// Para mover al auto
         /// </summary>
-        protected float fuerzaDireccional;
+        protected float fuerza;
         protected float velocidadAngular;
         //protected float peso;
         protected bool estaSaltando = false;
@@ -69,7 +70,7 @@ namespace Escenografia
         protected float rotacionRuedasDelanteras;
         protected float revolucionDeRuedas;
 
-        public float velocidad;
+        public float velocidad = 500000f;
 
 
      ///////Cosas de textureo//////////////   
@@ -84,10 +85,10 @@ namespace Escenografia
         protected Texture2D aoTexture;
         protected Texture2D emissionTexture;
 
-        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-140f, -20f, 220f); // Ajusta según tu modelo
-        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(140f, -20f, 220f);
-        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-140f, -20f, -220f);
-        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(140f, -20f, -220f);
+        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-130f, 0, 240f); // Ajusta según tu modelo
+        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(130f, 0, 240f);
+        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-130f, 0, -240f);
+        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(130f, 0, -240f);
 
 
 
@@ -134,7 +135,10 @@ namespace Escenografia
         /// </summary>
         float comportamientoDeVelocidad;
         public TypedIndex referenciaAFigura;
-        public float escalarDeVelocidad = 600f;
+        public float escalarDeVelocidad = 150f;
+        public ConstraintHandle constraintHandle;
+        public float anteriorFuerzaBuscada = 0f;
+        public float anteriorVelocidadBuscada = 0f;
 
         public Misil Misil;
 
@@ -142,7 +146,7 @@ namespace Escenografia
         {
             this.direccion = direccion;
             this.velocidadAngular = velocidadGiro;
-            this.fuerzaDireccional = 500f;
+            this.fuerza = 50f;
         }
         public void setVelocidadGiro(float velocidadGiro)
         {
@@ -169,12 +173,6 @@ namespace Escenografia
                 {
                 
                 float vAngularInst = velocidadAngular * deltaTime;
-                
-                if (refACuerpo.Velocity.Linear.Length() > maximaVelocidadPosible)
-                {
-                    var velocidadLimitada = System.Numerics.Vector3.Normalize(refACuerpo.Velocity.Linear) * maximaVelocidadPosible;
-                    refACuerpo.Velocity.Linear = velocidadLimitada;
-                }
                 float velocidadGRuedas = vAngularInst * 2.00f;//es solo un poco mas rapida que el giro del auto
                 //si estamos en la 
                 float sentidoMov = comportamientoDeVelocidad > 0 ? 1 : -1;
@@ -267,63 +265,34 @@ namespace Escenografia
             
         }
 
-    /*public void CrearCollider(Simulation _simulacion){
-
-        Box figuraCuerpoAuto = new BepuPhysics.Collidables.Box(280f, 100f, 500f);
-
-        //Capsule figuraCuerpoAuto = new Capsule(100f,500f);
-        BodyInertia autoInertia = figuraCuerpoAuto.ComputeInertia(1.5f); // Este float es la masa del auto entiendo
-        TypedIndex referenciaAFigura = _simulacion.Shapes.Add(figuraCuerpoAuto);
-
-        //BodyHandle handlerDeCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose( new Vector3(1f,0.5f,0f).ToNumerics() * 1500f),2f,referenciaAFigura,0.01f);
-
-        //Quaternion rotacion = Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f);
-
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(
-            //new RigidPose( new Vector3(0f,1f,0f).ToNumerics() * 1500f, rotacion.ToNumerics()),
-            new RigidPose( new Vector3(0f,1f,0f).ToNumerics() * 1500f),
-            autoInertia,
-            new CollidableDescription(referenciaAFigura, 0.1f),
-            new BodyActivityDescription(0.01f)
-        ));
-
-        //SEGUI LOS SAMPLES para agregar el auto, y comenzo a rotar segun el terreno
-
-        this.darCuerpo(handlerDeCuerpo);
-    }*/
-
     public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool){
 
         var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
         //var boxMainShape = new Box(280f, 100f, 500f);
-        var capsuleMainShape = new Capsule(100, 480f);
+        var boxMainShape = new Capsule(100, 480f);
         
-        var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+        var capsuleMainLocalPose = new RigidPose(new Vector3(0f,100f,0f).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+        //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,50f,0f).ToNumerics());
 
-        var ruedaDelanteraIzquierdaShape = new Sphere(10f);
+        var ruedaShape = new Cylinder(20f, 7.5f);
         var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics());
-
-        var ruedaDelanteraDerechaShape = new Sphere(10f);
         var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics());
-
-        var ruedaTraseraIzquierdaShape = new Sphere(10f);
         var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics());
-
-        var ruedaTraseraDerechaShape = new Sphere(10f);
         var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics());
 
-        compoundBuilder.Add(capsuleMainShape, capsuleMainLocalPose, 5f);
-        compoundBuilder.Add(ruedaDelanteraIzquierdaShape, ruedaDelanteraIzquierdaLocalPose, 1f);
-        compoundBuilder.Add(ruedaDelanteraDerechaShape, ruedaDelanteraDerechaLocalPose, 1f);
-        compoundBuilder.Add(ruedaTraseraIzquierdaShape, ruedaTraseraIzquierdaLocalPose, 1f);
-        compoundBuilder.Add(ruedaTraseraDerechaShape, ruedaTraseraDerechaLocalPose, 1f);
+        compoundBuilder.Add(boxMainShape, capsuleMainLocalPose, 5f);
+        compoundBuilder.Add(ruedaShape, ruedaDelanteraIzquierdaLocalPose, .5f);
+        compoundBuilder.Add(ruedaShape, ruedaDelanteraDerechaLocalPose, .5f);
+        compoundBuilder.Add(ruedaShape, ruedaTraseraIzquierdaLocalPose, .5f);
+        compoundBuilder.Add(ruedaShape, ruedaTraseraDerechaLocalPose, .5f);
 
         compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
         compoundBuilder.Reset();
 
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1500f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
         this.darCuerpo(handlerDeCuerpo);
+
     }
 
 

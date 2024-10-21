@@ -65,7 +65,7 @@ VertexShaderOutput VS(VertexShaderInput input)
 float4 PS(VertexShaderOutput input) : COLOR
 {
     //float4 color = diffuse.Sample(SamplerType, input.TexCoord);
-    float4 color = float4(input.worldPosition.y*0.1,input.worldPosition.y*0.1,input.worldPosition.y*0.1, 1.0);
+    float4 color = float4((input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1, 1.0);
     //return float4(texCUBE(SamplerType, normalize(input.TextureCoordinate)).rgb,1);
     return color;
 }

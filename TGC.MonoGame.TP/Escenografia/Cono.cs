@@ -51,10 +51,12 @@ namespace Escenografia
             var figuraCono = simulation.Shapes.Add(conoCollider);
 
             // Agregar el colisionador a la simulación.
+
+            BodyInertia conoInertia = conoCollider.ComputeInertia(0.1f);
+
             this.posicion = posicion;
-            BodyHandle handler = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose(posicion.ToNumerics()), 100f, figuraCono, 1f);
+            BodyHandle handler = simulation.Bodies.Add(BodyDescription.CreateDynamic(posicion.ToNumerics(), conoInertia, simulation.Shapes.Add(conoCollider), 0.01f));
             refACuerpo = AyudanteSimulacion.getRefCuerpoDinamico(handler);
-            //refACuerpo.Activity.SleepThreshold = -1;
         }
         public Buffer<Triangle> CrearBufferDeTriangulos(BufferPool bufferPool)
         {

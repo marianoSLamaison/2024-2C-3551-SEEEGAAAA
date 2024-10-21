@@ -147,7 +147,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
         {
             ContactSpringiness = new SpringSettings(30, 1);
             MaximumRecoveryVelocity = 2f;
-            FrictionCoefficient = 1f;
+            FrictionCoefficient = 10f;
         }
     }
 

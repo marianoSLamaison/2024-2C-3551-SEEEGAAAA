@@ -3,6 +3,7 @@
     using BepuPhysics.Collidables;
     using BepuPhysics.Constraints;
     using BepuUtilities.Memory;
+    using BepuUtilities;
     using Control;
     using Escenografia;
     using TGC.MonoGame.Samples.Physics.Bepu;
@@ -49,6 +50,7 @@
             private PrismaRectangularEditable _boxVisual {get; set;}
             private BepuPhysics.Collidables.Box _hitboxAuto {get; set;}
             private BufferPool bufferPool;
+            private ThreadDispatcher ThreadDispatcher;
 
             private Terreno terreno;
 
@@ -79,34 +81,38 @@
                 rasterizerState.CullMode = CullMode.None;
                 GraphicsDevice.RasterizerState = rasterizerState; 
 
-                bufferPool= new BufferPool();
+                bufferPool = new BufferPool();
+
+                var carProperties = new CollidableProperty<CarBodyProperties>();
 
                 _simulacion = Simulation.Create(bufferPool, 
                                                 new NarrowPhaseCallbacks(new SpringSettings(30f,1f)), 
-                                                new Control.AyudanteSimulacion.PoseIntegratorCallbacks(new Vector3(0f, -1000f, 0f).ToNumerics()),
+                                                //new CarCallbacks() { Properties = carProperties},
+                                                new PoseIntegratorCallbacks(new Vector3(0f, -1000f, 0f).ToNumerics()),
+                                                //new DemoPoseIntegratorCallbacks(new Vector3(0f, -1000f, 0f).ToNumerics()),
                                                 new SolveDescription(8,1));
 
                 AyudanteSimulacion.simulacion = _simulacion;
 
 
 
-                auto = new Escenografia.AutoJugador( Vector3.Backward,Convert.ToSingle(Math.PI)/2f, 15f);
+                auto = new Escenografia.AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
                 auto.Misil = new Misil();
                 //seteamos un colisionador para el auto
                 auto.CrearCollider(_simulacion, bufferPool);
 
-                Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
-                AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
-                                        _simulacion.Shapes.Add(new Sphere(100f)));
+                //Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
+                //AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
+                //                        _simulacion.Shapes.Add(new Sphere(100f)));
 
                 AyudanteSimulacion.SetScenario();
 
 
                 generadorConos = new AdministradorConos();
-                generadorConos.generarConos(Vector3.Zero, 11000f, 150, 1100f);
+                generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
                 Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*10000f, new Vector3(1f,0f,1f)*10000f);
-                _plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
+                //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
                 
@@ -125,19 +131,23 @@
                 _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
                 _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
-                _plane.SetEffect(_basicShader);
+                //_plane.SetEffect(_basicShader);
                 
                 Plataforma.setGScale(15f);
                 Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
 
-                terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
+                //terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
+                //terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
+                terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
                 terreno.SetEffect(_terrenoShader);
+                
+
 
                 auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
-                Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
+                //Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
                 auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
                 
-                terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
+                
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
 
@@ -159,7 +169,7 @@
                 //para que el camarografo nos siga siempre
                 camarografo.setPuntoAtencion(auto.Posicion);
                 camarografo.GetInputs();
-                _simulacion.Timestep(1f/60f);//por ahora corre en el mismo thread que todo lo demas
+                _simulacion.Timestep(1/60f, ThreadDispatcher);//por ahora corre en el mismo thread que todo lo demas
                 base.Update(gameTime);
             }
 
@@ -176,7 +186,7 @@
 
                 terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.DarkGray);
 
-                Colisionable1.dibujar(camarografo, new Vector3(0, 0, -500).ToNumerics());
+                //Colisionable1.dibujar(camarografo, new Vector3(0, 0, -500).ToNumerics());
                 
                 auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
