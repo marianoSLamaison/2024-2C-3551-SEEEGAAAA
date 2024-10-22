@@ -19,20 +19,16 @@ abstract class PowerUp
     public string tipoPowerUp;
     public float DuracionPowerUp; // Duración del power-up en segundos
 
-    public abstract void ActivarPowerUp(AutoJugador auto);
+    //public abstract void ActivarPowerUp(AutoJugador auto);
     public abstract void DesactivarPowerUp(AutoJugador auto);
     public abstract void ActualizarPowerUp(GameTime gameTime);
-
-    public void ActivarPowerUp(string tipoPowerUp)
-    {
-    
-    }
+    public virtual void ActivarPowerUp(Matrix autoMatrix, Vector3 autoPosicion){}
+    public virtual void ActivarPowerUp(AutoJugador auto){}
 }
 
 class Turbo : PowerUp
 {
     private float boostVelocidad;
-    private AutoJugador auto;
     public Turbo()
     {
         tipoPowerUp = "Turbo";
@@ -59,24 +55,24 @@ class Turbo : PowerUp
 
         if (DuracionPowerUp <= 0)
         {
-            DesactivarPowerUp(auto);
+            //DesactivarPowerUp(auto);
         }
     }
 }
 
 class Misil : PowerUp
 {
-    private Simulation _simulacion;
-    private BufferPool _bufferPool;
-    private AutoJugador auto;
     private int MunicionMisiles = 0;
     public Model modelo;
     public Effect efecto;
-    public float scale = 0.6f;
-    public Vector3 posicion;
+    public float scale = 0.8f;
+
+    Vector3 posicionRelativaAlAuto = new Vector3(0, 150, 0);
+
     protected float fuerza;
     protected BodyHandle handlerCuerpo;
     protected BodyReference refACuerpo;
+    public Matrix orientacionAutoSalida;
 
     public Vector3 Posicion { get{return AyudanteSimulacion.NumericsToMicrosofth(refACuerpo.Pose.Position);}}
     public Matrix orientacion  { get{ return Matrix.CreateFromQuaternion(refACuerpo.Pose.Orientation);}}
@@ -92,45 +88,45 @@ class Misil : PowerUp
         this.fuerza = 50f;
 
     }
-    public void CrearColliderCinematico(Simulation _simulacion, BufferPool _bufferpool)
+    public void CrearColliderMisil(Simulation _simulacion)
     {
-        var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
-        var capsuleShape = new Capsule(10f, 48f); // Ajusta dimensiones
-        var capsuleLocalPose = new RigidPose(new Vector3(0f, 100f, 0f).ToNumerics(), Quaternion.Identity.ToNumerics());
+        //var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
+        var capsuleShape = new Capsule(30f, 120f); // Ajusta dimensiones
+        var capsuleLocalPose = 
+            new RigidPose(System.Numerics.Vector3.UnitY * -10000f);
+            //Quaternion.CreateFromYawPitchRoll(MathF.PI/2, 0, 0).ToNumerics());
         
-        compoundBuilder.Add(capsuleShape, capsuleLocalPose, 5f);
+        BodyInertia bodyInertia = capsuleShape.ComputeInertia(.5f);
+        
+        //compoundBuilder.Add(capsuleShape, capsuleLocalPose, 5f);
         // Llamada corregida: solo devuelve los hijos y el centro
-        compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
+        //compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
 
         // Agregar el cuerpo cinemático a la simulación
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateKinematic(compoundCenter, System.Numerics.Vector3.Zero, _simulacion.Shapes.Add(new Compound(compoundChildren)), 2f));
+        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
         this.darCuerpo(handlerDeCuerpo);
     }
 
-        public void darCuerpo(BodyHandle handler)
-        {
-            handlerCuerpo = handler;
-            refACuerpo = AyudanteSimulacion.getRefCuerpoDinamico(handler);
-            refACuerpo.Activity.SleepThreshold = -1;//esto es lo que permite que el objeto no sea 
-                                                    //puesto a dormir
-                                                    //valores negativos lo haceno No durmiente
-                                                    //valores positivos solo le dan un tiempo hasta que duerma
-        }
-    public override void ActivarPowerUp(AutoJugador auto)
+    public void darCuerpo(BodyHandle handler)
     {
-        world = Matrix.CreateRotationX((float) Math.PI/2) * Matrix.CreateScale(scale) * auto.getWorldMatrix() * Matrix.CreateTranslation(posicion);
-        activado = true;
-        Console.WriteLine("Cantidad de misiles : " + MunicionMisiles);
+        handlerCuerpo = handler;
+        refACuerpo = AyudanteSimulacion.getRefCuerpoDinamico(handler);
+        //refACuerpo.Activity.SleepThreshold = -1;
     }
-
-public void ActivarMisil(AutoJugador auto, Simulation _simulacion, BufferPool _bufferPool)
-{
-            world = Matrix.CreateRotationX((float) Math.PI/2) * Matrix.CreateScale(scale) * auto.getWorldMatrix() * Matrix.CreateTranslation(posicion);
+    public override void ActivarPowerUp(Matrix orientacionAuto, Vector3 posicionAuto)
+    {
+        refACuerpo.Velocity.Angular = System.Numerics.Vector3.Zero;
+        refACuerpo.Pose.Position = (posicionAuto + posicionRelativaAlAuto).ToNumerics();
+        
+        refACuerpo.Velocity.Linear = System.Numerics.Vector3.Zero;
+        
+        world = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(refACuerpo.Pose.Orientation) * Matrix.CreateTranslation(Posicion);
+        orientacionAutoSalida = orientacionAuto;
+        refACuerpo.Velocity.Linear = new Vector3(orientacionAutoSalida.Backward.X, orientacionAutoSalida.Backward.Y, orientacionAutoSalida.Backward.Z).ToNumerics() * 2000f;
         activado = true;
-        Console.WriteLine("Cantidad de misiles : " + MunicionMisiles);
-        this.CrearColliderCinematico(_simulacion, _bufferPool);
-}
-
+        DuracionPowerUp = 1;
+        //Console.WriteLine("Cantidad de misiles : " + MunicionMisiles);
+    }
 
     public override void DesactivarPowerUp(AutoJugador auto)
     {
@@ -138,13 +134,29 @@ public void ActivarMisil(AutoJugador auto, Simulation _simulacion, BufferPool _b
         MunicionMisiles = 0;
         activado = false;
     }
+    public void DesactivarPowerUp(){
+        activado = false;
+    }
 
     public override void ActualizarPowerUp(GameTime gameTime)
     {
+        refACuerpo.Pose.Orientation = Quaternion.CreateFromRotationMatrix(orientacionAutoSalida).ToNumerics() 
+                                    * Quaternion.CreateFromYawPitchRoll(0, MathF.PI/2, 0).ToNumerics();
+        world = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(refACuerpo.Pose.Orientation) * Matrix.CreateTranslation(Posicion);
         
+        if(activado){
+            refACuerpo.Velocity.Linear += new Vector3(orientacionAutoSalida.Backward.X, 0, orientacionAutoSalida.Backward.Z).ToNumerics();
+            DuracionPowerUp -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        }else{
+            refACuerpo.Pose.Position = System.Numerics.Vector3.UnitY * -10000f;
+        }
         
-        world *= Matrix.CreateTranslation(Vector3.Normalize((world * Matrix.CreateRotationX((float) Math.PI/2)).Forward) * 15f);
-        DuracionPowerUp -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        activado = DuracionPowerUp >= 0;
+        Console.WriteLine(DuracionPowerUp);
+
+        
+    
+        
 
 /*
         world *= Matrix.CreateTranslation(refACuerpo.Pose.Position* 15f);

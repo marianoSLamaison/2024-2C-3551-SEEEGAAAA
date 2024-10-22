@@ -170,7 +170,7 @@ namespace Escenografia
         
         public void RecogerPowerUp(PowerUp powerUp)
         {
-            powerUp.ActivarPowerUp(this);   
+            powerUp.ActivarPowerUp(orientacion, refACuerpo.Pose.Position);   
         }
         /// <summary>
         /// Este metodo tomara los imputs del jugador y seteara las variables necesarias
@@ -234,9 +234,10 @@ namespace Escenografia
 
                 if (Keyboard.GetState().IsKeyDown(Keys.T))
                 {
-                    Turbo turbo = new Turbo();
+                    //Turbo turbo = new Turbo();
                     turboActivo = true;
-                    RecogerPowerUp(turbo);
+                    //RecogerPowerUp(turbo);
+                    escalarDeVelocidad = 300f;
                 }
                 else{
                     turboActivo= false;

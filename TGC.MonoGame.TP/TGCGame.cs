@@ -99,7 +99,7 @@
                 
                 //seteamos un colisionador para el auto
                 auto.CrearCollider(_simulacion, bufferPool);
-                auto.Misil.CrearColliderCinematico(_simulacion, bufferPool);
+                auto.Misil.CrearColliderMisil(_simulacion);
         
                 //Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
                 //AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
