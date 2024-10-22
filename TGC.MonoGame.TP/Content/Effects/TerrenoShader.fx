@@ -67,12 +67,11 @@ float4 PS(VertexShaderOutput input) : COLOR
 {
 
     float4 diffuseColor = Diffuse.Sample(SamplerType, input.TexCoord*0.001);
-    float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord);
-    return float4(diffuseColor.rgb, 1.0);
-    //float4 color = float4((input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1, 1.0);
-    //return float4(texCUBE(SamplerType, normalize(input.TextureCoordinate)).rgb,1);
+    float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord*0.001);
 
+    float4 finalColor = diffuseColor * 0.92 + normalColor * 0.08;
 
+    return float4(finalColor.rgb, 1.0);
 }
 
 // Técnica

@@ -89,7 +89,8 @@ namespace Escenografia
 
         public void ApplyTexturesToShader(ContentManager content)
         {
-            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
+            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainDiffuse_3");
+            terrenoTextureNormal = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainNormal_3");
             efecto.Parameters["SamplerType+Diffuse"]?.SetValue(terrenoTextureDiffuse);
             efecto.Parameters["NormalTexture"]?.SetValue(terrenoTextureNormal);
 

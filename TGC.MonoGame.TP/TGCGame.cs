@@ -111,7 +111,7 @@
                 generadorConos = new AdministradorConos();
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-                Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*10000f, new Vector3(1f,0f,1f)*10000f);
+                Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*8500f, new Vector3(1f,0f,1f)*8500f);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
@@ -135,6 +135,7 @@
                 
                 Plataforma.setGScale(15f);
                 Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
+                //Escenario.CrearColliders(bufferPool, _simulacion);
 
                 //terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
                 //terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
@@ -145,7 +146,6 @@
                 
                 //Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
                 auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
-                
                 
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 

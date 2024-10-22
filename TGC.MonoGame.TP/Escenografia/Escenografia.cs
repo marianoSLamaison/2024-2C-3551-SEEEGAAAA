@@ -12,7 +12,7 @@ namespace Escenografia
 {
     public abstract class Escenografia3D 
     {
-        protected Model modelo; 
+        public Model modelo; 
         protected Effect efecto;
 
         public Vector3 posicion;

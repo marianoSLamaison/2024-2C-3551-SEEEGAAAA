@@ -15,7 +15,7 @@ float4x4 Projection;
 float3 CameraPosition;
 
 // Texturas
-texture BoxTexture;
+Texture2D BoxTexture;
 
 // Sampler para las texturas
 SamplerState SamplerType
@@ -58,7 +58,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR
 {
-    float4 color = tex2D(SamplerType, input.TextureCoordinate);
+    float4 color = BoxTexture.Sample(SamplerType, input.TextureCoordinate.xz);
     //return float4(texCUBE(SamplerType, normalize(input.TextureCoordinate)).rgb,1);
     return color;
 }

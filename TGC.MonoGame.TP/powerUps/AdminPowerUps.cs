@@ -152,12 +152,6 @@ class Misil : PowerUp
         }
         
         activado = DuracionPowerUp >= 0;
-        Console.WriteLine(DuracionPowerUp);
-
-        
-    
-        
-
 /*
         world *= Matrix.CreateTranslation(refACuerpo.Pose.Position* 15f);
         Vector3 currentPosition = this.Posicion;

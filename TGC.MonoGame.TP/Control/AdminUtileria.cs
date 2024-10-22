@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using BepuPhysics;
+using BepuPhysics.Collidables;
+using BepuUtilities.Memory;
 using Escenografia;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -28,8 +32,8 @@ namespace Control
             objetosFijos = new List<Escenografia.Escenografia3D>
             {
                 new Escenografia.Plataforma(Convert.ToSingle(3*Math.PI / 2), minLims),
-                new Escenografia.Plataforma(Convert.ToSingle(Math.PI), new Vector3(minLims.X + dimensiones.X,0f, minLims.Z)),
-                new Escenografia.Plataforma(Convert.ToSingle(0),  new Vector3(minLims.X, 0f, minLims.Z + dimensiones.Z)),
+                new Escenografia.Plataforma(Convert.ToSingle(Math.PI), new Vector3(minLims.X + dimensiones.X,500f, minLims.Z)),
+                new Escenografia.Plataforma(Convert.ToSingle(0),  new Vector3(minLims.X, 500f, minLims.Z + dimensiones.Z)),
                 new Escenografia.Plataforma(Convert.ToSingle(Math.PI / 2), maxLims)
             };
         }
@@ -39,21 +43,29 @@ namespace Control
     public void SetTexturePlataform(Escenografia.Plataforma unaPlataforma, Texture2D unaTextura){
         unaPlataforma.SetTexture(unaTextura);
     }
-        public void loadPlataformas(string direcionModelo, string direccionEfecto, ContentManager contManager)
+    public void loadPlataformas(string direcionModelo, string direccionEfecto, ContentManager contManager)
+    {
+        if (objetosFijos.Count > 4) throw new Exception("Esto era un metodo de prueba");
+    
+        foreach(Plataforma plataforma in objetosFijos)
         {
-            if (objetosFijos.Count > 4) throw new Exception("Esto era un metodo de prueba");
-        
-            foreach(Plataforma plataforma in objetosFijos)
-            {
-                plataforma.loadModel(direcionModelo,direccionEfecto,contManager);
-            }
+            plataforma.loadModel(direcionModelo,direccionEfecto,contManager);
         }
-        public void Dibujar(Camarografo camarografo)
+    }
+
+    public void CrearColliders(BufferPool bufferPool, Simulation simulacion){
+        foreach(Plataforma plataforma in objetosFijos)
         {
-            foreach (Escenografia.Escenografia3D objeto in objetosFijos)
-            {
-                objeto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Purple);
-            }
+            plataforma.CrearCollider(bufferPool, simulacion);
         }
+    }
+
+    public void Dibujar(Camarografo camarografo)
+    {
+        foreach (Escenografia.Escenografia3D objeto in objetosFijos)
+        {
+            objeto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Purple);
+        }
+    }
     }
 }
