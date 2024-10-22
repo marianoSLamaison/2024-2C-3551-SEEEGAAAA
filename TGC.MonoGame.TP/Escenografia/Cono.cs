@@ -47,7 +47,7 @@ namespace Escenografia
             // Crear un colisionador para el cono.
             //var conoCollider = new Mesh(CrearBufferDeTriangulos(bufferPool), new Vector3(1, 1, 1).ToNumerics() * scale, bufferPool);
             //var conoCollider = new Cylinder(20f,100f);
-            var conoCollider = new Box(40f, 50f, 40f);
+            var conoCollider = new Box(30f, 40f, 30f);
             
             var figuraCono = simulation.Shapes.Add(conoCollider);
 

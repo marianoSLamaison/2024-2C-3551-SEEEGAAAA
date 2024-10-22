@@ -153,6 +153,15 @@ namespace Escenografia
             this.velocidadAngular = velocidadGiro;
         }
 
+        public Vector3 getDireccion()
+        {
+            return this.direccion;
+        }
+
+        public Vector3 getRefACuerpo(){
+            return refACuerpo.Velocity.Linear;
+        }
+
         public override Matrix getWorldMatrix() =>  orientacion * Matrix.CreateTranslation(Posicion);
 
         private float duracionTurbo = 0f;  // Variable para controlar la duración del turbo

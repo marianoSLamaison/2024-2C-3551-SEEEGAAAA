@@ -96,9 +96,11 @@
 
                 auto = new Escenografia.AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
                 auto.Misil = new Misil();
+                
                 //seteamos un colisionador para el auto
                 auto.CrearCollider(_simulacion, bufferPool);
-
+                auto.Misil.CrearColliderCinematico(_simulacion, bufferPool);
+        
                 //Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
                 //AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
                 //                        _simulacion.Shapes.Add(new Sphere(100f)));
