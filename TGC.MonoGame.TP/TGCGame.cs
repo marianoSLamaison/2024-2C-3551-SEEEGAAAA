@@ -94,8 +94,6 @@
 
                 AyudanteSimulacion.simulacion = _simulacion;
 
-
-
                 auto = new Escenografia.AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
                 auto.Misil = new Misil();
                 //seteamos un colisionador para el auto
@@ -139,17 +137,15 @@
                 //terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
                 //terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
                 terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
-                terreno.SetEffect(_terrenoShader);
-                
-
+                terreno.SetEffect(_terrenoShader, Content);
 
                 auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
+                
                 //Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
                 auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
                 
                 
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
-
 
                 base.LoadContent();
             }
@@ -184,7 +180,7 @@
                 
                 generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
 
-                terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.DarkGray);
+                terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
 
                 //Colisionable1.dibujar(camarografo, new Vector3(0, 0, -500).ToNumerics());
                 

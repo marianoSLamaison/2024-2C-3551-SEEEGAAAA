@@ -88,7 +88,6 @@ class Misil : PowerUp
 
     public override void DesactivarPowerUp(AutoJugador auto)
     {
-
         Console.WriteLine("Misiles desactivados");
         MunicionMisiles = 0;
         activado = false;
@@ -96,7 +95,7 @@ class Misil : PowerUp
 
     public override void ActualizarPowerUp(GameTime gameTime)
     {
-        world *= Matrix.CreateTranslation(Vector3.Normalize((world * Matrix.CreateRotationX((float) Math.PI/2)).Forward) * 3f);
+        world *= Matrix.CreateTranslation(Vector3.Normalize((world * Matrix.CreateRotationX((float) Math.PI/2)).Forward) * 15f);
         DuracionPowerUp -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         /*if (DuracionPowerUp <= 0 || MunicionMisiles <= 0)
         {

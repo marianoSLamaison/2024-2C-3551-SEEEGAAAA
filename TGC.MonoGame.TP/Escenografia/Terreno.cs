@@ -39,17 +39,21 @@ namespace Escenografia
         {
             // Cargar el heightmap como textura
             heightMapTexture = content.Load<Texture2D>(heightMapPath);
-            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
-            terrenoTextureHeight = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
-            terrenoTextureNormal = content.Load<Texture2D>("Models/Terreno/"+"normal");
+            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"diffuseColor");
+            //terrenoTextureHeight = content.Load<Texture2D>("Models/Terreno/"+"height2");
+            terrenoTextureNormal = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
+  
             width = heightMapTexture.Width;
             height = heightMapTexture.Height;
+
 
             // Extraer datos de altura del heightmap
             Color[] heightMapColors = new Color[width * height];
             heightMapTexture.GetData(heightMapColors);
 
             heightData = new float[width, height];
+
+
 
             for (int x = 0; x < width; x++)
             {
@@ -78,13 +82,17 @@ namespace Escenografia
             GenerarIndices();
         }
 
-        public void SetEffect (Effect effect){
+        public void SetEffect (Effect effect, ContentManager content){
             this.efecto = effect;
+            this.ApplyTexturesToShader(content);
         }
 
-        public void ApplyTexturesToShader()
+        public void ApplyTexturesToShader(ContentManager content)
         {
-            efecto.Parameters["TerrenoTexture"].SetValue(heightMapTexture);
+            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
+            efecto.Parameters["SamplerType+Diffuse"]?.SetValue(terrenoTextureDiffuse);
+            efecto.Parameters["NormalTexture"]?.SetValue(terrenoTextureNormal);
+
         }
 
         /// <summary>
@@ -252,7 +260,8 @@ namespace Escenografia
             efecto.Parameters["View"].SetValue(view);
             efecto.Parameters["Projection"].SetValue(projection);
             efecto.Parameters["DiffuseColor"]?.SetValue(color.ToVector3());
-            efecto.Parameters["SamplerType+diffuse"]?.SetValue(terrenoTextureDiffuse);
+            efecto.Parameters["SamplerType+Diffuse"]?.SetValue(terrenoTextureDiffuse);
+            efecto.Parameters["SamplerType+NormalTexture"]?.SetValue(terrenoTextureNormal);
 
             efecto.Parameters["World"].SetValue(getWorldMatrix());
 

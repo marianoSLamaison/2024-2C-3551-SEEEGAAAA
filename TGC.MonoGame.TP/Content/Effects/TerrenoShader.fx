@@ -14,12 +14,13 @@ float4x4 Projection;
 
 float3 CameraPosition;
 
-Texture2D diffuse;
+
 
 // Texturas
+Texture2D Diffuse;
+//Texture2D HeightMapTexture;
+Texture2D NormalTexture;
 
-
-texture TerrenoTexture;
 // Sampler para las texturas
 SamplerState SamplerType
 {
@@ -64,10 +65,14 @@ VertexShaderOutput VS(VertexShaderInput input)
 
 float4 PS(VertexShaderOutput input) : COLOR
 {
-    //float4 color = diffuse.Sample(SamplerType, input.TexCoord);
-    float4 color = float4((input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1, 1.0);
+
+    float4 diffuseColor = Diffuse.Sample(SamplerType, input.TexCoord*0.001);
+    float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord);
+    return float4(diffuseColor.rgb, 1.0);
+    //float4 color = float4((input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1,(input.worldPosition.y)*0.1, 1.0);
     //return float4(texCUBE(SamplerType, normalize(input.TextureCoordinate)).rgb,1);
-    return color;
+
+
 }
 
 // Técnica

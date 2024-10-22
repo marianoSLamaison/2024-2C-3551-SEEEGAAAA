@@ -67,10 +67,9 @@ float4 PS(VertexShaderOutput input) : SV_TARGET
     float ambientLight = 0.2; // Ajusta este valor
     float3 lighting = ambientLight + (baseColor.rgb * ao);
 
-
-
     // Devuelve el color final
     //return float4(lighting, baseColor.a);
+    //return float (1.0, 1.0, 1.0, 1.0);
     return float4(baseColor.rgb, baseColor.a);
 }
 
