@@ -133,6 +133,7 @@
                 _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
                 _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
+                
                 //_plane.SetEffect(_basicShader);
                 
                 Plataforma.setGScale(15f);

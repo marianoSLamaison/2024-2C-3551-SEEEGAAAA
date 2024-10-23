@@ -12,6 +12,11 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
+float3 lightPosition = float3(0, 10, 0); // Posición de la luz
+float3 lightDirection = normalize(float3(1, 1, 0)); //Dirección de la luz
+float ambientLight = 0.5;
+float lightIntensity = 0.5;
+
 float3 CameraPosition;
 
 
@@ -35,6 +40,7 @@ struct VertexShaderInput
 {
     float4 Position : POSITION0;   // La posición inicial del vértice
     float2 TexCoord : TEXCOORD0;  // Coordenadas de textura
+    float3 Normal : NORMAL0;        // Normal del vértice
 };
 
 // Salida del vértice
@@ -43,6 +49,7 @@ struct VertexShaderOutput
     float4 Position : SV_Position;    // Posición final que necesita el rasterizador
     float2 TexCoord : TEXCOORD0;      // Coordenadas de textura
     float4 worldPosition : TEXCOORD1;    // POS EN LA MATRIZ DE MUNDO
+    float3 WorldNormal : TEXCOORD2;     // Normal en el espacio del mundo
 };
 
 VertexShaderOutput VS(VertexShaderInput input)
@@ -56,6 +63,8 @@ VertexShaderOutput VS(VertexShaderInput input)
 	// View space to Projection space
     output.Position = mul(viewPosition, Projection);
 
+
+    output.WorldNormal = normalize(mul(input.Normal, (float3x3)World));
     output.worldPosition = input.Position;
 
     output.TexCoord = input.Position.xz;
@@ -65,13 +74,19 @@ VertexShaderOutput VS(VertexShaderInput input)
 
 float4 PS(VertexShaderOutput input) : COLOR
 {
+    float3 Normal = normalize(input.WorldNormal);
+    //float3 L = lightDirection;
+    float3 L = normalize(lightPosition - input.worldPosition.xyz); // Vector de luz
+    //float ndotl = max(dot(Normal, L), 0.0);                   //Cálculo de iluminación difusa.
+    //float kd = ambientLight + (ndotl * lightIntensity);       //Combina la luz ambiental con la luz difusa.
+    float kd = saturate(dot(Normal, L) * 0.5 + ambientLight); // Cálculo de iluminación difusa
 
     float4 diffuseColor = Diffuse.Sample(SamplerType, input.TexCoord*0.001);
     float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord*0.001);
 
-    float4 finalColor = diffuseColor * 0.92 + normalColor * 0.08;
+    float4 finalColor = (diffuseColor * 0.92 + normalColor * 0.08) * kd * 1.5;
 
-    return float4(finalColor.rgb, 1.0);
+    return float4(finalColor.rgb,  1.0);
 }
 
 // Técnica
