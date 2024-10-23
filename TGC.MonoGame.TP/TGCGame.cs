@@ -54,6 +54,8 @@
 
             private Terreno terreno;
 
+            public Luz luz;
+
             /// <summary>
             ///     Constructor del juego.
             /// </summary>
@@ -114,6 +116,7 @@
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
                 Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*8500f, new Vector3(1f,0f,1f)*8500f);
+                luz = new Luz(GraphicsDevice, new Vector3(5f, 3f, 5f), new Vector3(-1f, 0f, -1f), Color.White, 1);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
@@ -152,6 +155,8 @@
                 //auto.Metralleta.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
                 auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
 
+                luz.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "TerrenoShader", Content);
+                _terrenoShader.Parameters["lightPosition"].SetValue(new Vector3(2000,2000,2000 ));
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
                 base.LoadContent();
@@ -195,7 +200,7 @@
                 auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
                 auto.Metralleta.dibujar(camarografo.getProjectionMatrix(),camarografo.getProjectionMatrix(), Color.Red);
-
+                luz.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 camarografo.DrawDatos(SpriteBatch);
 
                 Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
