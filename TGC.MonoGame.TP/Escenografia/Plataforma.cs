@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
 using Control;
+using System.Runtime.CompilerServices;
 
 namespace Escenografia
 {
@@ -38,7 +39,7 @@ namespace Escenografia
             base.loadModel(direcionModelo, direccionEfecto, contManager);
             foreach ( ModelMesh mesh in modelo.Meshes )
             {
-                Console.WriteLine(mesh);
+                
                 foreach ( ModelMeshPart meshPart in mesh.MeshParts)
                 {
                     meshPart.Effect = efecto;
@@ -48,51 +49,59 @@ namespace Escenografia
         }
         public void CrearCollider(BufferPool bufferPool, Simulation simulacion){
 
-            var compoundBuilder = new CompoundBuilder(bufferPool, simulacion.Shapes, 28);
+            var compoundBuilder = new CompoundBuilder(bufferPool, simulacion.Shapes, 7);
 
             foreach ( ModelMesh mesh in modelo.Meshes )
             {
-                Console.WriteLine(mesh);
+                Console.WriteLine(mesh.Name);
                 var meshCollider = new Mesh();
                 foreach ( ModelMeshPart meshPart in mesh.MeshParts)
                 {
+                    if(meshPart.VertexBuffer.VertexCount > 4){throw new Exception();}
                     int[] indices = new int[meshPart.IndexBuffer.IndexCount];
 
-                    meshPart.IndexBuffer.GetData(indices, 0, meshPart.IndexBuffer.IndexCount * 4);
+                    meshPart.IndexBuffer.GetData(indices);
 
                     var VertexBuffer = new VertexPosition[meshPart.VertexBuffer.VertexCount];
 
                     meshPart.VertexBuffer.GetData(VertexBuffer);
 
                     meshCollider = new Mesh(CrearBufferDeTriangulos(bufferPool, VertexBuffer, indices),
-                        Vector3.One.ToNumerics(),
+                        Vector3.One.ToNumerics() * 15f,
                         bufferPool);
                 }
                 var meshShape = simulacion.Shapes.Add(meshCollider);
 
                 BodyInertia bodyInertia = new Box().ComputeInertia(1);
-            
-                compoundBuilder.Add(meshShape, new RigidPose((mesh.ParentBone.ModelTransform * getWorldMatrix()).Translation.ToNumerics()), bodyInertia.InverseInertiaTensor, 1f);
+
+                compoundBuilder.AddForKinematic(meshShape, new RigidPose(mesh.ParentBone.ModelTransform.Translation.ToNumerics()),1f);
             }
 
-            compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
-            
+            compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var _);
+
             compoundBuilder.Reset();
 
-            simulacion.Bodies.Add(BodyDescription.CreateKinematic(compoundCenter, new BodyVelocity(System.Numerics.Vector3.Zero), simulacion.Shapes.Add(new Compound(compoundChildren)), 1f));
+            var handler = simulacion.Statics.Add(new StaticDescription(getWorldMatrix().Translation.ToNumerics(), simulacion.Shapes.Add(new Compound(compoundChildren))));
+
+            var staticReference = simulacion.Statics.GetStaticReference(handler);
+            posicion = staticReference.Pose.Position;
+
+            Console.WriteLine(staticReference.Pose.Position);
+            //simulacion.Bodies.Add(BodyDescription.CreateStatic(compoundCenter, new BodyVelocity(System.Numerics.Vector3.Zero), simulacion.Shapes.Add(new Compound(compoundChildren)), 1f));
         }
 
         public Buffer<Triangle> CrearBufferDeTriangulos(BufferPool bufferPool, VertexPosition[] vertices, int[] indices){
             
+            if (indices.Length % 3 != 0) throw new Exception();
+
             bufferPool.Take<Triangle>(indices.Length / 3, out var triangulos);
             // Crear triángulos a partir de los índices
             for (int i = 0; i < indices.Length; i += 3)
             {
                 // Obtener los índices de los vértices
-                int index0 = indices[i];
-                int index1 = indices[i + 1];
-                int index2 = indices[i + 2];
-                
+                int index0 = indices[i]%vertices.Length < 0 ? indices[i]%vertices.Length     + vertices.Length: indices[i]%vertices.Length;
+                int index1 = indices[i+1]%vertices.Length < 0 ? indices[i+1]%vertices.Length + vertices.Length: indices[i+1]%vertices.Length;
+                int index2 = indices[i+2]%vertices.Length < 0 ? indices[i+2]%vertices.Length + vertices.Length: indices[i+2]%vertices.Length;
 
                 // Crear un triángulo usando los vértices correspondientes
                 Triangle triangle = new Triangle(

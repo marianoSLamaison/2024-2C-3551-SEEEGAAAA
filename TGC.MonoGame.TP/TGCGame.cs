@@ -11,10 +11,11 @@
     using Microsoft.Xna.Framework.Content;
     using Microsoft.Xna.Framework.Graphics;
     using Microsoft.Xna.Framework.Input;
+using DemoContentLoader;
 
 
 
-    namespace TGC.MonoGame.TP
+namespace TGC.MonoGame.TP
     {
         /// <summary>
         ///     Esta es la clase principal del juego.
@@ -80,6 +81,7 @@
                 var rasterizerState = new RasterizerState();
                 rasterizerState.CullMode = CullMode.None;
                 GraphicsDevice.RasterizerState = rasterizerState; 
+            
 
                 bufferPool = new BufferPool();
 
@@ -111,7 +113,7 @@
                 generadorConos = new AdministradorConos();
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-                Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*8500f, new Vector3(1f,0f,1f)*8500f);
+                Escenario = new AdminUtileria(new Vector3(-8500f,500f,-8500f), new Vector3(8500f,500f,8500f));
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
@@ -133,9 +135,9 @@
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
                 //_plane.SetEffect(_basicShader);
                 
-                Plataforma.setGScale(15f);
+                Plataforma.setGScale(5f);
                 Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
-                //Escenario.CrearColliders(bufferPool, _simulacion);
+                Escenario.CrearColliders(bufferPool, _simulacion);
 
                 //terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
                 //terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
@@ -164,6 +166,7 @@
                 
                 auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
                 auto.Misil.ActualizarPowerUp(gameTime);
+                Console.WriteLine(auto.Posicion);
                 //para que el camarografo nos siga siempre
                 camarografo.setPuntoAtencion(auto.Posicion);
                 camarografo.GetInputs();

@@ -6,8 +6,20 @@ using BepuUtilities;
 using BepuPhysics.Trees;
 using System.Runtime.CompilerServices;
 
-public static class DemoMeshHelper
+namespace DemoContentLoader
 {
+    public static class DemoMeshHelper
+{
+    public static Mesh LoadModel(ContentArchive content, BufferPool pool, string contentName, Vector3 scaling)
+    {
+        var meshContent = content.Load<MeshContent>(contentName);
+        pool.Take<Triangle>(meshContent.Triangles.Length, out var triangles);
+        for (int i = 0; i < meshContent.Triangles.Length; ++i)
+        {
+            triangles[i] = new Triangle(meshContent.Triangles[i].A, meshContent.Triangles[i].B, meshContent.Triangles[i].C);
+        }
+        return new Mesh(triangles, scaling, pool);
+    }
 
     public static Mesh CreateFan(int triangleCount, float radius, Vector3 scaling, BufferPool pool)
     {
@@ -63,8 +75,39 @@ public static class DemoMeshHelper
             }
         }
         pool.Return(ref vertices);
-        //return new Mesh(triangles, scaling, pool, dispatcher);
         return new Mesh(triangles, scaling, pool);
+    }
+
+    /// <summary>
+    /// Creates a bunch of nodes and associates them with leaves with absolutely no regard for where the leaves are.
+    /// </summary>
+    static void CreateDummyNodes(ref Tree tree, int nodeIndex, int nodeLeafCount, ref int leafCounter)
+    {
+        ref var node = ref tree.Nodes[nodeIndex];
+        node.A.LeafCount = nodeLeafCount / 2;
+        if (node.A.LeafCount > 1)
+        {
+            node.A.Index = nodeIndex + 1;
+            tree.Metanodes[node.A.Index] = new Metanode { IndexInParent = 0, Parent = nodeIndex };
+            CreateDummyNodes(ref tree, node.A.Index, node.A.LeafCount, ref leafCounter);
+        }
+        else
+        {
+            tree.Leaves[leafCounter] = new Leaf(nodeIndex, 0);
+            node.A.Index = Tree.Encode(leafCounter++);
+        }
+        node.B.LeafCount = nodeLeafCount - node.A.LeafCount;
+        if (node.B.LeafCount > 1)
+        {
+            node.B.Index = nodeIndex + node.A.LeafCount;
+            tree.Metanodes[node.B.Index] = new Metanode { IndexInParent = 1, Parent = nodeIndex };
+            CreateDummyNodes(ref tree, node.B.Index, node.B.LeafCount, ref leafCounter);
+        }
+        else
+        {
+            tree.Leaves[leafCounter] = new Leaf(nodeIndex, 1);
+            node.B.Index = Tree.Encode(leafCounter++);
+        }
     }
 
 }
@@ -96,5 +139,8 @@ struct RaceTrack
             return Vector2.Distance(closest, point);
         }
     }
+}
+
+
 
 
