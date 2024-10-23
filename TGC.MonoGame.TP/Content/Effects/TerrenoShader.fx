@@ -12,9 +12,9 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-float3 lightPosition = float3(0, 10, 0); // Posición de la luz
+float3 lightPosition = float3(5000, -10000, 3000); // Posición de la luz
 float3 lightDirection = normalize(float3(1, 1, 0)); //Dirección de la luz
-float ambientLight = 0.5;
+float ambientLight = 5.5;
 float lightIntensity = 0.5;
 
 float3 CameraPosition;
@@ -76,10 +76,9 @@ float4 PS(VertexShaderOutput input) : COLOR
 {
     float3 Normal = normalize(input.WorldNormal);
     //float3 L = lightDirection;
-    float3 L = normalize(lightPosition - input.worldPosition.xyz); // Vector de luz
-    //float ndotl = max(dot(Normal, L), 0.0);                   //Cálculo de iluminación difusa.
-    //float kd = ambientLight + (ndotl * lightIntensity);       //Combina la luz ambiental con la luz difusa.
-    float kd = saturate(dot(Normal, L) * 0.5 + ambientLight); // Cálculo de iluminación difusa
+    float3 L = normalize(+lightPosition + input.worldPosition.xyz); // Vector de luz
+    //float kd = saturate(dot(Normal, L) * 0.5 + ambientLight); // Con este Kd se ve la mitad negro.
+    float kd = saturate(0.4 + 0.7 * saturate(dot(Normal, L)));
 
     float4 diffuseColor = Diffuse.Sample(SamplerType, input.TexCoord*0.001);
     float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord*0.001);
