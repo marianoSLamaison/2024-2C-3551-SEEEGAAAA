@@ -141,7 +141,7 @@ namespace Escenografia
         public float anteriorVelocidadBuscada = 0f;
 
         public Misil Misil;
-
+        public Metralleta Metralleta;
         public AutoJugador(Vector3 direccion, float velocidadGiro, float fuerzaDireccional)
         {
             this.direccion = direccion;
@@ -172,6 +172,7 @@ namespace Escenografia
         {
             powerUp.ActivarPowerUp(orientacion, refACuerpo.Pose.Position);   
         }
+        
         /// <summary>
         /// Este metodo tomara los imputs del jugador y seteara las variables necesarias
         /// para mover el mismo con el metodo mover
@@ -245,6 +246,11 @@ namespace Escenografia
                 if (Keyboard.GetState().IsKeyDown(Keys.M))
                 {
                     RecogerPowerUp(Misil);
+                }
+                else if(Keyboard.GetState().IsKeyDown(Keys.P))
+                {
+                    
+                    RecogerPowerUp(Metralleta);
                 }
                 //evitamos que las ruedas den una vuelta entera
                 rotacionRuedasDelanteras = Convert.ToSingle(Math.Clamp(rotacionRuedasDelanteras, -Math.PI/4f, Math.PI/4f));

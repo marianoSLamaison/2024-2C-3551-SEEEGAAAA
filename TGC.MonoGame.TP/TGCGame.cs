@@ -107,7 +107,9 @@
 
                 AyudanteSimulacion.SetScenario();
 
-
+                auto.Metralleta = new Metralleta();
+                auto.Metralleta.CrearColliderMetralleta(_simulacion);
+                
                 generadorConos = new AdministradorConos();
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
@@ -146,7 +148,9 @@
                 
                 //Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
                 auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
-                
+                //auto.Metralleta.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
+                auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
+
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
                 base.LoadContent();
@@ -164,6 +168,7 @@
                 
                 auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
                 auto.Misil.ActualizarPowerUp(gameTime);
+                auto.Metralleta.ActualizarPowerUp(gameTime);
                 //para que el camarografo nos siga siempre
                 camarografo.setPuntoAtencion(auto.Posicion);
                 camarografo.GetInputs();
@@ -188,7 +193,8 @@
                 
                 auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
-                
+                auto.Metralleta.dibujar(camarografo.getProjectionMatrix(),camarografo.getProjectionMatrix(), Color.Red);
+
                 camarografo.DrawDatos(SpriteBatch);
 
                 Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
