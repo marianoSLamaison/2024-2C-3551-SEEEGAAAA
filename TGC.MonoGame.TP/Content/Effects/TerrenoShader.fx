@@ -19,7 +19,7 @@ float lightIntensity = 0.5;
 
 float3 CameraPosition;
 
-
+float3 lightBoxColor = float3(1.0, 1.0, 1.0);
 
 // Texturas
 Texture2D Diffuse;
@@ -85,6 +85,7 @@ float4 PS(VertexShaderOutput input) : COLOR
     float NdotH = saturate(0.4 + 0.7 * saturate(dot(Normal, halfVector)));
     float kd = saturate(0.4 + 0.7 * saturate(dot(Normal, lightDirection)));
 
+    
     float4 diffuseColor = Diffuse.Sample(SamplerType, input.TexCoord*0.001);
     float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord*0.001);
 

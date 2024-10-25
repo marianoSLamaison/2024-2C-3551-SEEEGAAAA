@@ -8,6 +8,8 @@ public class PrismaRectangularEditable : Escenografia3D
     private VertexBuffer _vertexBuffer;
     private IndexBuffer _indexBuffer;
     private Vector3 _dimensiones;
+    private Vector3 _posicion;
+    private Vector3 _direccion;
 
     public PrismaRectangularEditable(GraphicsDevice graphicsDevice, Vector3 dimensiones)
     {
@@ -19,6 +21,16 @@ public class PrismaRectangularEditable : Escenografia3D
     public void SetEffect (Effect effect){
         this.efecto = effect;
     }
+
+    public void setPosicion(Vector3 ubicacion){
+        this._posicion=ubicacion;
+    }
+
+    public void setDireccion(Vector3 direccion){
+        this._direccion = direccion;
+    }
+
+
 
     private void CrearPrismaRectangular(Vector3 dimensiones)
     {
@@ -74,7 +86,7 @@ public class PrismaRectangularEditable : Escenografia3D
         efecto.Parameters["World"].SetValue(getWorldMatrix());
         efecto.Parameters["View"].SetValue(view);
         efecto.Parameters["Projection"].SetValue(projection);
-        efecto.Parameters["DiffuseColor"].SetValue(color.ToVector3());
+        efecto.Parameters["DiffuseColor"]?.SetValue(color.ToVector3());
 
         _graphicsDevice.SetVertexBuffer(_vertexBuffer);
         _graphicsDevice.Indices = _indexBuffer;

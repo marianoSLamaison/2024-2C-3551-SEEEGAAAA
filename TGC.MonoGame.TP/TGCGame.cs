@@ -116,7 +116,7 @@
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
                 Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*8500f, new Vector3(1f,0f,1f)*8500f);
-                luz = new Luz(GraphicsDevice, new Vector3(5f, 3f, 5f), new Vector3(-1f, 0f, -1f), Color.White, 1);
+                luz = new Luz(GraphicsDevice, -new Vector3(5f, 2f, 3f), -new Vector3(10f, 5f, -7f), Color.White, 1);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
@@ -137,8 +137,6 @@
                 _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
                 
-                //_plane.SetEffect(_basicShader);
-                
                 Plataforma.setGScale(15f);
                 Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
                 //Escenario.CrearColliders(bufferPool, _simulacion);
@@ -156,7 +154,8 @@
                 auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
 
                 luz.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "TerrenoShader", Content);
-                _terrenoShader.Parameters["lightPosition"].SetValue(new Vector3(2000,2000,2000 ));
+                luz.setLightBoxEffect(_basicShader);
+                _terrenoShader.Parameters["lightPosition"].SetValue(luz.getPosition());
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
                 base.LoadContent();
@@ -190,9 +189,7 @@
 
                 Escenario.Dibujar(camarografo);
 
-                
                 generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
-
                 terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
 
                 //Colisionable1.dibujar(camarografo, new Vector3(0, 0, -500).ToNumerics());
