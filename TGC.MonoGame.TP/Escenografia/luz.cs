@@ -10,6 +10,7 @@ namespace Escenografia
         private Matrix _lightWorld = Matrix.Identity;
         private Matrix _lightBoxWorld;
         private Effect _lightEffect;
+        protected float rotacionX, rotacionZ;
 
         public Vector3 Direccion { get; set; }
         public Color Color { get; set; }
@@ -23,9 +24,11 @@ namespace Escenografia
         Direccion = direccion;
         Color = color;
         Intensidad = intensidad;
-        _lightBox = new PrismaRectangularEditable(_graphicsDevice, new Vector3(5f,5f,5f));
+        _lightBox = new PrismaRectangularEditable(_graphicsDevice, new Vector3(500000f,500000f,500000f));
         _lightBox.setPosicion(posicion);
         _lightBox.setDireccion(Direccion);
+        rotacionX = direccion.X;
+        rotacionZ = direccion.Z;
     }
 
         public void SetEffect (Effect effect){//Shader para la Luz propiamente.
@@ -40,13 +43,6 @@ namespace Escenografia
             SetEffect(effectForLight);
             _lightBox.SetEffect(effectForBox);
         }
-
-
-        public void setPosition(Vector3 nuevaPosicion){
-            posicion = nuevaPosicion;
-            _lightBox.setPosicion(nuevaPosicion);
-
-        }
         public Vector3 getPosition()
         {
             return posicion;
@@ -59,6 +55,7 @@ namespace Escenografia
             _lightEffect.Parameters["World"].SetValue(getWorldMatrix());
             _lightEffect.Parameters["View"].SetValue(view);
             _lightEffect.Parameters["Projection"].SetValue(projection);
+            _lightEffect.Parameters["lightPosition"].SetValue(posicion);
 
             // Configuración del color
             _lightEffect.Parameters["Diffuse"]?.SetValue(color.ToVector3());
@@ -71,8 +68,8 @@ namespace Escenografia
             Effect _lightBoxEffect = content.Load<Effect>(direccionEfectoBox);
             _lightEffect = content.Load<Effect>(direccionEfectoLuz);
             SetLightEffect(_lightEffect, _lightBoxEffect);
-            _lightBox.getWorldMatrix();
-            getWorldMatrix();
+            //_lightBox.getWorldMatrix();
+            //getWorldMatrix();
             //base.loadModel(direccionModelo, direccionEfecto, content);
       /*
             foreach ( ModelMesh mesh in modelo.Meshes )
@@ -84,16 +81,10 @@ namespace Escenografia
                 }
     */
         }
-        public void SetLightPosition(Vector3 position)
-        {
-               _lightBoxWorld = Matrix.CreateScale(3f) * Matrix.CreateTranslation(position);
-               _lightEffect.Parameters["lightPosition"].SetValue(position);
-        }
 
         public override Matrix getWorldMatrix()
         {   
-            SetLightPosition(this.posicion);
-            return _lightBoxWorld;
+            return Matrix.CreateRotationZ(rotacionZ) * Matrix.CreateRotationX(rotacionX) * Matrix.CreateTranslation(posicion)* Matrix.CreateScale(10f);
         }
 
         public void Dispose()

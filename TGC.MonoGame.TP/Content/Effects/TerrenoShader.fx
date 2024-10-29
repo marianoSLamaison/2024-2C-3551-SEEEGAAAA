@@ -14,9 +14,10 @@ float4x4 Projection;
 
 float3 lightPosition; // Posición de la luz
 float3 lightDirection; //Dirección de la luz
-float ambientLight = 3.5;
-float lightIntensity = 0.5;
-
+float ambientLight = 1.2;
+float lightIntensity = 1.2;
+float lightRadius = 1000.0f;    // Ajusta el radio de la luz
+float lightFalloff = 0.01f;     // Controla la rapidez de la atenuación
 float3 CameraPosition;
 
 float3 lightBoxColor = float3(1.0, 1.0, 1.0);
@@ -73,24 +74,26 @@ VertexShaderOutput VS(VertexShaderInput input)
 
 float4 PS(VertexShaderOutput input) : COLOR
 {
+    float distance = -length(lightPosition - input.worldPosition.xyz);   //Distancia hacia la luz.
+    float attenuation = saturate(1.0 - (lightRadius/distance));          //Atenuación según distancia
     float3 lightDirection = normalize(lightPosition - input.worldPosition.xyz);
-    float3 viewDirection = normalize(CameraPosition - input.worldPosition.xyz);
-    float3 halfVector = normalize(lightDirection + viewDirection);
-
+//    float3 viewDirection = normalize(CameraPosition - input.worldPosition.xyz);
+//    float3 halfVector = normalize(lightDirection + viewDirection);
+    float4 ambientColor = float4(ambientLight, ambientLight, ambientLight, 1.0);
     float3 Normal = normalize(input.WorldNormal);
     
     //float NdotL = saturate(0.4 + 0.7 * saturate(dot(Normal, lightDirection)));
     //float3 L = normalize(lightPosition - input.worldPosition.xyz); // Vector de luz
-    float NdotH = saturate(0.4 + 0.7 * saturate(dot(Normal, halfVector)));
+    //float NdotH = saturate(0.4 + 0.7 * saturate(dot(Normal, halfVector)));
     float kd = saturate(0.4 + 0.7 * saturate(dot(Normal, lightDirection)));
 
     
     float4 diffuseColor = Diffuse.Sample(SamplerType, input.TexCoord*0.001);
     float4 normalColor = NormalTexture.Sample(SamplerType, input.TexCoord*0.001);
-
-    float4 finalColor = (diffuseColor * 0.92 + normalColor * 0.08) * kd * 1.5;
+    float4 finalColor = (diffuseColor * 0.92 + normalColor * 0.08) * kd * 1.5 * attenuation;
 
     return float4(finalColor.rgb,  1.0);
+
 }
 
 // Técnica

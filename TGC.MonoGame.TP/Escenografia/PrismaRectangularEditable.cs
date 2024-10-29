@@ -79,7 +79,7 @@ public class PrismaRectangularEditable : Escenografia3D
 
     public override Matrix getWorldMatrix()
     {
-        return Matrix.CreateRotationZ(rotacionZ) * Matrix.CreateTranslation(posicion);
+        return Matrix.CreateRotationZ(rotacionZ) * Matrix.CreateRotationX(rotacionX) * Matrix.CreateTranslation(_posicion) * Matrix.CreateScale(10f);
     }
 
     public override void dibujar(Matrix view, Matrix projection, Color color)
