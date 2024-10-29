@@ -11,6 +11,8 @@ public class PrismaRectangularEditable : Escenografia3D
     private Vector3 _posicion;
     private Vector3 _direccion;
 
+ 
+
     public PrismaRectangularEditable(GraphicsDevice graphicsDevice, Vector3 dimensiones)
     {
         _graphicsDevice = graphicsDevice;
@@ -29,7 +31,6 @@ public class PrismaRectangularEditable : Escenografia3D
     public void setDireccion(Vector3 direccion){
         this._direccion = direccion;
     }
-
 
 
     private void CrearPrismaRectangular(Vector3 dimensiones)

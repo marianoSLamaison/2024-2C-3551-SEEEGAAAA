@@ -30,6 +30,10 @@ namespace Escenografia
         /// Este metodo es virtual, para permitir sobre escribirlo, en caso de que
         /// necesitemos que algun modelo tenga diferentes efectos por mesh
         /// </remarks>
+
+        public Effect GetEffect(){
+        return this.efecto;
+        }
         virtual public void loadModel(String direcionModelo,
                         String direccionEfecto, ContentManager contManager)
         {

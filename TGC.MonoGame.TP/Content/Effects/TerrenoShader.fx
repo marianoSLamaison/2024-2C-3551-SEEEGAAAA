@@ -12,8 +12,8 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-float3 lightPosition = normalize(float3(20000, 10000, 0)); // Posición de la luz
-float3 lightDirection = normalize(float3(-1, 0 , 1)); //Dirección de la luz
+float3 lightPosition; // Posición de la luz
+float3 lightDirection; //Dirección de la luz
 float ambientLight = 3.5;
 float lightIntensity = 0.5;
 
@@ -66,7 +66,6 @@ VertexShaderOutput VS(VertexShaderInput input)
 
     output.WorldNormal = normalize(mul(input.Normal, (float3x3)World));
     output.worldPosition = input.Position;
-
     output.TexCoord = input.Position.xz;
 
     return output;
