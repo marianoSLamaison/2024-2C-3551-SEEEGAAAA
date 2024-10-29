@@ -116,7 +116,7 @@
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
                 Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*8500f, new Vector3(1f,0f,1f)*8500f);
-                luz = new Luz(GraphicsDevice, new Vector3(7100f, 300f,7100f), new Vector3(1f, 0f, -1f), Color.White, 1);
+                luz = new Luz(GraphicsDevice, new Vector3(7100f, 1000f,7100f), new Vector3(-1f, -1f, 1f), Color.White, 1);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
@@ -138,7 +138,7 @@
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
                 
                 Plataforma.setGScale(15f);
-                Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
+                Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "TerrenoShader", Content);
                 //Escenario.CrearColliders(bufferPool, _simulacion);
 
                 //terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
@@ -153,7 +153,7 @@
                 //auto.Metralleta.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
                 auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
                 luz.cargarLuz(ContentFolderEffects+"BasicShader", ContentFolderEffects+"TerrenoShader", Content);
-                generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
+                generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "TerrenoShader", Content, bufferPool, _simulacion);
 
                 base.LoadContent();
             }
@@ -198,11 +198,9 @@
                 _terrenoShader.Parameters["lightPosition"].SetValue(luz.getPosition());
                 luz.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
  
-                
                 camarografo.DrawDatos(SpriteBatch);
 
                 Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
-
             }
 
             /// <summary>

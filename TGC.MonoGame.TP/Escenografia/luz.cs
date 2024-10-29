@@ -35,6 +35,7 @@ namespace Escenografia
             this.efecto = effect;
         }
 
+
         public Effect getBoxEffect(){
             return _lightBox.GetEffect();
         }
@@ -56,7 +57,6 @@ namespace Escenografia
             _lightEffect.Parameters["View"].SetValue(view);
             _lightEffect.Parameters["Projection"].SetValue(projection);
             _lightEffect.Parameters["lightPosition"].SetValue(posicion);
-
             // Configuración del color
             _lightEffect.Parameters["Diffuse"]?.SetValue(color.ToVector3());
             //efecto.Parameters["SamplerType+Diffuse"]?.SetValue(color.ToVector4());
