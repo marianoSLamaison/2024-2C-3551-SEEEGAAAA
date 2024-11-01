@@ -153,7 +153,7 @@ class Misil : PowerUp
         }
 
         activado = DuracionPowerUp >= 0;
-        Console.WriteLine(DuracionPowerUp);
+        //Console.WriteLine(DuracionPowerUp);
         
     
         
@@ -301,7 +301,7 @@ class Metralleta : PowerUp
         }
 
         activado = DuracionPowerUp >= 0;
-        Console.WriteLine(DuracionPowerUp);
+        //Console.WriteLine(DuracionPowerUp);
     }
 
 

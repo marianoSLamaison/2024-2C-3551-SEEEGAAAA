@@ -60,11 +60,11 @@ namespace Control
         }
     }
 
-    public void Dibujar(Camarografo camarografo)
+    public void Dibujar(Camarografo camarografo, GraphicsDevice graphicsDevice)
     {
-        foreach (Escenografia.Escenografia3D objeto in objetosFijos)
+        foreach (Plataforma objeto in objetosFijos)
         {
-            objeto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Purple);
+            objeto.dibujarPlataforma(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Silver);
         }
     }
     }

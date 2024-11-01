@@ -179,6 +179,7 @@ namespace Escenografia
         /// </summary>
         override public void Mover(float deltaTime)
         {
+                //Console.WriteLine(refACuerpo.Pose.Position);
                 if ( !estaSaltando )
                 {
                 
@@ -238,7 +239,7 @@ namespace Escenografia
                     //Turbo turbo = new Turbo();
                     turboActivo = true;
                     //RecogerPowerUp(turbo);
-                    escalarDeVelocidad = 300f;
+                    //escalarDeVelocidad = 300f;
                 }
                 else{
                     turboActivo= false;
@@ -255,7 +256,7 @@ namespace Escenografia
                 //evitamos que las ruedas den una vuelta entera
                 rotacionRuedasDelanteras = Convert.ToSingle(Math.Clamp(rotacionRuedasDelanteras, -Math.PI/4f, Math.PI/4f));
                 //para no tener el problema de estar girando por siempre a un mismo lado
-                RotUp = Convert.ToSingle(Math.Clamp(RotUp, -Math.PI, MathF.PI));
+                RotUp = Convert.ToSingle(Math.Clamp(RotUp, -Math.PI/2, MathF.PI/2));
                 //solo nos interesa rotar si nos movemos, de otra forma solo rotamos ruedas
                 if ( refACuerpo.Velocity.Linear.LengthSquared() > 1f )
                 {

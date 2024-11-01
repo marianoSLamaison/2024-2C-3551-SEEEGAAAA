@@ -189,11 +189,11 @@ namespace Escenografia
             this.color = color;
         }
 
-        public void dibujar(Camarografo camarografo, System.Numerics.Vector3 pos)
+        public void dibujar(Camarografo camarografo, RigidPose pose)
         {
             effect.Parameters["Projection"].SetValue(camarografo.getProjectionMatrix());
             effect.Parameters["View"].SetValue(camarografo.getViewMatrix());
-            effect.Parameters["World"].SetValue(Matrix.CreateTranslation(pos.X,pos.Y,pos.Z) * Matrix.CreateScale(1f));
+            effect.Parameters["World"].SetValue(Matrix.CreateFromQuaternion(pose.Orientation) * Matrix.CreateTranslation(pose.Position));
             effect.Parameters["DiffuseColor"].SetValue(color.ToVector3());
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {

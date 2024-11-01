@@ -290,21 +290,21 @@ namespace Control
 
         public static void SetScenario()
         {
-            var Piso = new Box(1000000, 1, 1000000);
+           //var Piso = new Box(1000000, 1, 1000000);
            // Add the plane to the simulation
-           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(new Vector3(0f, -1f, 0f)), simulacion.Shapes.Add(Piso));
+           //AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(new Vector3(0f, -1f, 0f)), simulacion.Shapes.Add(Piso));
            var Pared1 = new Box(1, 1000000, 1000000);
            // Add the plane to the simulation
-           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitX*10000), simulacion.Shapes.Add(Pared1));
+           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitX*8800), simulacion.Shapes.Add(Pared1));
            var Pared2 = new Box(1, 1000000, 1000000);
            // Add the plane to the simulation
-           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitX*-10000), simulacion.Shapes.Add(Pared2));
+           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitX*-8800), simulacion.Shapes.Add(Pared2));
            var Pared3 = new Box(1000000, 1000000, 1);
            // Add the plane to the simulation
-           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ*10000), simulacion.Shapes.Add(Pared3));
+           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ*8800), simulacion.Shapes.Add(Pared3));
            var Pared4 = new Box(1000000, 1000000, 1);
            // Add the plane to the simulation
-           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ*-10000), simulacion.Shapes.Add(Pared4));
+           AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ*-8800), simulacion.Shapes.Add(Pared4));
         }
         public static void AplicarFuerzaLineal( Vector3 fuerzaLineal, BodyHandle handlerDeCuerpo)
         {

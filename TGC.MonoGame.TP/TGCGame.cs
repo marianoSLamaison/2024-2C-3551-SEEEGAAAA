@@ -44,6 +44,7 @@
             private Escenografia.Plano _plane { get; set; }
             private AdminUtileria Escenario;
             Primitiva Colisionable1;
+            private StaticReference refACollisionable;
             private Escenografia.Plataforma _plataforma { get; set;}
             private Turbo turboPowerUp;
             private BepuPhysics.Collidables.Box _box {get; set;}
@@ -103,7 +104,11 @@
                 auto.CrearCollider(_simulacion, bufferPool);
                 auto.Misil.CrearColliderMisil(_simulacion);
         
-                //Colisionable1 = Primitiva.Prisma(new Vector3(100,100,100),- new Vector3(100,100,100));
+                //Colisionable1 = Primitiva.Prisma(new Vector3(300,250,1000),- new Vector3(300,250,1000));
+                //var staticHandle =_simulacion.Statics.Add(new StaticDescription(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f, 
+                //                        Quaternion.CreateFromYawPitchRoll(0,MathF.PI/12,0).ToNumerics()), _simulacion.Shapes.Add(new Box(600,500,1000))));
+
+                //refACollisionable = _simulacion.Statics.GetStaticReference(staticHandle);
                 //AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
                 //                        _simulacion.Shapes.Add(new Sphere(100f)));
 
@@ -115,7 +120,7 @@
                 generadorConos = new AdministradorConos();
                 generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-                Escenario = new AdminUtileria(-new Vector3(1f,0f,1f)*8500f, new Vector3(1f,0f,1f)*8500f);
+                Escenario = new AdminUtileria(new Vector3(-7500f,500f,-7500f), new Vector3(7500f,500f,7500f));
                 luz = new Luz(GraphicsDevice, new Vector3(5f, 3f, 5f), new Vector3(-1f, 0f, -1f), Color.White, 1);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
@@ -133,6 +138,7 @@
                 
                 camarografo.loadTextFont(ContentFolderEffects, Content);
 
+                
                 _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
                 _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
@@ -141,7 +147,7 @@
                 
                 Plataforma.setGScale(15f);
                 Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
-                //Escenario.CrearColliders(bufferPool, _simulacion);
+                Escenario.CrearColliders(bufferPool, _simulacion);
 
                 //terreno.CargarTerreno(ContentFolder3D+"Terreno/height2",Content, 10f);
                 //terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
@@ -188,14 +194,13 @@
                 // Aca deberiamos poner toda la logia de renderizado del juego.
                 GraphicsDevice.Clear(Color.LightBlue);
 
-                Escenario.Dibujar(camarografo);
-
+                Escenario.Dibujar(camarografo, GraphicsDevice);
                 
                 generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
 
                 terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
 
-                //Colisionable1.dibujar(camarografo, new Vector3(0, 0, -500).ToNumerics());
+                //Colisionable1.dibujar(camarografo, refACollisionable.Pose);
                 
                 auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);

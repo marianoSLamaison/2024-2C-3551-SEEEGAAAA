@@ -1,4 +1,6 @@
 using System;
+using BepuPhysics.Collidables;
+using BepuPhysics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 //como solo tendremos una projeccion presumo solo habra una camara, pero despues podemos cambiarlo,
@@ -11,7 +13,27 @@ namespace Control
         private Vector3 puntoAtencion;
         //queremos que al cambiar el punto de atencion, la camara siga manteniendose en el mismo lugar relativo
         //no se si queda limpio a si, probablemente seria mas legible con un metodo dedicado
-        public Vector3 PuntoAtencion {get {return puntoAtencion;} set {posicion += (value - puntoAtencion); puntoAtencion = value;}}
+        public Vector3 PuntoAtencion {get {return puntoAtencion;} 
+            set 
+            {
+                Vector3 desplazamiento = value - puntoAtencion;
+
+                // Condicional para el eje X
+                if (posicion.X >= 8500 && value.X >= 7500)
+                {
+                    desplazamiento.X = 0;  // Mantener X constante si se excede el límite
+                }
+
+                // Condicional para el eje Z
+                if (posicion.Z >= 8500 && value.Z >= 7500)
+                {
+                    desplazamiento.Z = 0;  // Mantener Z constante si se excede el límite
+                }
+
+                // Actualizar posición y punto de atención
+                posicion += desplazamiento;
+                puntoAtencion = value;
+            }}
 
         public Camara(Vector3 posicion, Vector3 puntoAtencion)
         {
@@ -24,48 +46,4 @@ namespace Control
             return Matrix.CreateLookAt(posicion, puntoAtencion, Vector3.Up);
         }
     }
-    /*
-    class Camera
-    {
-        //el lugar donde esta pocisionada
-        public Vector3 posicion;
-        //a si a donde este mirando la camara
-        public Vector3 PuntoAtencion; 
-        
-        public Camera(Vector3 posicion, Vector3 PuntoAtencion)
-        {
-            this.posicion = posicion;
-            this.PuntoAtencion = PuntoAtencion;
-        }
-        //para obtener la vision de la camara
-        public Matrix getViewMatrix()
-        {
-            return Matrix.CreateLookAt(posicion, PuntoAtencion, Vector3.Up);
-        }
-        private const float velocidadMov = 100f;
-        public void getInputs(float deltaTime)
-        {
-            if (Keyboard.GetState().IsKeyDown(Keys.Up))
-                PuntoAtencion += Vector3.Up * velocidadMov * deltaTime;
-            if (Keyboard.GetState().IsKeyDown(Keys.Down))
-                PuntoAtencion += Vector3.Down * velocidadMov * deltaTime;
-            if (Keyboard.GetState().IsKeyDown(Keys.Left))
-                PuntoAtencion = Vector3.Transform(PuntoAtencion - posicion, Matrix.CreateRotationY((3.141592654f / 6f)* deltaTime)) + posicion;
-            if (Keyboard.GetState().IsKeyDown(Keys.Right))
-                PuntoAtencion = Vector3.Transform(PuntoAtencion - posicion, Matrix.CreateRotationY((-3.141592654f / 6f)* deltaTime)) + posicion;
-
-            Vector3 movimiento = Vector3.Normalize(PuntoAtencion - posicion); 
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
-            {
-                PuntoAtencion += movimiento * deltaTime * velocidadMov;
-                posicion += movimiento * deltaTime * velocidadMov;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                PuntoAtencion -= movimiento * deltaTime * velocidadMov;
-                posicion -= movimiento * deltaTime * velocidadMov;
-            }
-        }
-    }
-    */
 }
