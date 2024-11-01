@@ -16,7 +16,7 @@ namespace Escenografia
 {
     public class Terreno : Escenografia3D
     {
-        private VertexPosition[] vertices;
+        private VertexPositionNormalTexture[] vertices;
         private int[] indices;
         private Texture2D heightMapTexture;
         private Texture2D terrenoTextureDiffuse;
@@ -25,62 +25,7 @@ namespace Escenografia
 
         StaticHandle handlerTerreno;
 
-        private float[,] heightData;
         private int width, height;
-
-        /// <summary>
-        /// Constructor para inicializar el terreno con un heightmap.
-        /// </summary>
-        /// <param name="heightMapPath">La ruta de la imagen del heightmap.</param>
-        /// <param name="content">El ContentManager del juego.</param>
-        /// <param name="alturaMaxima">Altura máxima del terreno basado en el heightmap.</param>
-        /// 
-        public void CargarTerreno(string heightMapPath, ContentManager content, float alturaMaxima)
-        {
-            // Cargar el heightmap como textura
-            heightMapTexture = content.Load<Texture2D>(heightMapPath);
-            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"diffuseColor");
-            //terrenoTextureHeight = content.Load<Texture2D>("Models/Terreno/"+"height2");
-            terrenoTextureNormal = content.Load<Texture2D>("Models/Terreno/"+"OrangeRockTexture");
-  
-            width = heightMapTexture.Width;
-            height = heightMapTexture.Height;
-
-
-            // Extraer datos de altura del heightmap
-            Color[] heightMapColors = new Color[width * height];
-            heightMapTexture.GetData(heightMapColors);
-
-            heightData = new float[width, height];
-
-
-
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    heightData[x, y] = heightMapColors[x + y * width].R / 255.0f * alturaMaxima;
-                }
-            }
-
-            // Suavizar los datos de altura
-            for (int x = 1; x < width - 1; x++)
-            {
-                for (int y = 1; y < height - 1; y++)
-                {
-                    // Promediar la altura con los píxeles vecinos
-                    heightData[x, y] = (heightData[x, y] + 
-                                        heightData[x - 1, y] + heightData[x + 1, y] + 
-                                        heightData[x, y - 1] + heightData[x, y + 1] + 
-                                        heightData[x + 1, y + 1] + heightData[x - 1, y + 1] +
-                                        heightData[x - 1, y - 1] + heightData[x + 1, y - 1]) / 9.0f;
-                }
-            }
-
-            // Crear el mesh (malla) del terreno
-            GenerarVertices();
-            GenerarIndices();
-        }
 
         public void SetEffect (Effect effect, ContentManager content){
             this.efecto = effect;
@@ -90,29 +35,19 @@ namespace Escenografia
         public void ApplyTexturesToShader(ContentManager content)
         {
             terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainDiffuse_3");
-            terrenoTextureNormal = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainNormal_3");
-            efecto.Parameters["SamplerType+Diffuse"]?.SetValue(terrenoTextureDiffuse);
-            efecto.Parameters["NormalTexture"]?.SetValue(terrenoTextureNormal);
 
-        }
+            efecto.Parameters["baseTexture"]?.SetValue(terrenoTextureDiffuse);
+            efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
 
-        /// <summary>
-        /// Generar los vértices del terreno basados en el heightmap.
-        /// </summary>
-        private void GenerarVertices()
-        {
-            vertices = new VertexPosition[width * height];
-            for (int x = 0; x < width; x++)
-            {
-                for (int y = 0; y < height; y++)
-                {
-                    Vector3 posicion = new Vector3(x, heightData[x, y], y);
-                    //Vector2 texCoord = new Vector2((float)x / (width - 1), (float)y / (height - 1));
-                    vertices[x + y * width] = new VertexPosition(posicion);
-                }
-            }
+            efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.4f, 0.4f, 0.2f));
+            efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.8f, 0.75f, 0.3f));
+            efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
 
-            // Puedes calcular las normales más adelante si es necesario.
+            efecto.Parameters["KAmbient"]?.SetValue(0.2f);
+            efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efecto.Parameters["KSpecular"]?.SetValue(0.05f);
+            efecto.Parameters["shininess"]?.SetValue(32.0f);
+
         }
 
         /// <summary>
@@ -138,24 +73,6 @@ namespace Escenografia
                     indices[indice++] = x + (y + 1) * width;
                 }
             }
-        }
-
-        public void CrearCollider(BufferPool bufferPool, Simulation simulation, Vector3 posicion)
-        {
-            // Extraer solo las posiciones de los vértices para el colisionador.
-            var posiciones = new System.Numerics.Vector3[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                posiciones[i] = new System.Numerics.Vector3(vertices[i].Position.X, vertices[i].Position.Y, vertices[i].Position.Z);
-            }
-
-            var terrenoCollider = new Mesh(CrearBufferDeTriangulos(bufferPool), Vector3.One.ToNumerics() * 40f, bufferPool);
-            var figuraTerreno = simulation.Shapes.Add(terrenoCollider);
-
-            // Agregar el colisionador a la simulación.
-            //le damos una posicion 
-            this.posicion = posicion;
-            AyudanteSimulacion.agregarCuerpoEstatico(simulation, new RigidPose(posicion.ToNumerics()), figuraTerreno);
         }
 
         public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher){
@@ -189,55 +106,55 @@ namespace Escenografia
             var triangles = planeMesh.Triangles;
             int triangleCount = triangles.Length; // Número de triángulos en el mesh
 
-             // Crear arrays para almacenar los vértices e índices
-            vertices = new VertexPosition[triangleCount * 3];
+            // Crear arrays para almacenar los vértices, índices y las normales
+
+            vertices = new VertexPositionNormalTexture[triangleCount * 3];
             indices = new int[triangleCount * 3];
+            Vector3[] vertexNormals = new Vector3[triangleCount * 3];
 
             // Recorrer cada triángulo y extraer los vértices
             for (int i = 0; i < triangleCount; i++)
             {
                 var triangle = triangles[i];
+                Vector3 vertexA = new Vector3(triangle.A.X, triangle.A.Y, triangle.A.Z);
+                Vector3 vertexB = new Vector3(triangle.B.X, triangle.B.Y, triangle.B.Z);
+                Vector3 vertexC = new Vector3(triangle.C.X, triangle.C.Y, triangle.C.Z);
 
-                // Cada triángulo tiene tres vértices: A, B, C
-                vertices[i * 3] = new VertexPosition(new Vector3(triangle.A.X, triangle.A.Y, triangle.A.Z));
-                vertices[i * 3 + 1] = new VertexPosition(new Vector3(triangle.B.X, triangle.B.Y, triangle.B.Z));
-                vertices[i * 3 + 2] = new VertexPosition(new Vector3(triangle.C.X, triangle.C.Y, triangle.C.Z));
+                // Calcular la normal del triángulo
+                Vector3 edge1 = vertexB - vertexA;
+                Vector3 edge2 = vertexC - vertexA;
+                Vector3 triangleNormal = Vector3.Cross(edge2, edge1);
+                triangleNormal.Normalize();
+                //triangleNormal.Y = MathF.Abs(triangleNormal.Y);
 
-                // Los índices apuntan a los tres vértices de cada triángulo
+                Console.WriteLine(triangleNormal);
+                
+
+                // Añadir la normal a los vértices involucrados
+                vertexNormals[i * 3] = triangleNormal;
+                vertexNormals[i * 3 + 1] = triangleNormal;
+                vertexNormals[i * 3 + 2] = triangleNormal;
+
+                // Asignar posiciones y normales a los vértices
+                vertices[i * 3] = new VertexPositionNormalTexture(vertexA, Vector3.Zero, new Vector2(vertexA.X, vertexA.Z));   // Placeholder para la normal
+                vertices[i * 3 + 1] = new VertexPositionNormalTexture(vertexB, Vector3.Zero, new Vector2(vertexB.X, vertexB.Z)); 
+                vertices[i * 3 + 2] = new VertexPositionNormalTexture(vertexC, Vector3.Zero, new Vector2(vertexC.X, vertexC.Z));
+
+                // Índices para los triángulos
                 indices[i * 3] = i * 3;
                 indices[i * 3 + 1] = i * 3 + 1;
                 indices[i * 3 + 2] = i * 3 + 2;
             }
-                    
+
+            // Normalizar y asignar las normales a cada vértice
+            for (int i = 0; i < vertexNormals.Length; i++)
+            {
+                vertices[i].Normal = Vector3.Normalize(vertexNormals[i]);
+                //vertices[i].Normal = Vector3.One * 0.8f;
+            }
             
             AyudanteSimulacion.agregarCuerpoEstatico(_simulacion, new RigidPose(new Vector3(0, -15, 0).ToNumerics()), _simulacion.Shapes.Add(planeMesh));
             //handlerTerreno = _simulacion.Statics.Add(new StaticDescription(new Vector3(0, -15, 0).ToNumerics(), _simulacion.Shapes.Add(planeMesh)));
-        }
-
-        public Buffer<Triangle> CrearBufferDeTriangulos(BufferPool bufferPool)
-        {
-            // Crear un buffer para almacenar los triángulos, el tamaño es la cantidad de triángulos
-            bufferPool.Take<Triangle>(indices.Length / 3, out var triangulos);
-
-            // Crear triángulos a partir de los índices
-            for (int i = 0; i < indices.Length; i += 3)
-            {
-                // Obtener los índices de los vértices
-                int index0 = indices[i];
-                int index1 = indices[i + 1];
-                int index2 = indices[i + 2];
-
-                // Crear un triángulo usando los vértices correspondientes
-                Triangle triangle = new Triangle(
-                    new System.Numerics.Vector3(vertices[index0].Position.X, vertices[index0].Position.Y, vertices[index0].Position.Z),
-                    new System.Numerics.Vector3(vertices[index1].Position.X, vertices[index1].Position.Y, vertices[index1].Position.Z),
-                    new System.Numerics.Vector3(vertices[index2].Position.X, vertices[index2].Position.Y, vertices[index2].Position.Z)
-                );
-
-                // Agregar el triángulo al buffer
-                triangulos[i / 3] = triangle;
-            }
-            return triangulos;
         }
 
         /// <summary>
@@ -246,25 +163,20 @@ namespace Escenografia
         public override Microsoft.Xna.Framework.Matrix getWorldMatrix()
         {
             return
-                //Microsoft.Xna.Framework.Matrix.CreateRotationY(rotacionY) *
-                //Microsoft.Xna.Framework.Matrix.CreateRotationZ(rotacionZ) * 
-                //Microsoft.Xna.Framework.Matrix.CreateScale(40f) *
-                //Microsoft.Xna.Framework.Matrix.CreateTranslation(posicion);
                 Microsoft.Xna.Framework.Matrix.CreateTranslation(0, -15, 0);
         }
 
         /// <summary>
         /// Sobreescribe el método para dibujar el terreno.
         /// </summary>
-        public override void dibujar(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Color color)
+        public void dibujar(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 posicionCamara)
         {
             efecto.Parameters["View"].SetValue(view);
             efecto.Parameters["Projection"].SetValue(projection);
-            efecto.Parameters["DiffuseColor"]?.SetValue(color.ToVector3());
-            efecto.Parameters["SamplerType+Diffuse"]?.SetValue(terrenoTextureDiffuse);
-            efecto.Parameters["SamplerType+NormalTexture"]?.SetValue(terrenoTextureNormal);
+            efecto.Parameters["CameraPosition"]?.SetValue(posicionCamara);
 
             efecto.Parameters["World"].SetValue(getWorldMatrix());
+            efecto.Parameters["InverseTransposeWorld"]?.SetValue(Microsoft.Xna.Framework.Matrix.Transpose(Microsoft.Xna.Framework.Matrix.Invert(getWorldMatrix())));
 
             foreach (var pass in efecto.CurrentTechnique.Passes)
             {

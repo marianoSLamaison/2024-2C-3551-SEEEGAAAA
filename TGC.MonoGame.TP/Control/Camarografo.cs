@@ -47,11 +47,6 @@ namespace Control
             if (Keyboard.GetState().IsKeyUp(Keys.O) && teclaOprimida)
                 teclaOprimida = false;
 
-            
-
-            //camaraAsociada.posicion.Z = Math.Clamp(camaraAsociada.posicion.Z, -9500f, 8500f);
-            //Console.WriteLine(camaraAsociada.posicion);
-            Console.WriteLine(camaraAsociada.PuntoAtencion);
         }
 
         public void setPuntoAtencion(Vector3 PuntoAtencion)

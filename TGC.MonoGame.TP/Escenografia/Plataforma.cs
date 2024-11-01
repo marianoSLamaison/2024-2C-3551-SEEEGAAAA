@@ -130,7 +130,7 @@ namespace Escenografia
             // le cargamos el como quedaria projectado en la pantalla
             efecto.Parameters["Projection"].SetValue(projection);
             // le pasamos el color ( repasar esto )
-            efecto.Parameters["DiffuseColor"].SetValue(color.ToVector3());
+            efecto.Parameters["DiffuseColor"]?.SetValue(color.ToVector3());
             foreach( ModelMesh mesh in modelo.Meshes)
             {
                 efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform 

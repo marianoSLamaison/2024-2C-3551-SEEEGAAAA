@@ -229,12 +229,12 @@ namespace Control
             }
         }
 
-        public void drawConos(Matrix view, Matrix projection)
+        public void drawConos(Matrix view, Matrix projection, Vector3 posicionCamara)
         {
             // Dibujar todos los conos
             foreach (Cono cono in conos)
             {
-                cono.dibujar(view, projection, Color.Orange);
+                cono.dibujar(view, projection, Color.Orange, posicionCamara);
             }
         }
     }
