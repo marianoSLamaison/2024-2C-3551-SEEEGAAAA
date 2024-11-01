@@ -26,7 +26,7 @@ namespace Utils
 
         public static List<T> map<T>(List<T> list, Func<T, T> func)
         {
-            List<T> ret = new List<T>();
+            List<T> ret = new List<T>(list.Capacity);
             foreach(T item in list)
                 ret.Add(func(item));
             return ret;

@@ -51,6 +51,7 @@
             private BufferPool bufferPool;
 
             private Terreno terreno;
+            private AdministradorNPCs IACentral;
 
             /// <summary>
             ///     Constructor del juego.
@@ -109,6 +110,10 @@
                 _plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
                 terreno = new Terreno();
+
+
+                IACentral = new AdministradorNPCs();
+                IACentral.generarAutos(10, 10000f, _simulacion, bufferPool);
                 
                 base.Initialize();
             }
@@ -118,8 +123,13 @@
                 // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
                 SpriteBatch = new SpriteBatch(GraphicsDevice);
                 String[] modelos = {ContentFolder3D + "Auto/RacingCar"};
-                String[] efectos = {ContentFolderEffects + "BasicShader"};
+                String[] efectos = {ContentFolderEffects + "VehicleShader"};
                 
+
+                IACentral.load(efectos, modelos, Content);
+
+
+
                 camarografo.loadTextFont(ContentFolderEffects, Content);
 
                 _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
@@ -160,6 +170,8 @@
                 camarografo.setPuntoAtencion(auto.Posicion);
                 camarografo.GetInputs();
                 _simulacion.Timestep(1f/60f);//por ahora corre en el mismo thread que todo lo demas
+
+                IACentral.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
                 base.Update(gameTime);
             }
 
@@ -182,6 +194,8 @@
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
                 
                 camarografo.DrawDatos(SpriteBatch);
+
+                IACentral.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
 
                 Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
 

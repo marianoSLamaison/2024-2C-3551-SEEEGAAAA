@@ -16,10 +16,12 @@ namespace Control
         //leer ese ejmplo si que dio muchas ideas AJAJ
     private class IA//para el manejo de los autos
     {
-        public IA(Vector3 initPos, float influencia)
+        public IA(Vector2 initPos, float influencia, Simulation simulation, BufferPool bufferPool)
         {
-            AutoControlado = new AutoNPC(initPos);
+            AutoControlado = new AutoNPC();
             DistanciaInfluenciaCuadrada = influencia;
+            AutoControlado.CrearCollider(simulation, bufferPool, initPos);
+            AutoControlado.velocidad = 1000f;
         }
         public Vector2 posicionObj;
         private AutoNPC AutoControlado;
@@ -27,7 +29,9 @@ namespace Control
         public bool NecesitoNuevoObjetivo(float deltaTime)
         {
             AutoControlado.Update(deltaTime, posicionObj);
-            if (Vector2.Dot(posicionObj, Utils.Matematicas.AssV2(AutoControlado.Posicion)) <= DistanciaInfluenciaCuadrada)
+            float distancia = Vector2.DistanceSquared(posicionObj ,  Utils.Matematicas.AssV2(AutoControlado.Posicion));
+            Console.WriteLine("la distancia de auto a su objetivo es " + distancia);
+            if (distancia <= DistanciaInfluenciaCuadrada)
                 return true;
             return false;
         }
@@ -40,10 +44,11 @@ namespace Control
         private Effect [] efectos;
         private Model[] modelos;
         List<IA> autos;
-        public void generarAutos(int numero, Vector2 areaTrabajo)
+        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool)
         {//los genero de esta manera para reducir espacios sin nada en los bordes del escenario
-            List<Vector2> puntosSpawn = new List<Vector2>();
-            float radioSubDiscos = areaTrabajo.Length() / 4f;
+            List<Vector2> puntosSpawn = new(numero);
+            autos = new List<IA>(numero);
+            float radioSubDiscos = radioArea / 4f;
             Vector2 direccionSpawnPointOrigen = new Vector2(1,1);
             const float anguloDeRotacion =  3.1415926539f / 2f;//PI/2
             Vector2 centroActual;
@@ -52,15 +57,20 @@ namespace Control
             {
                 centroActual = Vector2.Transform(direccionSpawnPointOrigen, Matrix.CreateRotationZ(anguloDeRotacion * i));
                 centroActual *= Convert.ToSingle(radioSubDiscos * Math.Sqrt(2));
-                puntosSpawn.Concat(Utils.Commons.map(GenerarPuntosPoissonDisk(radioSubDiscos, 500f, numero / 4),
+                puntosSpawn.AddRange(Utils.Commons.map(GenerarPuntosPoissonDisk(radioSubDiscos, 500f, numero / 4),
                 vector => {return vector + centroActual;}));
+                Console.WriteLine("Cantidad de puntos" + puntosSpawn.Count);
             }
+
+            
             //creamos dichos autos
             foreach( Vector2 posicion in puntosSpawn )
             {
-                IA auto = new IA(new Vector3(posicion.X, 400f, posicion.Y), 100f);
+                Console.WriteLine("La posicion es " + posicion);
+                IA auto = new IA(posicion, 1000000f, simulation, bufferpool);
                 autos.Add(auto);
             }
+            Console.WriteLine(autos.Count);
         }
 
         public void Update(float deltaTime)
@@ -70,13 +80,20 @@ namespace Control
             {
                 //esto se encarga de moverlos ya
                 if (auto.NecesitoNuevoObjetivo(deltaTime))
-                    auto.posicionObj = RNGDentroDeCirculo(10000f);
+                {
+                    Console.WriteLine("Viejo punte el " + auto.posicionObj);
+                    auto.posicionObj = RNGDentroDeCirculo(100000f);
+                    Console.WriteLine("Nuevo punte el " + auto.posicionObj);
+                }
+                    
             }
         }
         public void load(String [] efectos, String [] modelos, ContentManager content)
         {
             foreach( IA auto in autos )
-            {//designamos modelos al azar
+            {//designamos modelos y efectos al azar, si necesitan que esten juntos, habria que dise
+            //diseñar alguna sestructura que tenga a los dos para tener el modelo y la estruct juntos,
+            //y pasar eso
                 String dEffecto = efectos[RNG.Next() % efectos.Length];
                 String dModelo = modelos[RNG.Next() % modelos.Length];
                 auto.GetAuto().loadModel(dModelo, dEffecto, content);

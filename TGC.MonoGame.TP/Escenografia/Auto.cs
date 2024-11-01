@@ -406,18 +406,11 @@ namespace Escenografia
                 mesh.Draw();    
             }
         }
-        
-
-
+    
     }
     class AutoNPC : Auto
     {
         private Vector3 vector3;
-
-        public AutoNPC(Vector3 vector3)
-        {
-            this.vector3 = vector3;
-        }
 
         public override void dibujar(Matrix view, Matrix projection, Color color)
         {
@@ -469,7 +462,6 @@ namespace Escenografia
             }
         }
         
-
         public override Matrix getWorldMatrix()
         {
             return orientacion * Matrix.CreateTranslation(Posicion);
@@ -524,6 +516,40 @@ namespace Escenografia
         public override void Mover( float fuerzaAAplicar)
         {
             throw new NotImplementedException();
+        }
+
+        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicion){
+
+        var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
+
+        //var boxMainShape = new Box(280f, 100f, 500f);
+        var capsuleMainShape = new Capsule(100, 480f);
+        
+        var capsuleMainLocalPose = new RigidPose(new Vector3(posicion.X,120f,posicion.Y).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+
+        var ruedaDelanteraIzquierdaShape = new Sphere(10f);
+        var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics());
+
+        var ruedaDelanteraDerechaShape = new Sphere(10f);
+        var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics());
+
+        var ruedaTraseraIzquierdaShape = new Sphere(10f);
+        var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics());
+
+        var ruedaTraseraDerechaShape = new Sphere(10f);
+        var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics());
+
+        compoundBuilder.Add(capsuleMainShape, capsuleMainLocalPose, 5f);
+        compoundBuilder.Add(ruedaDelanteraIzquierdaShape, ruedaDelanteraIzquierdaLocalPose, 1f);
+        compoundBuilder.Add(ruedaDelanteraDerechaShape, ruedaDelanteraDerechaLocalPose, 1f);
+        compoundBuilder.Add(ruedaTraseraIzquierdaShape, ruedaTraseraIzquierdaLocalPose, 1f);
+        compoundBuilder.Add(ruedaTraseraDerechaShape, ruedaTraseraDerechaLocalPose, 1f);
+
+        compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
+        compoundBuilder.Reset();
+
+        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1500f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        darCuerpo(handlerDeCuerpo);
         }
     }
 
