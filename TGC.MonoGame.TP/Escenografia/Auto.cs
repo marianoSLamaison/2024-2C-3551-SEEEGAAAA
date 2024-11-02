@@ -82,7 +82,7 @@ namespace Escenografia
         protected Texture2D normalTexture;
         protected Texture2D metallicTexture;
         protected Texture2D roughnessTexture;
-        protected Texture2D aoTexture;
+        protected Texture2D AOTexture;
         protected Texture2D emissionTexture;
 
         protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-130f, 0, 240f); // Ajusta según tu modelo
@@ -316,7 +316,32 @@ namespace Escenografia
 
     public void ApplyTexturesToShader()
         {
-            efecto.Parameters["SamplerType+BaseColorTexture"].SetValue(baseColorTexture);
+            efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
+            efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
+            efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
+            efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
+            
+            
+
+            efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+            efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+            efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.75f, 0.75f, 0.75f));
+            efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+            efecto.Parameters["KAmbient"]?.SetValue(0.4f);
+            efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efecto.Parameters["KSpecular"]?.SetValue(0.25f);
+            efecto.Parameters["shininess"]?.SetValue(4.0f);
+
+            foreach ( ModelMesh mesh in modelo.Meshes )
+            {
+                foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efecto;
+                }
+            }
+
             //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
             //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
             //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
@@ -335,7 +360,7 @@ namespace Escenografia
             normalTexture = contManager.Load<Texture2D>("Models/Auto/" + "Vehicle_normal");
             metallicTexture = contManager.Load<Texture2D>("Models/Auto/" + "Vehicle_metallic");
             roughnessTexture = contManager.Load<Texture2D>("Models/Auto/" + "Vehicle_rougness");
-            aoTexture = contManager.Load<Texture2D>("Models/Auto/" + "Vehicle_ao");
+            AOTexture = contManager.Load<Texture2D>("Models/Auto/" + "Vehicle_ao");
             emissionTexture = contManager.Load<Texture2D>("Models/Auto/" + "Vehicle_emission");
 
             this.ApplyTexturesToShader();

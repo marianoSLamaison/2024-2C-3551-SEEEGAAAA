@@ -65,8 +65,9 @@ VertexShaderOutput VS(VertexShaderInput input)
     //output.WorldNormal = normalize(mul(input.Normal, (float3x3)World));
     output.localPosition = input.Position;
     output.WorldPosition = worldPosition;
-    output.Normal = normalize(input.Normal);
-	
+    //output.Normal = normalize(input.Normal);
+	output.Normal = normalize(mul(float4(input.Normal.xyz, 0.0), World));
+
     return output;
 }
 

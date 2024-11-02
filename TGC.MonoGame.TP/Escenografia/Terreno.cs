@@ -124,11 +124,7 @@ namespace Escenografia
                 Vector3 edge1 = vertexB - vertexA;
                 Vector3 edge2 = vertexC - vertexA;
                 Vector3 triangleNormal = Vector3.Cross(edge2, edge1);
-                triangleNormal.Normalize();
-                //triangleNormal.Y = MathF.Abs(triangleNormal.Y);
-
-                Console.WriteLine(triangleNormal);
-                
+                triangleNormal.Normalize();                
 
                 // Añadir la normal a los vértices involucrados
                 vertexNormals[i * 3] = triangleNormal;
