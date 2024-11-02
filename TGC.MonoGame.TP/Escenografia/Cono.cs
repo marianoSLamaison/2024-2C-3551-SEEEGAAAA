@@ -23,7 +23,7 @@ namespace Escenografia
         {
            //Console.WriteLine("Cono:" + refACuerpo.Pose.Position);
            
-           return Matrix.CreateScale(scale) * Matrix.CreateTranslation(refACuerpo.Pose.Position);
+           return Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(refACuerpo.Pose.Orientation) * Matrix.CreateTranslation(refACuerpo.Pose.Position);
            
         }
         public void SetScale(float scale)
@@ -58,13 +58,13 @@ namespace Escenografia
         public void CrearCollider(BufferPool bufferPool, Simulation simulation, Vector3 posicion)
         {
             // Crear un colisionador para el cono.
-            var conoCollider = new Box(70f, 100f, 70f);
+            var conoCollider = new Box(100f, 150f, 100f);
             
             var figuraCono = simulation.Shapes.Add(conoCollider);
 
             // Agregar el colisionador a la simulación.
 
-            BodyInertia conoInertia = conoCollider.ComputeInertia(0.1f);
+            BodyInertia conoInertia = conoCollider.ComputeInertia(0.5f);
 
             this.posicion = posicion;
             BodyHandle handler = simulation.Bodies.Add(BodyDescription.CreateDynamic(posicion.ToNumerics(), conoInertia, simulation.Shapes.Add(conoCollider), 0.01f));

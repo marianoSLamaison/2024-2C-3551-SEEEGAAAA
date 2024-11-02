@@ -79,18 +79,18 @@ namespace Escenografia
         public void CrearCollider(BufferPool bufferPool, Simulation simulacion)
         {
             // Definir las formas de cada sección
-            var plataformaPrincipal = new Box(2800, 500, 2800);
-            var plataformaPrincipalPose = new RigidPose(posicion.ToNumerics() - new System.Numerics.Vector3(0, 400, 0), 
+            var plataformaPrincipal = new Box(3000, 500, 3000);
+            var plataformaPrincipalPose = new RigidPose(new System.Numerics.Vector3 (posicion.X, 250, posicion.Z), 
                 Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationY(rotacionY)).ToNumerics());
 
-            var rampa = new Box(600, 500, 2000);
+            var rampa = new Box(750, 500, 2000);
             var rampaDerechaPose = new RigidPose(
-                plataformaPrincipalPose.Position + new System.Numerics.Vector3(-200, -400, -2400),
-                Quaternion.Multiply(plataformaPrincipalPose.Orientation, Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 12, 0)).ToNumerics()
+                plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, -2320f),
+                Quaternion.Multiply(Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0) , plataformaPrincipalPose.Orientation).ToNumerics()
             );
             var rampaInferiorPose = new RigidPose(
-                plataformaPrincipalPose.Position + new System.Numerics.Vector3(2400, -400, 0),
-                Quaternion.Multiply(plataformaPrincipalPose.Orientation,Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 12, 0)).ToNumerics()
+                plataformaPrincipalPose.Position + new System.Numerics.Vector3(2320, -372f, 0),
+                Quaternion.Multiply(Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0), plataformaPrincipalPose.Orientation).ToNumerics()
             );
 
             // Agregar cada colisionador de forma independiente a la simulación
@@ -135,9 +135,10 @@ namespace Escenografia
             {
                 efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform 
                 * Matrix.CreateScale(g_scale) 
-                //* Matrix.CreateRotationY(rotacionY)
-                * Matrix.CreateFromQuaternion(refACollider.Pose.Orientation)
-                * Matrix.CreateTranslation(refACollider.Pose.Position));
+                * Matrix.CreateRotationY(rotacionY)
+                //* Matrix.CreateFromQuaternion(refACollider.Pose.Orientation)
+                //* Matrix.CreateTranslation(refACollider.Pose.Position));
+                * Matrix.CreateTranslation(posicion));
                 mesh.Draw();
             }
 

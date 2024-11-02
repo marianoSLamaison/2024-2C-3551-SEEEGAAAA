@@ -93,7 +93,7 @@ namespace Control
     {
         static Random RNG = new Random();
         List<Cono> conos;
-        float alturaConos = 500f; // Altura fija para todos los conos
+        float alturaConos = 300f; // Altura fija para todos los conos
 
         public void generarConos(Vector3 centro, float radio, int numeroNPCs, float distanciaMinima)
         {

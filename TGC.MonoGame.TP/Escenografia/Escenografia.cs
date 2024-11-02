@@ -198,7 +198,7 @@ namespace Escenografia
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, 4, indices, 0, numeroTriangulos);
+                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length /3);
             }
         }
         public void setearCuerpoPrisma(Vector3 minV, Vector3 maxV, Vector3 posicion)

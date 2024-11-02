@@ -46,8 +46,9 @@
             Primitiva CollisionablePlataforma;
             Primitiva CollisionableRampaDerecha;
             Primitiva CollisionableRampaInferior;
-            Primitiva Luz;
-            private StaticReference refACollisionable;
+            private StaticReference refACollisionablePlataforma;
+            private StaticReference refACollisionableRampaDerecha;
+            private StaticReference refACollisionableRampaInferior;
             private Escenografia.Plataforma _plataforma { get; set;}
             private Turbo turboPowerUp;
             private BepuPhysics.Collidables.Box _box {get; set;}
@@ -57,6 +58,7 @@
             private ThreadDispatcher ThreadDispatcher;
 
             private Terreno terreno;
+            private Cilindro cilindro;
 
             public Luz luz;
 
@@ -106,20 +108,26 @@
                 //seteamos un colisionador para el auto
                 auto.CrearCollider(_simulacion, bufferPool);
                 auto.Misil.CrearColliderMisil(_simulacion);
+                
+                /*
+                CollisionablePlataforma = Primitiva.Prisma(new Vector3(1500, 250, 1500) , -new Vector3(1500, 250, 1500));
+                var CollisionablePlataformaPose = new RigidPose(new System.Numerics.Vector3 (-7000, 250, 7000), 
+                                        Quaternion.CreateFromRotationMatrix(Microsoft.Xna.Framework.Matrix.CreateRotationY(0)).ToNumerics());
+                var staticHandlePlataforma = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose, _simulacion.Shapes.Add(new Box(3000,500,3000))));
+                refACollisionablePlataforma = _simulacion.Statics.GetStaticReference(staticHandlePlataforma);
 
-                Luz = Primitiva.Prisma(new Vector3(5, 5, 5), -new Vector3(5, 5, 5));
+                CollisionableRampaDerecha = Primitiva.Prisma(new Vector3(375, 250, 1000) , -new Vector3(375, 250, 1000));
+                var SHRD = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(0, -372f, -2320),
+                Quaternion.Multiply(CollisionablePlataformaPose.Orientation, Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0)).ToNumerics(), 
+                _simulacion.Shapes.Add(new Box(750,500,2000))));
+                refACollisionableRampaDerecha = _simulacion.Statics.GetStaticReference(SHRD);
 
-                //CollisionablePlataforma = Primitiva.Prisma(new Vector3(1400, 250, 1400), -new Vector3(1400, 250, 1400));
-                //var staticHandlePlataforma = _simulacion.Statics.Add(new StaticDescription(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f, 
-                //                        Quaternion.Identity.ToNumerics()), _simulacion.Shapes.Add(new Box(2800,500,2800))));
-        
-                //Colisionable1 = Primitiva.Prisma(new Vector3(300,250,1000),- new Vector3(300,250,1000));
-                //var staticHandle =_simulacion.Statics.Add(new StaticDescription(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f, 
-                //                        Quaternion.CreateFromYawPitchRoll(0,MathF.PI/12,0).ToNumerics()), _simulacion.Shapes.Add(new Box(600,500,1000))));
-
-                //refACollisionable = _simulacion.Statics.GetStaticReference(staticHandle);
-                //AyudanteSimulacion.agregarCuerpoStatico(new RigidPose(Vector3.UnitZ.ToNumerics() * -500f),
-                //                        _simulacion.Shapes.Add(new Sphere(100f)));
+                CollisionableRampaInferior = Primitiva.Prisma(new Vector3(375, 250, 1000) , -new Vector3(375, 250, 1000));
+                var SHRI = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(2320, -372f, 0),
+                Quaternion.Multiply(CollisionablePlataformaPose.Orientation,Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0)).ToNumerics(), 
+                _simulacion.Shapes.Add(new Box(750,500,2000))));
+                refACollisionableRampaInferior = _simulacion.Statics.GetStaticReference(SHRI);
+                */
 
                 AyudanteSimulacion.SetScenario();
 
@@ -127,9 +135,9 @@
                 auto.Metralleta.CrearColliderMetralleta(_simulacion);
                 
                 generadorConos = new AdministradorConos();
-                generadorConos.generarConos(Vector3.Zero, 11000f, 100, 1100f);
+                generadorConos.generarConos(Vector3.Zero, 8000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-                Escenario = new AdminUtileria(new Vector3(-7500f,500f,-7500f), new Vector3(7500f,500f,7500f));
+                Escenario = new AdminUtileria(new Vector3(-7000f,500f,-7000f), new Vector3(7000f,500f,7000f));
                 luz = new Luz(GraphicsDevice, new Vector3(5f, 3f, 5f), new Vector3(-1f, 0f, -1f), Color.White, 1);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
@@ -163,8 +171,10 @@
 
                 auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
                 
-                //Colisionable1.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
-                Luz.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.White);
+                //CollisionablePlataforma.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
+                //CollisionableRampaDerecha.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.BlueViolet);
+                //CollisionableRampaInferior.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.BlueViolet);
+                
 
                 auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
                 //auto.Metralleta.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
@@ -209,11 +219,13 @@
 
                 terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
 
-                //Colisionable1.dibujar(camarografo, refACollisionable.Pose);
+                //CollisionablePlataforma.dibujar(camarografo, refACollisionablePlataforma.Pose);
+                //CollisionableRampaDerecha.dibujar(camarografo, refACollisionableRampaDerecha.Pose);
+                //CollisionableRampaInferior.dibujar(camarografo, refACollisionableRampaInferior.Pose);
                 
                 auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
-                auto.Metralleta.dibujar(camarografo.getProjectionMatrix(),camarografo.getProjectionMatrix(), Color.Red);
+                auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
 
                 camarografo.DrawDatos(SpriteBatch);
 

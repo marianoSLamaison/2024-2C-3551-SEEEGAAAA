@@ -290,13 +290,13 @@ namespace Escenografia
         var boxMainShape = new Capsule(100, 480f);
         
         var capsuleMainLocalPose = new RigidPose(new Vector3(0f,100f,0f).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
-        //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,50f,0f).ToNumerics());
+        //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics());
 
-        var ruedaShape = new Cylinder(20f, 7.5f);
-        var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics());
-        var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics());
-        var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics());
-        var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics());
+        var ruedaShape = new Cylinder(32.5f, 20f);
+        var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
+        var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
+        var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
+        var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
 
         compoundBuilder.Add(boxMainShape, capsuleMainLocalPose, 5f);
         compoundBuilder.Add(ruedaShape, ruedaDelanteraIzquierdaLocalPose, .5f);
@@ -464,13 +464,6 @@ namespace Escenografia
         float fuerza;
         Primitiva figuraAsociada;
         public System.Numerics.Vector3 Posicion { get { return figuraAsociada.Posicion;}}
-
-        public void setForma(Vector3 minVer, Vector3 maxVer, Vector3 posInicial)
-        {
-            figuraAsociada = Primitiva.Prisma(minVer, maxVer);
-            figuraAsociada.setearCuerpoPrisma( minVer,maxVer,posInicial);
-            fuerza = 500f;
-        }
 
         public void dibujar(Camarografo camarografo)
         {
