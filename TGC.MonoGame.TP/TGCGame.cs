@@ -137,7 +137,7 @@
                 generadorConos = new AdministradorConos();
                 generadorConos.generarConos(Vector3.Zero, 8000f, 100, 1100f);
                 camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-                Escenario = new AdminUtileria(new Vector3(-7000f,500f,-7000f), new Vector3(7000f,500f,7000f));
+                Escenario = new AdminUtileria(new Vector3(-7200f,500f,-7200f), new Vector3(7200f,500f,7200f));
                 luz = new Luz(GraphicsDevice, new Vector3(5f, 3f, 5f), new Vector3(-1f, 0f, -1f), Color.White, 1);
                 //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
 
