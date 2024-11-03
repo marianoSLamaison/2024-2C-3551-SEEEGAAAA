@@ -111,20 +111,20 @@
                 
                 /*
                 CollisionablePlataforma = Primitiva.Prisma(new Vector3(1500, 250, 1500) , -new Vector3(1500, 250, 1500));
-                var CollisionablePlataformaPose = new RigidPose(new System.Numerics.Vector3 (-7000, 250, 7000), 
-                                        Quaternion.CreateFromRotationMatrix(Microsoft.Xna.Framework.Matrix.CreateRotationY(0)).ToNumerics());
+                var CollisionablePlataformaPose = new RigidPose(new System.Numerics.Vector3 (-7000, 250, -7000), 
+                                        Quaternion.CreateFromRotationMatrix(Microsoft.Xna.Framework.Matrix.CreateRotationY(3*MathF.PI/2)).ToNumerics());
                 var staticHandlePlataforma = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose, _simulacion.Shapes.Add(new Box(3000,500,3000))));
                 refACollisionablePlataforma = _simulacion.Statics.GetStaticReference(staticHandlePlataforma);
 
                 CollisionableRampaDerecha = Primitiva.Prisma(new Vector3(375, 250, 1000) , -new Vector3(375, 250, 1000));
-                var SHRD = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(0, -372f, -2320),
-                Quaternion.Multiply(CollisionablePlataformaPose.Orientation, Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0)).ToNumerics(), 
+                var SHRD = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(0, -372f, 2320),
+                Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 7.8f, 0).ToNumerics(), 
                 _simulacion.Shapes.Add(new Box(750,500,2000))));
                 refACollisionableRampaDerecha = _simulacion.Statics.GetStaticReference(SHRD);
 
                 CollisionableRampaInferior = Primitiva.Prisma(new Vector3(375, 250, 1000) , -new Vector3(375, 250, 1000));
                 var SHRI = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(2320, -372f, 0),
-                Quaternion.Multiply(CollisionablePlataformaPose.Orientation,Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0)).ToNumerics(), 
+                Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0).ToNumerics(), 
                 _simulacion.Shapes.Add(new Box(750,500,2000))));
                 refACollisionableRampaInferior = _simulacion.Statics.GetStaticReference(SHRI);
                 */

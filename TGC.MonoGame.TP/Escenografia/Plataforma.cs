@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
-using Control;
 
 namespace Escenografia
 {
@@ -83,14 +82,47 @@ namespace Escenografia
             var plataformaPrincipalPose = new RigidPose(new System.Numerics.Vector3 (posicion.X, 250, posicion.Z), 
                 Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationY(rotacionY)).ToNumerics());
 
+            var posicionRampaDerecha = Vector3.Zero;
+            var posicionRampaInferior = Vector3.Zero;
+            var orientacionRampaDerecha = Quaternion.Identity;
+            var orientacionRampaInferior = Quaternion.Identity;
+
+            switch (rotacionY){
+                case 0:
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, -2320f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2320, -372f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0);
+                    break;
+                case MathF.PI:
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, 2320f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2320, -372f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 7.8f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 7.8f, 0);
+                    break;
+                case MathF.PI/2:
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, -2320f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2320, -372f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 7.8f, 0);
+                    break;
+                case 3*MathF.PI/2:
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, 2320f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2320, -372f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 7.8f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0);
+                    break;
+                default:
+                    break;
+            }
             var rampa = new Box(750, 500, 2000);
             var rampaDerechaPose = new RigidPose(
-                plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, -2320f),
-                Quaternion.Multiply(Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0) , plataformaPrincipalPose.Orientation).ToNumerics()
+                posicionRampaDerecha.ToNumerics(),
+                orientacionRampaDerecha.ToNumerics()
             );
             var rampaInferiorPose = new RigidPose(
-                plataformaPrincipalPose.Position + new System.Numerics.Vector3(2320, -372f, 0),
-                Quaternion.Multiply(Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0), plataformaPrincipalPose.Orientation).ToNumerics()
+                posicionRampaInferior.ToNumerics(),
+                orientacionRampaInferior.ToNumerics()
             );
 
             // Agregar cada colisionador de forma independiente a la simulación

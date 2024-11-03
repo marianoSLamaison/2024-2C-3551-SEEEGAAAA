@@ -179,7 +179,7 @@ namespace Escenografia
         /// </summary>
         override public void Mover(float deltaTime)
         {
-                //Console.WriteLine(refACuerpo.Pose.Position);
+                Console.WriteLine(refACuerpo.Pose.Position);
                 if ( !estaSaltando )
                 {
                 
