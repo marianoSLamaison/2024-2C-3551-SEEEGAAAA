@@ -14,7 +14,7 @@ namespace Escenografia
     public class Cono : Escenografia3D
     {
         float scale;
-        BodyReference refACuerpo;
+        public BodyReference refACuerpo;
 
         public Cono(Vector3 posicion){
             this.posicion = posicion;
@@ -23,7 +23,10 @@ namespace Escenografia
         {
            //Console.WriteLine("Cono:" + refACuerpo.Pose.Position);
            
-           return Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(refACuerpo.Pose.Orientation) * Matrix.CreateTranslation(refACuerpo.Pose.Position);
+           return Matrix.CreateScale(scale)
+                * Matrix.CreateTranslation(0, -70.5f, 0)
+                * Matrix.CreateFromQuaternion(refACuerpo.Pose.Orientation) 
+                * Matrix.CreateTranslation(refACuerpo.Pose.Position);
            
         }
         public void SetScale(float scale)
@@ -58,7 +61,7 @@ namespace Escenografia
         public void CrearCollider(BufferPool bufferPool, Simulation simulation, Vector3 posicion)
         {
             // Crear un colisionador para el cono.
-            var conoCollider = new Box(100f, 150f, 100f);
+            var conoCollider = new Box(140f, 150f, 140f);
             
             var figuraCono = simulation.Shapes.Add(conoCollider);
 

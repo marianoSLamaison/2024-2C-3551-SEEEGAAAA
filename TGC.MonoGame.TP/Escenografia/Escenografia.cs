@@ -132,6 +132,164 @@ namespace Escenografia
 
             return ret;
         }
+
+        public static Primitiva Cilindro(float radio, float altura, int segmentos = 16)
+        {
+            Primitiva ret = new Primitiva();
+            
+            int verticesPorCapa = segmentos + 1; // Un vértice adicional para cerrar el círculo
+            int totalVertices = verticesPorCapa * 2; // Capa superior e inferior
+
+            ret.vertices = new VertexPositionColor[totalVertices];
+            ret.indices = new short[segmentos * 12]; // 6 índices por cada segmento para tapa superior, lateral e inferior
+
+            float mitadAltura = altura / 2;
+
+            // Crear vértices
+            for (int i = 0; i <= segmentos; i++)
+            {
+                float theta = MathHelper.TwoPi * i / segmentos;
+                float x = radio * (float)Math.Cos(theta);
+                float z = radio * (float)Math.Sin(theta);
+
+                // Capa inferior
+                ret.vertices[i] = new VertexPositionColor(new Vector3(x, -mitadAltura, z), Color.Blue);
+                // Capa superior
+                ret.vertices[i + verticesPorCapa] = new VertexPositionColor(new Vector3(x, mitadAltura, z), Color.Red);
+            }
+
+            // Crear índices para los triángulos
+            int index = 0;
+            for (int i = 0; i < segmentos; i++)
+            {
+                // Lados
+                ret.indices[index++] = (short)i;
+                ret.indices[index++] = (short)(i + verticesPorCapa);
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa);
+
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa);
+                ret.indices[index++] = (short)(i + verticesPorCapa);
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa + verticesPorCapa);
+
+                // Tapa superior
+                ret.indices[index++] = (short)(i + verticesPorCapa);
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa + verticesPorCapa);
+                ret.indices[index++] = (short)(verticesPorCapa + segmentos);
+
+                // Tapa inferior
+                ret.indices[index++] = (short)i;
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa);
+                ret.indices[index++] = (short)segmentos;
+            }
+
+            ret.numeroTriangulos = segmentos * 4;
+
+            return ret;
+        }
+        public static Primitiva Capsula(float radio, float altura, int segmentos = 16, int segmentosEsfera = 8)
+        {
+            Primitiva ret = new Primitiva();
+
+            int verticesPorCapa = segmentos + 1;
+            int verticesPorSemiesfera = (segmentosEsfera + 1) * verticesPorCapa;
+            int totalVertices = verticesPorSemiesfera * 2 + verticesPorCapa * 2;
+
+            ret.vertices = new VertexPositionColor[totalVertices];
+            ret.indices = new short[segmentos * (12 * (segmentosEsfera + 1))];
+
+            float mitadAltura = altura / 2;
+
+            int verticeIndex = 0;
+            
+            // Crear vértices de la capa inferior (cilindro)
+            for (int i = 0; i <= segmentos; i++)
+            {
+                float theta = MathHelper.TwoPi * i / segmentos;
+                float x = radio * (float)Math.Cos(theta);
+                float z = radio * (float)Math.Sin(theta);
+
+                ret.vertices[verticeIndex++] = new VertexPositionColor(new Vector3(x, -mitadAltura, z), Color.Blue);
+                ret.vertices[verticeIndex++] = new VertexPositionColor(new Vector3(x, mitadAltura, z), Color.Red);
+            }
+
+            // Crear vértices de la semiesfera inferior
+            for (int i = 0; i <= segmentosEsfera; i++)
+            {
+                float phi = MathHelper.PiOver2 * i / segmentosEsfera;
+                float y = -mitadAltura - radio * (float)Math.Sin(phi);
+                float radioEsfera = radio * (float)Math.Cos(phi);
+
+                for (int j = 0; j <= segmentos; j++)
+                {
+                    float theta = MathHelper.TwoPi * j / segmentos;
+                    float x = radioEsfera * (float)Math.Cos(theta);
+                    float z = radioEsfera * (float)Math.Sin(theta);
+
+                    ret.vertices[verticeIndex++] = new VertexPositionColor(new Vector3(x, y, z), Color.CornflowerBlue);
+                }
+            }
+
+            // Crear vértices de la semiesfera superior
+            for (int i = 0; i <= segmentosEsfera; i++)
+            {
+                float phi = MathHelper.PiOver2 * i / segmentosEsfera;
+                float y = mitadAltura + radio * (float)Math.Sin(phi);
+                float radioEsfera = radio * (float)Math.Cos(phi);
+
+                for (int j = 0; j <= segmentos; j++)
+                {
+                    float theta = MathHelper.TwoPi * j / segmentos;
+                    float x = radioEsfera * (float)Math.Cos(theta);
+                    float z = radioEsfera * (float)Math.Sin(theta);
+
+                    ret.vertices[verticeIndex++] = new VertexPositionColor(new Vector3(x, y, z), Color.CornflowerBlue);
+                }
+            }
+
+            int index = 0;
+            for (int i = 0; i < segmentos; i++)
+            {
+                // Lados del cilindro
+                ret.indices[index++] = (short)i;
+                ret.indices[index++] = (short)(i + verticesPorCapa);
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa);
+
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa);
+                ret.indices[index++] = (short)(i + verticesPorCapa);
+                ret.indices[index++] = (short)((i + 1) % verticesPorCapa + verticesPorCapa);
+            }
+
+            for (int i = 0; i < segmentosEsfera; i++)
+            {
+                for (int j = 0; j < segmentos; j++)
+                {
+                    // Triángulos para las semiesferas
+                    int baseIndexInferior = verticesPorCapa * 2 + i * verticesPorCapa + j;
+                    int baseIndexSuperior = verticesPorCapa * 2 + verticesPorSemiesfera + i * verticesPorCapa + j;
+
+                    ret.indices[index++] = (short)baseIndexInferior;
+                    ret.indices[index++] = (short)(baseIndexInferior + 1);
+                    ret.indices[index++] = (short)(baseIndexInferior + verticesPorCapa);
+
+                    ret.indices[index++] = (short)(baseIndexInferior + 1);
+                    ret.indices[index++] = (short)(baseIndexInferior + verticesPorCapa + 1);
+                    ret.indices[index++] = (short)(baseIndexInferior + verticesPorCapa);
+
+                    ret.indices[index++] = (short)baseIndexSuperior;
+                    ret.indices[index++] = (short)(baseIndexSuperior + 1);
+                    ret.indices[index++] = (short)(baseIndexSuperior + verticesPorCapa);
+
+                    ret.indices[index++] = (short)(baseIndexSuperior + 1);
+                    ret.indices[index++] = (short)(baseIndexSuperior + verticesPorCapa + 1);
+                    ret.indices[index++] = (short)(baseIndexSuperior + verticesPorCapa);
+                }
+            }
+
+            ret.numeroTriangulos = index / 3;
+            return ret;
+        }
+
+
         public static Primitiva Triangulo(Vector3 vertice1, Vector3 vertice2, Vector3 vertice3)
         {
             Primitiva ret = new Primitiva();
@@ -201,6 +359,20 @@ namespace Escenografia
                 device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length /3);
             }
         }
+
+        public void dibujar(Camarografo camarografo, Matrix world)
+        {
+            effect.Parameters["Projection"].SetValue(camarografo.getProjectionMatrix());
+            effect.Parameters["View"].SetValue(camarografo.getViewMatrix());
+            effect.Parameters["World"].SetValue(world);
+            effect.Parameters["DiffuseColor"].SetValue(color.ToVector3());
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length /3);
+            }
+        }
+
         public void setearCuerpoPrisma(Vector3 minV, Vector3 maxV, Vector3 posicion)
         {
             Vector3 dims = maxV - minV;

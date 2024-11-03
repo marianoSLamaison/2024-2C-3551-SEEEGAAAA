@@ -32,8 +32,8 @@ namespace Control
             objetosFijos = new List<Escenografia.Escenografia3D>
             {
                 new Escenografia.Plataforma(3*MathF.PI / 2, minLims),
-                new Escenografia.Plataforma(MathF.PI, new Vector3(minLims.X + dimensiones.X,500f, minLims.Z)),
-                new Escenografia.Plataforma(0,  new Vector3(minLims.X, 500f, minLims.Z + dimensiones.Z)),
+                new Escenografia.Plataforma(MathF.PI, new Vector3(minLims.X + dimensiones.X, 400f, minLims.Z)),
+                new Escenografia.Plataforma(0,  new Vector3(minLims.X, 400f, minLims.Z + dimensiones.Z)),
                 new Escenografia.Plataforma(MathF.PI / 2, maxLims)
             };
         }

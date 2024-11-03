@@ -40,27 +40,10 @@
             Control.Camarografo camarografo;
             Escenografia.AutoJugador auto;
             AdministradorConos generadorConos;
-
-            private Escenografia.Plano _plane { get; set; }
             private AdminUtileria Escenario;
-            Primitiva CollisionablePlataforma;
-            Primitiva CollisionableRampaDerecha;
-            Primitiva CollisionableRampaInferior;
-            private StaticReference refACollisionablePlataforma;
-            private StaticReference refACollisionableRampaDerecha;
-            private StaticReference refACollisionableRampaInferior;
-            private Escenografia.Plataforma _plataforma { get; set;}
-            private Turbo turboPowerUp;
-            private BepuPhysics.Collidables.Box _box {get; set;}
-            private PrismaRectangularEditable _boxVisual {get; set;}
-            private BepuPhysics.Collidables.Box _hitboxAuto {get; set;}
             private BufferPool bufferPool;
             private ThreadDispatcher ThreadDispatcher;
-
             private Terreno terreno;
-            private Cilindro cilindro;
-
-            public Luz luz;
 
             /// <summary>
             ///     Constructor del juego.
@@ -91,8 +74,6 @@
 
                 bufferPool = new BufferPool();
 
-                var carProperties = new CollidableProperty<CarBodyProperties>();
-
                 _simulacion = Simulation.Create(bufferPool, 
                                                 new NarrowPhaseCallbacks(new SpringSettings(30f,1f)), 
                                                 //new CarCallbacks() { Properties = carProperties},
@@ -108,26 +89,6 @@
                 //seteamos un colisionador para el auto
                 auto.CrearCollider(_simulacion, bufferPool);
                 auto.Misil.CrearColliderMisil(_simulacion);
-                
-                /*
-                CollisionablePlataforma = Primitiva.Prisma(new Vector3(1500, 250, 1500) , -new Vector3(1500, 250, 1500));
-                var CollisionablePlataformaPose = new RigidPose(new System.Numerics.Vector3 (-7000, 250, -7000), 
-                                        Quaternion.CreateFromRotationMatrix(Microsoft.Xna.Framework.Matrix.CreateRotationY(3*MathF.PI/2)).ToNumerics());
-                var staticHandlePlataforma = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose, _simulacion.Shapes.Add(new Box(3000,500,3000))));
-                refACollisionablePlataforma = _simulacion.Statics.GetStaticReference(staticHandlePlataforma);
-
-                CollisionableRampaDerecha = Primitiva.Prisma(new Vector3(375, 250, 1000) , -new Vector3(375, 250, 1000));
-                var SHRD = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(0, -372f, 2320),
-                Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 7.8f, 0).ToNumerics(), 
-                _simulacion.Shapes.Add(new Box(750,500,2000))));
-                refACollisionableRampaDerecha = _simulacion.Statics.GetStaticReference(SHRD);
-
-                CollisionableRampaInferior = Primitiva.Prisma(new Vector3(375, 250, 1000) , -new Vector3(375, 250, 1000));
-                var SHRI = _simulacion.Statics.Add(new StaticDescription(CollisionablePlataformaPose.Position + new System.Numerics.Vector3(2320, -372f, 0),
-                Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0).ToNumerics(), 
-                _simulacion.Shapes.Add(new Box(750,500,2000))));
-                refACollisionableRampaInferior = _simulacion.Statics.GetStaticReference(SHRI);
-                */
 
                 AyudanteSimulacion.SetScenario();
 
@@ -135,11 +96,10 @@
                 auto.Metralleta.CrearColliderMetralleta(_simulacion);
                 
                 generadorConos = new AdministradorConos();
-                generadorConos.generarConos(Vector3.Zero, 8000f, 100, 1100f);
-                camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-                Escenario = new AdminUtileria(new Vector3(-7200f,500f,-7200f), new Vector3(7200f,500f,7200f));
-                luz = new Luz(GraphicsDevice, new Vector3(5f, 3f, 5f), new Vector3(-1f, 0f, -1f), Color.White, 1);
-                //_plane = new Plano(GraphicsDevice, new Vector3(-11000, -200, -11000));
+                generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
+                
+                camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 600f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
+                Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
 
                 terreno = new Terreno();
                 
@@ -160,9 +120,8 @@
                 _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
                 _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
                 
-                //_plane.SetEffect(_basicShader);
                 
-                Plataforma.setGScale(15f);
+                Plataforma.setGScale(15f*1.75f);
                 Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
                 Escenario.CrearColliders(bufferPool, _simulacion);
 
@@ -170,18 +129,10 @@
                 terreno.SetEffect(_terrenoShader, Content);
 
                 auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
-                
-                //CollisionablePlataforma.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.DarkCyan);
-                //CollisionableRampaDerecha.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.BlueViolet);
-                //CollisionableRampaInferior.loadPrimitiva(Graphics.GraphicsDevice, _basicShader, Color.BlueViolet);
-                
 
                 auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
-                //auto.Metralleta.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
                 auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
-
-                luz.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "TerrenoShader", Content);
-                //_terrenoShader.Parameters["lightPosition"].SetValue(new Vector3(2000,2000,2000 ));
+                
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
                 base.LoadContent();
@@ -218,10 +169,6 @@
                 generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
 
                 terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
-
-                //CollisionablePlataforma.dibujar(camarografo, refACollisionablePlataforma.Pose);
-                //CollisionableRampaDerecha.dibujar(camarografo, refACollisionableRampaDerecha.Pose);
-                //CollisionableRampaInferior.dibujar(camarografo, refACollisionableRampaInferior.Pose);
                 
                 auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.White);
                 auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);

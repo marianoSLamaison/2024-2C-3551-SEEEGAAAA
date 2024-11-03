@@ -45,40 +45,11 @@ namespace Escenografia
                 }
             }
         }
-
-
-        /*public void CrearCollider(BufferPool bufferPool, Simulation simulacion){
-
-            var compoundBuilder = new CompoundBuilder(bufferPool, simulacion.Shapes, 3);
-
-            var plataformaPrincipal = new Box(3000,250,3000);
-            var plataformaPrincipalPose = new RigidPose(posicion.ToNumerics() - new System.Numerics.Vector3(0,250,0));
-            var rampa = new Box(600,500,2000);
-            var rampaDerecha = new RigidPose(plataformaPrincipalPose.Position + new System.Numerics.Vector3(0,-380,-2500),
-                            Quaternion.CreateFromYawPitchRoll(0,-MathF.PI/12,0).ToNumerics());
-            var rampaInferior = new RigidPose(plataformaPrincipalPose.Position + new System.Numerics.Vector3(2500,-380,0),
-                            Quaternion.CreateFromYawPitchRoll(MathF.PI/2,MathF.PI/12,0).ToNumerics());
-
-            compoundBuilder.AddForKinematic(plataformaPrincipal, plataformaPrincipalPose, 10f);
-            compoundBuilder.AddForKinematic(rampa, rampaDerecha, 1f);
-            compoundBuilder.AddForKinematic(rampa, rampaInferior, 1f);
-
-            compoundBuilder.BuildKinematicCompound(out var children, out var center);
-            compoundBuilder.Reset();
-
-            var staticHandle = simulacion.Statics.Add(new StaticDescription(center,
-                                    Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationY(rotacionY)).ToNumerics(), 
-                                    simulacion.Shapes.Add(new Compound(children))));
-            refACollider = simulacion.Statics.GetStaticReference(staticHandle);
-
-            Console.WriteLine(refACollider.Pose.Position);
-
-        }*/
-
+        
         public void CrearCollider(BufferPool bufferPool, Simulation simulacion)
         {
             // Definir las formas de cada sección
-            var plataformaPrincipal = new Box(3000, 500, 3000);
+            var plataformaPrincipal = new Box(3000 * 1.75f, 500, 3000 * 1.75f);
             var plataformaPrincipalPose = new RigidPose(new System.Numerics.Vector3 (posicion.X, 250, posicion.Z), 
                 Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationY(rotacionY)).ToNumerics());
 
@@ -89,33 +60,33 @@ namespace Escenografia
 
             switch (rotacionY){
                 case 0:
-                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, -2320f);
-                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2320, -372f, 0);
-                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0);
-                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0);
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, -2332f * 1.75f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2332 * 1.75f, -428f * 1.75f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 6.85f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 6.85f, 0);
                     break;
                 case MathF.PI:
-                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, 2320f);
-                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2320, -372f, 0);
-                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 7.8f, 0);
-                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 7.8f, 0);
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, 2332f * 1.75f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2332 * 1.75f, -428f * 1.75f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 6.85f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 6.85f, 0);
                     break;
                 case MathF.PI/2:
-                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, -2320f);
-                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2320, -372f, 0);
-                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 7.8f, 0);
-                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 7.8f, 0);
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, -2332f * 1.75f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2332 * 1.75f, -428f * 1.75f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 6.85f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 6.85f, 0);
                     break;
                 case 3*MathF.PI/2:
-                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -372f, 2320f);
-                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2320, -372f, 0);
-                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 7.8f, 0);
-                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 7.8f, 0);
+                    posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, 2332f * 1.75f);
+                    posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2332 * 1.75f, -428f * 1.75f, 0);
+                    orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 6.85f, 0);
+                    orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 6.85f, 0);
                     break;
                 default:
                     break;
             }
-            var rampa = new Box(750, 500, 2000);
+            var rampa = new Box(750* 1.75f, 500, 2000* 1.75f);
             var rampaDerechaPose = new RigidPose(
                 posicionRampaDerecha.ToNumerics(),
                 orientacionRampaDerecha.ToNumerics()

@@ -39,7 +39,7 @@ namespace Escenografia
         /// <summary>
         /// esta es la referencia al cuerpo, con esto es con lo que aplicamos fuerzas y demas
         /// </summary>
-        protected BodyReference refACuerpo;
+        public BodyReference refACuerpo;
         /// <summary>
         /// Esto es para ligar la posicion con la que trabaja Bepu a nuestro modelo visible
         /// No tengo idea como valla a reaccionar Bepu si ustedes simplemente le setean una posicion a si que solo pueden consultarla
@@ -85,10 +85,10 @@ namespace Escenografia
         protected Texture2D AOTexture;
         protected Texture2D emissionTexture;
 
-        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-130f, 0, 240f); // Ajusta según tu modelo
-        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(130f, 0, 240f);
-        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-130f, 0, -240f);
-        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(130f, 0, -240f);
+        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-85f, 35, 145f); // Ajusta según tu modelo
+        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(85f, 35, 145f);
+        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-85f, 35, -145f);
+        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(85f, 35, -145f);
 
 
 
@@ -287,12 +287,12 @@ namespace Escenografia
         var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
         //var boxMainShape = new Box(280f, 100f, 500f);
-        var boxMainShape = new Capsule(100, 480f);
+        var boxMainShape = new Capsule(100, 400f);
         
         var capsuleMainLocalPose = new RigidPose(new Vector3(0f,100f,0f).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
         //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics());
 
-        var ruedaShape = new Cylinder(32.5f, 20f);
+        var ruedaShape = new Cylinder(35, 35);
         var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
         var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
         var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
@@ -310,6 +310,80 @@ namespace Escenografia
         BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
         this.darCuerpo(handlerDeCuerpo);
 
+    }
+
+    public Matrix ObtenerMatrizMundoCapsula(){
+        var poseCompuesto = refACuerpo.Pose;
+
+        var rotacionLocal = Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics();
+
+        var posicionLocal = new Vector3(0f,100f,0f);
+
+        var posicionGlobal = System.Numerics.Vector3.Transform(posicionLocal.ToNumerics(), System.Numerics.Matrix4x4.CreateFromQuaternion(poseCompuesto.Orientation)) + poseCompuesto.Position;
+        var orientacionGlobal = System.Numerics.Quaternion.Concatenate(rotacionLocal, poseCompuesto.Orientation);
+
+        return Matrix.CreateFromQuaternion(orientacionGlobal) * Matrix.CreateTranslation(posicionGlobal);
+    }
+
+    public Matrix ObtenerMatrizMundoRuedaDelanteraIzquierda()
+    {
+        // Obtener la pose del cuerpo principal
+        var poseCompuesto = refACuerpo.Pose;
+
+        // Pose local de la rueda delantera izquierda (como la definiste al crear el compuesto)
+        var rotacionLocalRuedaDelanteraIzquierda = Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI / 2)).ToNumerics();
+        
+        // Calcular posición y orientación global de la rueda delantera izquierda
+        var posicionGlobal = System.Numerics.Vector3.Transform(posicionRuedaDelanteraIzquierda.ToNumerics(), System.Numerics.Matrix4x4.CreateFromQuaternion(poseCompuesto.Orientation)) + poseCompuesto.Position;
+        var orientacionGlobal = System.Numerics.Quaternion.Concatenate(rotacionLocalRuedaDelanteraIzquierda, poseCompuesto.Orientation);
+        
+        // Crear la matriz de mundo combinando la escala (opcional), rotación y posición globales
+        return Matrix.CreateFromQuaternion(orientacionGlobal) * Matrix.CreateTranslation(posicionGlobal);
+    }
+        public Matrix ObtenerMatrizMundoRuedaDelanteraDerecha()
+    {
+        // Obtener la pose del cuerpo principal
+        var poseCompuesto = refACuerpo.Pose;
+
+        // Pose local de la rueda delantera Derecha (como la definiste al crear el compuesto)
+        var rotacionLocalRuedaDelanteraDerecha = Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI / 2)).ToNumerics();
+        
+        // Calcular posición y orientación global de la rueda delantera Derecha
+        var posicionGlobal = System.Numerics.Vector3.Transform(posicionRuedaDelanteraDerecha.ToNumerics(), System.Numerics.Matrix4x4.CreateFromQuaternion(poseCompuesto.Orientation)) + poseCompuesto.Position;
+        var orientacionGlobal = System.Numerics.Quaternion.Concatenate(rotacionLocalRuedaDelanteraDerecha, poseCompuesto.Orientation);
+        
+        // Crear la matriz de mundo combinando la escala (opcional), rotación y posición globales
+        return Matrix.CreateFromQuaternion(orientacionGlobal) * Matrix.CreateTranslation(posicionGlobal);
+    }
+        public Matrix ObtenerMatrizMundoRuedaTraseraIzquierda()
+    {
+        // Obtener la pose del cuerpo principal
+        var poseCompuesto = refACuerpo.Pose;
+
+        // Pose local de la rueda delantera izquierda (como la definiste al crear el compuesto)
+        var rotacionLocalRuedaTraseraIzquierda = Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI / 2)).ToNumerics();
+        
+        // Calcular posición y orientación global de la rueda delantera izquierda
+        var posicionGlobal = System.Numerics.Vector3.Transform(posicionRuedaTraseraIzquierda.ToNumerics(), System.Numerics.Matrix4x4.CreateFromQuaternion(poseCompuesto.Orientation)) + poseCompuesto.Position;
+        var orientacionGlobal = System.Numerics.Quaternion.Concatenate(rotacionLocalRuedaTraseraIzquierda, poseCompuesto.Orientation);
+        
+        // Crear la matriz de mundo combinando la escala (opcional), rotación y posición globales
+        return Matrix.CreateFromQuaternion(orientacionGlobal) * Matrix.CreateTranslation(posicionGlobal);
+    }
+        public Matrix ObtenerMatrizMundoRuedaTraseraDerecha()
+    {
+        // Obtener la pose del cuerpo principal
+        var poseCompuesto = refACuerpo.Pose;
+
+        // Pose local de la rueda delantera izquierda (como la definiste al crear el compuesto)
+        var rotacionLocalRuedaTraseraDerecha = Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI / 2)).ToNumerics();
+        
+        // Calcular posición y orientación global de la rueda delantera izquierda
+        var posicionGlobal = System.Numerics.Vector3.Transform(posicionRuedaTraseraDerecha.ToNumerics(), System.Numerics.Matrix4x4.CreateFromQuaternion(poseCompuesto.Orientation)) + poseCompuesto.Position;
+        var orientacionGlobal = System.Numerics.Quaternion.Concatenate(rotacionLocalRuedaTraseraDerecha, poseCompuesto.Orientation);
+        
+        // Crear la matriz de mundo combinando la escala (opcional), rotación y posición globales
+        return Matrix.CreateFromQuaternion(orientacionGlobal) * Matrix.CreateTranslation(posicionGlobal);
     }
 
 
