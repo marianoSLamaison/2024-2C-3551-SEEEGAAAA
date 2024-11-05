@@ -13,6 +13,13 @@ namespace Utils
             valor.Z = Math.Clamp(valor.Z, minimo.Z, maximo.Z);
             return valor; 
         }
+        public static Vector2 clampV(Vector2 valor, Vector2 maximo, Vector2 minimo)
+        {
+            valor.X = Math.Clamp(valor.X, minimo.X, maximo.X);
+            valor.Y = Math.Clamp(valor.Y, minimo.Y, maximo.Y);
+            return valor;
+        }
+        public static Vector3 AssV3(Vector2 v2) => new( v2.X, 0f, v2.Y);
         public static double wrapf(double value, double min, double max)
         {
             return value > max ? min : value < min ? max : value;

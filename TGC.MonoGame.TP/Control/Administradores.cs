@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using BepuPhysics;
 using BepuUtilities.Memory;
 using Escenografia;
+using Escenografia.TESTS;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Design;
@@ -16,77 +18,156 @@ namespace Control
         //leer ese ejmplo si que dio muchas ideas AJAJ
     private class IA//para el manejo de los autos
     {
-        public IA(Vector2 initPos, float influencia, Simulation simulation, BufferPool bufferPool)
+        public IA(){}
+        public IA(Vector2 initPos, float distanciaParaCambio, Simulation simulation, BufferPool bufferPool)
         {
             AutoControlado = new AutoNPC();
-            DistanciaInfluenciaCuadrada = influencia;
+            DistanciaAPuntoCuadrada = distanciaParaCambio * distanciaParaCambio;
             AutoControlado.CrearCollider(simulation, bufferPool, initPos);
-            AutoControlado.velocidad = 1000f;
+            AutoControlado.velocidad = 300f;
+            AutoControlado.SetVelocidadAngular(MathF.PI / 2f);
+            objetivo = Utils.Matematicas.AssV2(AutoControlado.Posicion);
         }
-        public Vector2 posicionObj;
-        private AutoNPC AutoControlado;
-        private float DistanciaInfluenciaCuadrada;
-        public bool NecesitoNuevoObjetivo(float deltaTime)
+        public Vector2 objetivo;
+        protected AutoNPC AutoControlado;
+        private float DistanciaAPuntoCuadrada;
+        public bool NecesitoNuevoObjetivo()
         {
-            AutoControlado.Update(deltaTime, posicionObj);
-            float distancia = Vector2.DistanceSquared(posicionObj ,  Utils.Matematicas.AssV2(AutoControlado.Posicion));
-            Console.WriteLine("la distancia de auto a su objetivo es " + distancia);
-            if (distancia <= DistanciaInfluenciaCuadrada)
-                return true;
-            return false;
+            Vector2 autosXZPos = new(AutoControlado.Posicion.X, AutoControlado.Posicion.Z);
+            float cuadradoDistActual = Vector2.DistanceSquared(objetivo, autosXZPos);
+            return cuadradoDistActual - DistanciaAPuntoCuadrada < 0f;
+        }
+
+        public virtual void Update()
+        {
+            // movemos el auto
+            AutoControlado.Mover(251);
+            //actualizamos nuestra direccion
+            Vector2 nuevaDireccion = Vector2.Normalize(objetivo - Utils.Matematicas.AssV2(AutoControlado.Posicion));
+            AutoControlado.SetDireccion(Utils.Matematicas.AssV3(nuevaDireccion));
+        }
+        
+        public Vector2 GetPos() => new(AutoControlado.Posicion.X, AutoControlado.Posicion.Z);
+        public void SetDestino(Vector2 obj)
+        {
+            objetivo = obj;
         }
         public AutoNPC GetAuto() => AutoControlado;
-        
     }
- 
+
+        class AgresiveIA : IA
+        {
+            public IA autoObjetivo;
+            public AgresiveIA(){
+
+            }
+            public AgresiveIA(Vector2 initPos, float distanciaParaCambio, Simulation simulation, BufferPool bufferPool) : base(initPos, distanciaParaCambio, simulation, bufferPool)
+            {
+            }
+            /*
+                las ias agresivas simplemente atacan a un auto particular
+            */
+            public static AgresiveIA TurnIAAgresive(IA input)
+            {
+                AgresiveIA ret = new()
+                {
+                    AutoControlado = input.GetAuto()
+                };
+                return ret;
+            }
+            public override void Update()
+            {
+                // movemos el auto
+                AutoControlado.Mover(251);
+                //actualizamos nuestra direccion
+                Vector2 nuevaDireccion = Vector2.Normalize(autoObjetivo.GetPos() - Utils.Matematicas.AssV2(AutoControlado.Posicion));
+                AutoControlado.SetDireccion(Utils.Matematicas.AssV3(nuevaDireccion));
+                Console.WriteLine(nuevaDireccion);
+            }
+        }
+
 
         Random RNG = new Random();
         private Effect [] efectos;
         private Model[] modelos;
         List<IA> autos;
+        List<AgresiveIA> atacantes;
         public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool)
         {//los genero de esta manera para reducir espacios sin nada en los bordes del escenario
-            List<Vector2> puntosSpawn = new(numero);
-            autos = new List<IA>(numero);
-            float radioSubDiscos = radioArea / 4f;
-            Vector2 direccionSpawnPointOrigen = new Vector2(1,1);
-            const float anguloDeRotacion =  3.1415926539f / 2f;//PI/2
-            Vector2 centroActual;
-            //cargamos todos los puntos donde spawnear autos
-            for ( int i=1; i<=4; i++)
+            int autosGen = numero / 4;
+            int autosSob = numero % 4;
+            float subRadio = radioArea / 2f;
+            float anguloRot = MathF.PI / 2;
+            Vector2 direccion_centro = Vector2.Normalize(new Vector2(1,1));
+            Vector2 puntoTemp;
+            List<Vector2> puntosAutos = new(numero);
+            IA auto;
+            autos = new(numero);
+            for (int i=0; i<4; i++)
             {
-                centroActual = Vector2.Transform(direccionSpawnPointOrigen, Matrix.CreateRotationZ(anguloDeRotacion * i));
-                centroActual *= Convert.ToSingle(radioSubDiscos * Math.Sqrt(2));
-                puntosSpawn.AddRange(Utils.Commons.map(GenerarPuntosPoissonDisk(radioSubDiscos, 500f, numero / 4),
-                vector => {return vector + centroActual;}));
-                Console.WriteLine("Cantidad de puntos" + puntosSpawn.Count);
+                if ( autosGen != 0 )
+                {
+                    puntoTemp = Vector2.Transform(direccion_centro  * subRadio * MathF.Sqrt(2), Matrix.CreateRotationZ(anguloRot*i));
+                    puntosAutos.AddRange(
+                        Utils.Commons.map<Vector2>(GenerarPuntosPoissonDisk(radioArea, 1000f, autosGen),
+                        (Vector) => {return Vector + puntoTemp;})
+                        );
+                }
             }
-
-            
-            //creamos dichos autos
-            foreach( Vector2 posicion in puntosSpawn )
+            if ( autosSob != 0)
+                puntosAutos.AddRange(GenerarPuntosPoissonDisk(subRadio*(MathF.Sqrt(2) - 1), 1000, autosSob));
+            foreach( Vector2 punto in puntosAutos )
             {
-                Console.WriteLine("La posicion es " + posicion);
-                IA auto = new IA(posicion, 1000000f, simulation, bufferpool);
-                autos.Add(auto);
+                auto = new IA(punto, 2000, simulation, bufferpool);
+                autos.Add(auto);  
             }
-            Console.WriteLine(autos.Count);
+            atacantes = new(1);
         }
 
-        public void Update(float deltaTime)
+        public void Update()
         {
+            //chequeamos si se puede o no colocar mas enemigos en pantalla
+            const int maximoAts = 1;
+            
+            if ( atacantes.Count < maximoAts && autos.Count != 0)
+            {
+                AgresiveIA nuevoAtacante;
+                IA candidato;
+                for (int i =0; i< maximoAts - atacantes.Count; i++)
+                {//se saca un auto del control normal, y se lo envia a la lista de control de enemigos
+                    candidato = autos.ElementAt<IA>(RNG.Next() % autos.Count);
+                    nuevoAtacante = AgresiveIA.TurnIAAgresive(candidato);
+                    autos.Remove(candidato);
+                    nuevoAtacante.autoObjetivo = autos.Count != 0 ? autos.ElementAt<IA>(RNG.Next() % autos.Count) : null;
+                    atacantes.Add(nuevoAtacante);
+                }
+            }
             //los autos se moveran al azar en lineas rectas a objetivos en su rango
             foreach( IA auto in autos )
             {
-                //esto se encarga de moverlos ya
-                if (auto.NecesitoNuevoObjetivo(deltaTime))
-                {
-                    Console.WriteLine("Viejo punte el " + auto.posicionObj);
-                    auto.posicionObj = RNGDentroDeCirculo(100000f);
-                    Console.WriteLine("Nuevo punte el " + auto.posicionObj);
+                auto.Update();
+                if ( auto.NecesitoNuevoObjetivo() ){
+                    auto.SetDestino(
+                        Utils.Matematicas.clampV(puntoEnAnillo(1000f, 5000f) + Utils.Matematicas.AssV2(auto.GetAuto().Posicion), new Vector2(10000,10000), new Vector2(-10000,-10000)));
                 }
-                    
             }
+            foreach( AgresiveIA atacante in atacantes)
+            {
+                atacante.Update();
+            }
+            
+        }
+
+        public Vector3 GetPosFitsCar()
+        {
+            return autos.ElementAt(0).GetAuto().Posicion;
+        }
+        private Vector2 puntoEnAnillo(float radioAnillo, float minRad)
+        {
+            Vector2 ret = Vector2.Zero;
+            float radioVerdadero = RNG.NextSingle() * radioAnillo + minRad;
+            ret = Vector2.Transform(Vector2.UnitX, Matrix.CreateRotationZ(RNG.NextSingle() * MathF.Tau));
+            return ret * radioVerdadero;
         }
         public void load(String [] efectos, String [] modelos, ContentManager content)
         {
@@ -103,6 +184,8 @@ namespace Control
         {
             foreach( IA auto in autos )
                 auto.GetAuto().dibujar(view, projeccion, Color.Navy);
+            foreach( AgresiveIA atacante in atacantes )
+                atacante.GetAuto().dibujar(view, projeccion, Color.Navy);
         }
 
         ////funciones robadas de generador de conos ( no las lei pero se que funcionan )

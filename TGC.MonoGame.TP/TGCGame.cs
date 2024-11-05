@@ -113,7 +113,7 @@
 
 
                 IACentral = new AdministradorNPCs();
-                IACentral.generarAutos(10, 10000f, _simulacion, bufferPool);
+                IACentral.generarAutos(12, 10000f, _simulacion, bufferPool);
                 
                 base.Initialize();
             }
@@ -167,11 +167,11 @@
                 auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
                 auto.Misil.ActualizarPowerUp(gameTime);
                 //para que el camarografo nos siga siempre
-                camarografo.setPuntoAtencion(auto.Posicion);
+                camarografo.setPuntoAtencion(IACentral.GetPosFitsCar());
                 camarografo.GetInputs();
                 _simulacion.Timestep(1f/60f);//por ahora corre en el mismo thread que todo lo demas
 
-                IACentral.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
+                IACentral.Update();
                 base.Update(gameTime);
             }
 
