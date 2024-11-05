@@ -83,7 +83,7 @@
 
                 AyudanteSimulacion.simulacion = _simulacion;
 
-                auto = new Escenografia.AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
+                auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
                 auto.Misil = new Misil();
                 
                 //seteamos un colisionador para el auto
@@ -98,7 +98,7 @@
                 generadorConos = new AdministradorConos();
                 generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
                 
-                camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 600f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
+                camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
                 Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
 
                 terreno = new Terreno();

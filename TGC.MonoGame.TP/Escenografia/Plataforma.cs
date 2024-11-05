@@ -13,9 +13,6 @@ namespace Escenografia
     {
         private Texture2D texture;
         static private float g_scale;
-        private StaticReference refACollider;
-        private StaticReference refAColliderDerecha;
-        private StaticReference refAColliderInferior;
         public Plataforma(float rotacionY, Vector3 posicion)
         {
             this.rotacionY = rotacionY;
@@ -58,30 +55,60 @@ namespace Escenografia
             var orientacionRampaDerecha = Quaternion.Identity;
             var orientacionRampaInferior = Quaternion.Identity;
 
+            var posicionBaranda1 = Vector3.Zero;
+            var posicionBaranda2 = Vector3.Zero;
+            var posicionBaranda3 = Vector3.Zero;
+            var posicionBaranda4 = Vector3.Zero;
+
+            
+
+            
+
             switch (rotacionY){
                 case 0:
                     posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, -2332f * 1.75f);
                     posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2332 * 1.75f, -428f * 1.75f, 0);
                     orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 6.85f, 0);
                     orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 6.85f, 0);
+
+                    posicionBaranda1 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2450, 300, 1700);
+                    posicionBaranda2 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2450, 300, -1600);
+                    posicionBaranda3 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(1600, 300, -2450);
+                    posicionBaranda4 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-1700, 300, -2450);
+
                     break;
                 case MathF.PI:
                     posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, 2332f * 1.75f);
                     posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2332 * 1.75f, -428f * 1.75f, 0);
                     orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 6.85f, 0);
                     orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 6.85f, 0);
+
+                    posicionBaranda1 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2450, 300, -1700);
+                    posicionBaranda2 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2450, 300, 1600);
+                    posicionBaranda3 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-1600, 300, 2450);
+                    posicionBaranda4 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(1700, 300, 2450);
                     break;
                 case MathF.PI/2:
                     posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, -2332f * 1.75f);
                     posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2332 * 1.75f, -428f * 1.75f, 0);
                     orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, -MathF.PI / 6.85f, 0);
                     orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, -MathF.PI / 6.85f, 0);
+
+                    posicionBaranda1 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2450, 300, 1700);
+                    posicionBaranda2 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-2450, 300, -1600);
+                    posicionBaranda3 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-1600, 300, -2450);
+                    posicionBaranda4 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(1700, 300, -2450);
                     break;
                 case 3*MathF.PI/2:
                     posicionRampaDerecha = plataformaPrincipalPose.Position + new System.Numerics.Vector3(0, -428f * 1.75f, 2332f * 1.75f);
                     posicionRampaInferior = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2332 * 1.75f, -428f * 1.75f, 0);
                     orientacionRampaDerecha = Quaternion.CreateFromYawPitchRoll(0, MathF.PI / 6.85f, 0);
                     orientacionRampaInferior = Quaternion.CreateFromYawPitchRoll(MathF.PI / 2, MathF.PI / 6.85f, 0);
+
+                    posicionBaranda1 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2450, 300, -1700);
+                    posicionBaranda2 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(2450, 300, 1600);
+                    posicionBaranda3 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(1600, 300, 2450);
+                    posicionBaranda4 = plataformaPrincipalPose.Position + new System.Numerics.Vector3(-1700, 300, 2450);
                     break;
                 default:
                     break;
@@ -97,33 +124,45 @@ namespace Escenografia
             );
 
             // Agregar cada colisionador de forma independiente a la simulación
-            var plataformaHandle = simulacion.Statics.Add(new StaticDescription(
+            simulacion.Statics.Add(new StaticDescription(
                 plataformaPrincipalPose.Position,
                 plataformaPrincipalPose.Orientation,
                 simulacion.Shapes.Add(plataformaPrincipal)
             ));
 
-            var rampaDerechaHandle = simulacion.Statics.Add(new StaticDescription(
+            simulacion.Statics.Add(new StaticDescription(
                 rampaDerechaPose.Position,
                 rampaDerechaPose.Orientation,
                 simulacion.Shapes.Add(rampa)
             ));
 
-            var rampaInferiorHandle = simulacion.Statics.Add(new StaticDescription(
+            simulacion.Statics.Add(new StaticDescription(
                 rampaInferiorPose.Position,
                 rampaInferiorPose.Orientation,
                 simulacion.Shapes.Add(rampa)
             ));
 
-            // Guardar referencias a cada colisionador, si necesitas acceder a ellos más tarde
-            refACollider = simulacion.Statics.GetStaticReference(plataformaHandle);
-            refAColliderDerecha = simulacion.Statics.GetStaticReference(rampaDerechaHandle);
-            refAColliderInferior = simulacion.Statics.GetStaticReference(rampaInferiorHandle);
+            simulacion.Statics.Add(new StaticDescription(
+                posicionBaranda1.ToNumerics(),
+                System.Numerics.Quaternion.Identity,
+                simulacion.Shapes.Add(new Box(340, 340, 2100))
+            ));
+            simulacion.Statics.Add(new StaticDescription(
+                posicionBaranda2.ToNumerics(),
+                System.Numerics.Quaternion.Identity,
+                simulacion.Shapes.Add(new Box(340, 340, 1900))
+            ));
+            simulacion.Statics.Add(new StaticDescription(
+                posicionBaranda3.ToNumerics(),
+                System.Numerics.Quaternion.Identity,
+                simulacion.Shapes.Add(new Box(1900, 340, 340))
+            ));
+            simulacion.Statics.Add(new StaticDescription(
+                posicionBaranda4.ToNumerics(),
+                System.Numerics.Quaternion.Identity,
+                simulacion.Shapes.Add(new Box(2100, 340, 340))
+            ));
 
-            // Imprimir las posiciones de cada colisionador para debug
-            Console.WriteLine("Plataforma: " + refACollider.Pose.Position);
-            Console.WriteLine("Rampa Derecha: " + refAColliderDerecha.Pose.Position);
-            Console.WriteLine("Rampa Inferior: " + refAColliderInferior.Pose.Position);
         }
 
 
