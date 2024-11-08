@@ -44,7 +44,7 @@
             private BufferPool bufferPool;
             private ThreadDispatcher ThreadDispatcher;
             private Terreno terreno;
-
+            private Primitiva prismaRectangular;
             /// <summary>
             ///     Constructor del juego.
             /// </summary>
@@ -102,7 +102,9 @@
                 Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
 
                 terreno = new Terreno();
-                
+
+                prismaRectangular = Primitiva.Prisma(new Vector3(0, 0, 0), new Vector3(100, 100, 100));
+
                 base.Initialize();
             }
 
@@ -134,6 +136,9 @@
                 auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
                 
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
+                
+
+                prismaRectangular.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
 
                 base.LoadContent();
             }
@@ -175,6 +180,12 @@
                 auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
 
                 camarografo.DrawDatos(SpriteBatch);
+
+                prismaRectangular.dibujar(camarografo, new Vector3(6300f, 600f, 6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
+                prismaRectangular.dibujar(camarografo, new Vector3(6775f, 600, -6073f).ToNumerics()); //Caja en plataforma (abajo a la izq)
+                prismaRectangular.dibujar(camarografo, new Vector3(-7000f, 600f, -6000f).ToNumerics()); //Caja en plataforma (arriba a la derecha)
+                prismaRectangular.dibujar(camarografo, new Vector3(-5442f, 600f, -5722f).ToNumerics()); //Caja en plataforma (arriba a la izq)
+
 
                 Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
 
