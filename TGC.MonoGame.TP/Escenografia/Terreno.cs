@@ -165,8 +165,13 @@ namespace Escenografia
         /// <summary>
         /// Sobreescribe el método para dibujar el terreno.
         /// </summary>
-        public void dibujar(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 posicionCamara)
+        public void dibujar(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection, Vector3 posicionCamara, RenderTarget2D shadowMap)
         {
+            efecto.CurrentTechnique = efecto.Techniques["TerrenoTechnique"];
+
+            efecto.Parameters["shadowMap"]?.SetValue(shadowMap);
+            efecto.Parameters["shadowMapSize"]?.SetValue(Vector2.One * 4096);
+
             efecto.Parameters["View"].SetValue(view);
             efecto.Parameters["Projection"].SetValue(projection);
             efecto.Parameters["CameraPosition"]?.SetValue(posicionCamara);
@@ -180,6 +185,25 @@ namespace Escenografia
                 GraphicsDevice device = efecto.GraphicsDevice;
                 device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
             }
+        }
+
+        public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection){
+            efecto.CurrentTechnique = efecto.Techniques["DepthPass"];
+
+            efecto.Parameters["View"].SetValue(view);
+            efecto.Parameters["Projection"].SetValue(projection);
+
+            efecto.Parameters["LightViewProjection"]?.SetValue(view * projection);
+
+            efecto.Parameters["World"].SetValue(getWorldMatrix());
+
+            foreach (var pass in efecto.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                GraphicsDevice device = efecto.GraphicsDevice;
+                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
+            }
+
         }
     }
 }

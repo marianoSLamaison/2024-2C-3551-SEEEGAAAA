@@ -102,7 +102,7 @@ namespace Escenografia
         abstract public void Mover(float fuerzaAAplicar);
         abstract public Matrix getWorldMatrix();
         abstract public void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager);
-        abstract public void dibujar(Matrix view, Matrix projection, Color color);
+        //abstract public void dibujar(Matrix view, Matrix projection, Color color);
         /// <summary>
         /// se encarga de asignar un cuerpo para el auto, siempre hara que no duerma por que 
         /// Bepu pone a "dormir" todo lo que no este moviendose y por culpa de eso, luego no puedes moverlo
@@ -457,8 +457,13 @@ namespace Escenografia
         /// <param name="view"></param>
         /// <param name="projection"></param>
         /// <param name="color"></param>
-        public override void dibujar(Matrix view, Matrix projection, Color color)
+        public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
+            efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
+
+            efecto.Parameters["shadowMap"]?.SetValue(shadowMap);
+            efecto.Parameters["shadowMapSize"]?.SetValue(Vector2.One * 16384);
+
             efecto.Parameters["View"].SetValue(view);
             // le cargamos el como quedaria projectado en la pantalla
             efecto.Parameters["Projection"].SetValue(projection);
@@ -506,13 +511,64 @@ namespace Escenografia
                 mesh.Draw();    
             }
         }
+        public void dibujarSombras(Matrix view, Matrix projection){
+            efecto.CurrentTechnique = efecto.Techniques["DepthPass"];
+
+            efecto.Parameters["View"].SetValue(view);
+            // le cargamos el como quedaria projectado en la pantalla
+            efecto.Parameters["Projection"].SetValue(projection);
+
+            efecto.Parameters["LightViewProjection"]?.SetValue(view * projection);
+
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
         
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
 
 
     }
     class AutoNPC : Auto
     {
-        public override void dibujar(Matrix view, Matrix projection, Color color)
+        public void dibujar(Matrix view, Matrix projection, Color color)
         {
             throw new NotImplementedException();
         }
