@@ -87,7 +87,7 @@ namespace Escenografia
         private int numeroTriangulos;
         private BodyReference cuerpoFisico;
         public BodyHandle handlerCuerpo;
-
+    
         public System.Numerics.Vector3 Posicion {get {return cuerpoFisico.Pose.Position;}}
 
         public static Primitiva Prisma(Vector3 vMenor, Vector3 vMayor)

@@ -49,6 +49,8 @@ namespace TGC.MonoGame.TP
 
         Luz luz;
 
+        private Primitiva prismaRectangular;
+
         /// <summary>
         ///     Constructor del juego.
         /// </summary>
@@ -110,6 +112,8 @@ namespace TGC.MonoGame.TP
             shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
 
             luz = new Luz(GraphicsDevice);
+
+            prismaRectangular = Primitiva.Prisma(new Vector3(0, 0, 0), new Vector3(100, 100, 100));
             
             base.Initialize();
         }
@@ -142,6 +146,8 @@ namespace TGC.MonoGame.TP
             auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
             
             generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
+
+            prismaRectangular.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
 
             base.LoadContent();
         }
@@ -201,6 +207,11 @@ namespace TGC.MonoGame.TP
             
             auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
+
+            prismaRectangular.dibujar(camarografo, new Vector3(6300f, 600f, 6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
+            prismaRectangular.dibujar(camarografo, new Vector3(6775f, 600, -6073f).ToNumerics()); //Caja en plataforma (abajo a la izq)
+            prismaRectangular.dibujar(camarografo, new Vector3(-7000f, 600f, -6000f).ToNumerics()); //Caja en plataforma (arriba a la derecha)
+            prismaRectangular.dibujar(camarografo, new Vector3(-5442f, 600f, -5722f).ToNumerics()); //Caja en plataforma (arriba a la izq)
 
             #endregion
 
