@@ -6,6 +6,12 @@ namespace Utils
 {
     static class Matematicas
     {
+        public static Vector2 RandomTilt(Vector2 vec, float rotIz, float rotDe, Random RNG)
+        {
+            float ranNum = RNG.NextSingle();
+            float v = ranNum * (rotDe - rotIz) + (1f - ranNum) * rotIz;
+            return Vector2.Transform(vec, Matrix.CreateRotationZ(v));
+        }
         public static Vector3 clampV(Vector3 valor, Vector3 minimo, Vector3 maximo)
         {
             valor.X = Math.Clamp(valor.X, minimo.X, maximo.X);
@@ -27,6 +33,7 @@ namespace Utils
         public static Vector2 AssV2(Vector3 input) => new(input.X, input.Z);
         public static Vector3 XZOrthogonal(Vector3 input) => new(-input.Z, input.Y, input.X);
         public static Vector3 AssXNA(System.Numerics.Vector3 input) => new(input.X, input.Y, input.Z);
+
     }
     static class Commons
     {

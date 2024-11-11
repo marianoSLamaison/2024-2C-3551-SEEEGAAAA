@@ -18,39 +18,54 @@ namespace Control
         //leer ese ejmplo si que dio muchas ideas AJAJ
     private class IA//para el manejo de los autos
     {
+        private float fuerzaMov;
+        private float aceleracion;
+        private float maxVelocity;
+
+        public Vector2 direccion;
         public IA(){}
         public IA(Vector2 initPos, float distanciaParaCambio, Simulation simulation, BufferPool bufferPool)
         {
             AutoControlado = new AutoNPC();
-            DistanciaAPuntoCuadrada = distanciaParaCambio * distanciaParaCambio;
             AutoControlado.CrearCollider(simulation, bufferPool, initPos);
-            AutoControlado.velocidad = 300f;
-            AutoControlado.SetVelocidadAngular(MathF.PI / 2f);
-            objetivo = Utils.Matematicas.AssV2(AutoControlado.Posicion);
+            fuerzaMov = 251;//despues setear a un rango
+            aceleracion = AutoControlado.DarAceleracion(fuerzaMov) / 2f;
+            AutoControlado.velocidad = 0;
+            maxVelocity = 2500f;
+            SetDireccion(Utils.Matematicas.AssV2(AutoControlado.orientacion.Backward.ToNumerics()));
+            AutoControlado.SetVelocidadAngular(MathF.PI);
         }
-        public Vector2 objetivo;
         protected AutoNPC AutoControlado;
-        private float DistanciaAPuntoCuadrada;
-        public bool NecesitoNuevoObjetivo()
-        {
-            Vector2 autosXZPos = new(AutoControlado.Posicion.X, AutoControlado.Posicion.Z);
-            float cuadradoDistActual = Vector2.DistanceSquared(objetivo, autosXZPos);
-            return cuadradoDistActual - DistanciaAPuntoCuadrada < 0f;
-        }
 
-        public virtual void Update()
+        private float tViaje;
+        public bool NecesitoNuevoObjetivo() => tViaje <= 0f;
+
+        public virtual void Update(float dtime)
         {
             // movemos el auto
-            AutoControlado.Mover(251);
-            //actualizamos nuestra direccion
-            Vector2 nuevaDireccion = Vector2.Normalize(objetivo - Utils.Matematicas.AssV2(AutoControlado.Posicion));
-            AutoControlado.SetDireccion(Utils.Matematicas.AssV3(nuevaDireccion));
+            AutoControlado.Mover(fuerzaMov, dtime);
+            tViaje -= dtime;
         }
-        
+
         public Vector2 GetPos() => new(AutoControlado.Posicion.X, AutoControlado.Posicion.Z);
-        public void SetDestino(Vector2 obj)
+        public void SetDireccion(Vector2 direccion)
         {
-            objetivo = obj;
+            //actualizamos nuestra direccion
+            //sacamos la direccion general
+            //con esto sacamos la distancia teorica
+            float distancia = direccion.Length();
+            //con esto sacamos el tiempo aproximado de viaje
+            float velocidad = AutoControlado.velocidad;
+            //NOTA: como la distancia siempre es positiva podemos ignorar casos especiales de esta formula
+            tViaje = (- velocidad + MathF.Sqrt( velocidad * velocidad - 4f * aceleracion * -distancia ))/(2f*aceleracion);
+
+            //le damos su nueva direccion al ajuto controlado
+            direccion /= distancia;
+            this.direccion = direccion;
+            AutoControlado.SetDireccion(new Vector3(direccion.X, 0f, direccion.Y));
+            AutoControlado.velocidad = aceleracion * tViaje + velocidad;
+            AutoControlado.velocidad = AutoControlado.velocidad > maxVelocity ? maxVelocity : AutoControlado.velocidad;
+
         }
         public AutoNPC GetAuto() => AutoControlado;
     }
@@ -75,7 +90,7 @@ namespace Control
                 };
                 return ret;
             }
-            public override void Update()
+            public void Update()
             {
                 // movemos el auto
                 AutoControlado.Mover(251);
@@ -124,7 +139,7 @@ namespace Control
             atacantes = new(1);
         }
 
-        public void Update()
+        public void Update(float deltaTime)
         {
             //chequeamos si se puede o no colocar mas enemigos en pantalla
             const int maximoAts = 1;
@@ -145,15 +160,18 @@ namespace Control
             //los autos se moveran al azar en lineas rectas a objetivos en su rango
             foreach( IA auto in autos )
             {
-                auto.Update();
+                auto.Update(deltaTime);
                 if ( auto.NecesitoNuevoObjetivo() ){
-                    auto.SetDestino(
-                        Utils.Matematicas.clampV(puntoEnAnillo(1000f, 5000f) + Utils.Matematicas.AssV2(auto.GetAuto().Posicion), new Vector2(10000,10000), new Vector2(-10000,-10000)));
+                    
+                    auto.SetDireccion(500 * Utils.Matematicas.RandomTilt(auto.direccion, MathF.PI / 7f, -MathF.PI / 7f, RNG));
+                    //auto.SetDireccion(
+                      //  Utils.Matematicas.clampV(puntoEnAnillo(1000f, 3000f), new Vector2(10000,10000), new Vector2(-10000,-10000)));
                 }
             }
+
             foreach( AgresiveIA atacante in atacantes)
             {
-                atacante.Update();
+                //atacante.Update();
             }
             
         }

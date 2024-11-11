@@ -514,17 +514,30 @@ namespace Escenografia
             }
         }
 
-        public override void  Mover( float fuerzaAAplicar)
+        public void  Mover( float fuerzaAAplicar, float deltaTime)
         {//la logica de a donde moverse, se maneja en otro lado, a qui solo nos movemos
-            refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
+            float scuareLimit = (velocidad * velocidad) * 100f;
+            if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
+                refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
             float alineamiento = Vector3.Dot(orientacion.Backward, direccion);
-            const float epsilon = 0.3f;
+            const float epsilon = 0.1f;
             if (alineamiento < 1 - epsilon)
+            {
                 refACuerpo.Velocity.Angular += Vector3.Cross(
-                    orientacion.Backward, direccion).ToNumerics() * MathF.PI * 1/60;
+                    orientacion.Backward, direccion).ToNumerics() * velocidadAngular * deltaTime;
+            }
+            //si estamos mirando hacia abajo
+            if ( orientacion.Up.Y < 0.1f)
+            {
+                refACuerpo.Velocity.Angular += orientacion.Backward.ToNumerics() * velocidadAngular * deltaTime;
+            }
+            
+
             refACuerpo.Velocity.Angular *= 0.98f;
+            
         }
 
+        public float DarAceleracion(float fuerz) => refACuerpo.LocalInertia.InverseMass * fuerz;
         public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicion){
 
         var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
@@ -556,6 +569,11 @@ namespace Escenografia
 
         BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1500f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
         darCuerpo(handlerDeCuerpo);
+        }
+
+        public override void Mover(float fuerzaAAplicar)
+        {
+            throw new NotImplementedException();
         }
     }
 

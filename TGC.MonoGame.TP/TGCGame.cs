@@ -49,9 +49,10 @@
             private PrismaRectangularEditable _boxVisual {get; set;}
             private BepuPhysics.Collidables.Box _hitboxAuto {get; set;}
             private BufferPool bufferPool;
-
+            private Primitiva cuboPerfecto;
             private Terreno terreno;
             private AdministradorNPCs IACentral;
+            
 
             /// <summary>
             ///     Constructor del juego.
@@ -113,7 +114,9 @@
 
 
                 IACentral = new AdministradorNPCs();
-                IACentral.generarAutos(12, 10000f, _simulacion, bufferPool);
+                IACentral.generarAutos(22, 10000f, _simulacion, bufferPool);
+
+                cuboPerfecto = Primitiva.Prisma(-new Vector3(1000f, 1000f, 1000f), new Vector3(1000f, 1000f, 1000f));
                 
                 base.Initialize();
             }
@@ -149,7 +152,9 @@
                 
                 terreno.CrearCollider(bufferPool, _simulacion, new Vector3(-10000f, 0f, -10000f));
                 generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
+                
 
+                cuboPerfecto.loadPrimitiva(GraphicsDevice, _basicShader, Color.AliceBlue);
 
                 base.LoadContent();
             }
@@ -171,7 +176,7 @@
                 camarografo.GetInputs();
                 _simulacion.Timestep(1f/60f);//por ahora corre en el mismo thread que todo lo demas
 
-                IACentral.Update();
+                IACentral.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
                 base.Update(gameTime);
             }
 
@@ -198,6 +203,9 @@
                 IACentral.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
 
                 Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
+
+
+                cuboPerfecto.dibujar(camarografo, new Vector3(0f, 600f, 0f).ToNumerics());
 
             }
 
