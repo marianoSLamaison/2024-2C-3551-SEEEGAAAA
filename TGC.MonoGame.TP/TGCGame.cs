@@ -172,7 +172,7 @@
                 auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
                 auto.Misil.ActualizarPowerUp(gameTime);
                 //para que el camarografo nos siga siempre
-                camarografo.setPuntoAtencion(IACentral.GetPosFitsCar());
+                camarografo.setPuntoAtencion(auto.Posicion);
                 camarografo.GetInputs();
                 _simulacion.Timestep(1f/60f);//por ahora corre en el mismo thread que todo lo demas
 

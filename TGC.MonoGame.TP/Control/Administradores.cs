@@ -24,7 +24,7 @@ namespace Control
 
         public Vector2 direccion;
         public IA(){}
-        public IA(Vector2 initPos, float distanciaParaCambio, Simulation simulation, BufferPool bufferPool)
+        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool)
         {
             AutoControlado = new AutoNPC();
             AutoControlado.CrearCollider(simulation, bufferPool, initPos);
@@ -33,7 +33,7 @@ namespace Control
             AutoControlado.velocidad = 0;
             maxVelocity = 2500f;
             SetDireccion(Utils.Matematicas.AssV2(AutoControlado.orientacion.Backward.ToNumerics()));
-            AutoControlado.SetVelocidadAngular(MathF.PI);
+            AutoControlado.SetVelocidadAngular(MathF.Tau);
         }
         protected AutoNPC AutoControlado;
 
@@ -53,14 +53,13 @@ namespace Control
             //actualizamos nuestra direccion
             //sacamos la direccion general
             //con esto sacamos la distancia teorica
-            float distancia = direccion.Length();
             //con esto sacamos el tiempo aproximado de viaje
             float velocidad = AutoControlado.velocidad;
             //NOTA: como la distancia siempre es positiva podemos ignorar casos especiales de esta formula
-            tViaje = (- velocidad + MathF.Sqrt( velocidad * velocidad - 4f * aceleracion * -distancia ))/(2f*aceleracion);
+            tViaje = 0.25f;
 
             //le damos su nueva direccion al ajuto controlado
-            direccion /= distancia;
+            direccion.Normalize();
             this.direccion = direccion;
             AutoControlado.SetDireccion(new Vector3(direccion.X, 0f, direccion.Y));
             AutoControlado.velocidad = aceleracion * tViaje + velocidad;
@@ -76,7 +75,7 @@ namespace Control
             public AgresiveIA(){
 
             }
-            public AgresiveIA(Vector2 initPos, float distanciaParaCambio, Simulation simulation, BufferPool bufferPool) : base(initPos, distanciaParaCambio, simulation, bufferPool)
+            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool) : base(initPos, simulation, bufferPool)
             {
             }
             /*
@@ -90,14 +89,13 @@ namespace Control
                 };
                 return ret;
             }
-            public void Update()
+            public override void Update(float deltaTime)
             {
                 // movemos el auto
-                AutoControlado.Mover(251);
+                AutoControlado.Mover(10, deltaTime);
                 //actualizamos nuestra direccion
                 Vector2 nuevaDireccion = Vector2.Normalize(autoObjetivo.GetPos() - Utils.Matematicas.AssV2(AutoControlado.Posicion));
                 AutoControlado.SetDireccion(Utils.Matematicas.AssV3(nuevaDireccion));
-                Console.WriteLine(nuevaDireccion);
             }
         }
 
@@ -133,7 +131,7 @@ namespace Control
                 puntosAutos.AddRange(GenerarPuntosPoissonDisk(subRadio*(MathF.Sqrt(2) - 1), 1000, autosSob));
             foreach( Vector2 punto in puntosAutos )
             {
-                auto = new IA(punto, 2000, simulation, bufferpool);
+                auto = new IA(punto, simulation, bufferpool);
                 autos.Add(auto);  
             }
             atacantes = new(1);
@@ -150,7 +148,7 @@ namespace Control
                 IA candidato;
                 for (int i =0; i< maximoAts - atacantes.Count; i++)
                 {//se saca un auto del control normal, y se lo envia a la lista de control de enemigos
-                    candidato = autos.ElementAt<IA>(RNG.Next() % autos.Count);
+                    candidato = autos.ElementAt<IA>(0);
                     nuevoAtacante = AgresiveIA.TurnIAAgresive(candidato);
                     autos.Remove(candidato);
                     nuevoAtacante.autoObjetivo = autos.Count != 0 ? autos.ElementAt<IA>(RNG.Next() % autos.Count) : null;
@@ -163,7 +161,7 @@ namespace Control
                 auto.Update(deltaTime);
                 if ( auto.NecesitoNuevoObjetivo() ){
                     
-                    auto.SetDireccion(500 * Utils.Matematicas.RandomTilt(auto.direccion, MathF.PI / 7f, -MathF.PI / 7f, RNG));
+                    auto.SetDireccion(500 * Utils.Matematicas.RandomTilt(auto.direccion, MathF.PI / 24f, -MathF.PI / 24f, RNG));
                     //auto.SetDireccion(
                       //  Utils.Matematicas.clampV(puntoEnAnillo(1000f, 3000f), new Vector2(10000,10000), new Vector2(-10000,-10000)));
                 }
@@ -171,14 +169,14 @@ namespace Control
 
             foreach( AgresiveIA atacante in atacantes)
             {
-                //atacante.Update();
+                atacante.Update(deltaTime);
             }
             
         }
 
         public Vector3 GetPosFitsCar()
         {
-            return autos.ElementAt(0).GetAuto().Posicion;
+            return atacantes.Count > 0 ? atacantes.ElementAt(0).GetAuto().Posicion : Vector3.Zero;
         }
         private Vector2 puntoEnAnillo(float radioAnillo, float minRad)
         {

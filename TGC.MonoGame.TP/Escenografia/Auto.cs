@@ -410,6 +410,9 @@ namespace Escenografia
     }
     class AutoNPC : Auto
     {
+
+        private float anguloCorreccion;
+        private float MaxRuedaRotacion;
         public override void dibujar(Matrix view, Matrix projection, Color color)
         {
             efecto.Parameters["View"].SetValue(view);
@@ -467,6 +470,14 @@ namespace Escenografia
 
         public void SetDireccion(Vector3 direccion)
         {
+            //sacamos el angulo por el cual tendremos que rotar el auto hasta que se alinee con nuestro objetivo deseado
+            Vector3 frenteAuto = new Vector3(orientacion.Backward.X, 0f, orientacion.Backward.Z);
+            float relacion = Vector3.Dot(orientacion.Backward, direccion);
+            anguloCorreccion = MathF.Acos(relacion);
+            //si es positivo el PP con el ortogonal a izquierda del vector, entonces esta mirando a la izquierda, caso contrario esta mirando a la derecha
+            //con eso sabemos para que sentido hay que rotar
+            anguloCorreccion *= MathF.Sign(Vector3.Dot(frenteAuto, Utils.Matematicas.XZOrthogonal(direccion)));
+            MaxRuedaRotacion = anguloCorreccion;
             this.direccion = direccion;
         }
         public void SetVelocidadAngular(float vAngular)
@@ -517,22 +528,27 @@ namespace Escenografia
         public void  Mover( float fuerzaAAplicar, float deltaTime)
         {//la logica de a donde moverse, se maneja en otro lado, a qui solo nos movemos
             float scuareLimit = (velocidad * velocidad) * 100f;
+            //aceleramos solo lo que se necesite
             if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
                 refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
-            float alineamiento = Vector3.Dot(orientacion.Backward, direccion);
-            const float epsilon = 0.1f;
-            if (alineamiento < 1 - epsilon)
+            const float epsilon = 0.01f;
+            float VAInstantanea = velocidadAngular * deltaTime;
+            //para alinear el auto
+            if (anguloCorreccion > epsilon || anguloCorreccion < -epsilon)
             {
-                refACuerpo.Velocity.Angular += Vector3.Cross(
-                    orientacion.Backward, direccion).ToNumerics() * velocidadAngular * deltaTime;
+                VAInstantanea *= MathF.Sign(anguloCorreccion);
+                refACuerpo.Velocity.Angular += Vector3.UnitY.ToNumerics() * VAInstantanea ;
+                anguloCorreccion -= VAInstantanea;
             }
             //si estamos mirando hacia abajo
-            if ( orientacion.Up.Y < 0.1f)
-            {
-                refACuerpo.Velocity.Angular += orientacion.Backward.ToNumerics() * velocidadAngular * deltaTime;
-            }
+            if ( Vector3.Dot(Vector3.UnitY, orientacion.Up) < 0.85f)
+                refACuerpo.Velocity.Angular += Vector3.Cross(orientacion.Up, Vector3.UnitY).ToNumerics() * VAInstantanea * 2f;
+            //para ajustar las ruedas delanteras de a poco
+            if ( MathF.Sign(rotacionRuedasDelanteras) < MathF.Sign(MaxRuedaRotacion) )
+                rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
             
-
+            revolucionDeRuedas += VAInstantanea * 3f;
+            revolucionDeRuedas = revolucionDeRuedas > MathF.Tau ? 0f : revolucionDeRuedas;
             refACuerpo.Velocity.Angular *= 0.98f;
             
         }
