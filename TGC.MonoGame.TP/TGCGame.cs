@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.Constraints;
@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.ComponentModel;
 
 
 
@@ -34,6 +35,7 @@ namespace TGC.MonoGame.TP
         private SpriteBatch SpriteBatch { get; set; }
         private Effect _basicShader;
         private Effect _vehicleShader;
+        private Effect _vehicleCombatShader;
         private Effect _terrenoShader;
         private Simulation _simulacion;
         //Control.Camera camara;
@@ -53,6 +55,7 @@ namespace TGC.MonoGame.TP
         private Primitiva cajaPowerUp2;
         private Primitiva cajaPowerUp3;
         private Primitiva cajaPowerUp4;
+        private AdministradorNPCs adminNPCs;
 
         /// <summary>
         ///     Constructor del juego.
@@ -126,7 +129,9 @@ namespace TGC.MonoGame.TP
             _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
             _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
 
-            
+            adminNPCs = new AdministradorNPCs();
+            adminNPCs.generarAutos(10, 7000f, _simulacion, bufferPool);
+
             base.Initialize();
         }
 
@@ -135,13 +140,14 @@ namespace TGC.MonoGame.TP
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             String[] modelos = {ContentFolder3D + "Auto/RacingCar"};
-            String[] efectos = {ContentFolderEffects + "BasicShader"};
+            String[] efectos = {ContentFolderEffects + "VehicleShader"};
             
             camarografo.loadTextFont(ContentFolderEffects, Content);
 
 
             _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
+            //_vehicleCombatShader = Content.Load<Effect>(ContentFolderEffects + "VehicleCombatShader");
             _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
             
             
@@ -163,12 +169,16 @@ namespace TGC.MonoGame.TP
             cajaPowerUp2.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             cajaPowerUp3.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
+            
+
+            adminNPCs.load(efectos, modelos, Content);
 
             base.LoadContent();
         }
 
         protected override void Update(GameTime gameTime)
         {
+
             // Aca deberiamos poner toda la logica de actualizacion del juego.
             // Capturar Input teclado
             if (Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -180,7 +190,9 @@ namespace TGC.MonoGame.TP
             auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             auto.Misil.ActualizarPowerUp(gameTime);
             auto.Metralleta.ActualizarPowerUp(gameTime);
+            
 
+            adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             luz.BuildView(auto.Posicion);
             //para que el camarografo nos siga siempre
             camarografo.setPuntoAtencion(auto.Posicion);
@@ -214,7 +226,7 @@ namespace TGC.MonoGame.TP
             
             Escenario.Dibujar(camarografo, GraphicsDevice);
             
-            generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
+            //generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
 
             auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
@@ -231,6 +243,8 @@ namespace TGC.MonoGame.TP
             #endregion
 
             camarografo.DrawDatos(SpriteBatch);
+
+            adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
 
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
 

@@ -8,11 +8,11 @@
 #endif
 
 // Variables globales
-float4x4 World;
+float4x4 World;//
 float4x4 View;
 float4x4 Projection;
 
-float3 CameraPosition;
+float3 CameraPosition;//
 
 // Texturas
 
@@ -29,7 +29,15 @@ SamplerState SamplerType
     AddressU = Mirror;
     AddressV = Mirror;
 };
-
+sampler2D samplerTest
+{
+    texture = (BlueRockTexture);
+    magfilter = LINEAR;
+    minfilter = LINEAR;
+    mipfilter = LINEAR;
+    AddressU = Mirror;
+    AddressV = Mirror;
+};
 
 // Entrada del vértice
 struct VertexShaderInput
@@ -60,7 +68,7 @@ VertexShaderOutput VertexShaderFunction(VertexShaderInput input)
 
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR
 {
-    float4 color = tex2D(SamplerType, input.TextureCoordinate);
+    float4 color = tex2D(samplerTest, input.TextureCoordinate.xy);
     //return float4(texCUBE(SamplerType, normalize(input.TextureCoordinate)).rgb,1);
     return color;
 }

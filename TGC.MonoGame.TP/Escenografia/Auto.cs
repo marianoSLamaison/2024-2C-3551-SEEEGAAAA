@@ -180,7 +180,7 @@ namespace Escenografia
         /// </summary>
         override public void Mover(float deltaTime)
         {
-                Console.WriteLine(refACuerpo.Pose.Position);
+                //Console.WriteLine(refACuerpo.Pose.Position);
                 if ( !estaSaltando )
                 {
                 
@@ -497,8 +497,13 @@ namespace Escenografia
 
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
-        public void dibujar(Matrix view, Matrix projection, Color color)
+        public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
+            efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
+
+            efecto.Parameters["shadowMap"]?.SetValue(shadowMap);
+            efecto.Parameters["shadowMapSize"]?.SetValue(Vector2.One * 16384);
+
             efecto.Parameters["View"].SetValue(view);
             // le cargamos el como quedaria projectado en la pantalla
             efecto.Parameters["Projection"].SetValue(projection);
@@ -571,18 +576,42 @@ namespace Escenografia
         public void anguloDeGiro(float angulo){
 
         }
-        public void ApplyTexturesToShader()
+    public void ApplyTexturesToShader()
+    {
+        efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
+        efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
+        efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
+        efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
+        
+        
+
+        efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+        efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+        efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.75f, 0.75f, 0.75f));
+        efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+        efecto.Parameters["KAmbient"]?.SetValue(0.4f);
+        efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+        efecto.Parameters["KSpecular"]?.SetValue(0.25f);
+        efecto.Parameters["shininess"]?.SetValue(4.0f);
+
+        foreach ( ModelMesh mesh in modelo.Meshes )
         {
-            efecto.Parameters["SamplerType+BaseColorTexture"].SetValue(baseColorTexture);
-            //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
-            //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
-            //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
-            //efecto.Parameters["SamplerType+AOTexture"].SetValue(aoTexture);
-            //efecto.Parameters["SamplerType+EmissionTexture"].SetValue(emissionTexture);
+            foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = efecto;
+            }
         }
 
-        public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager)
-        {
+        //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
+        //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
+        //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
+        //efecto.Parameters["SamplerType+AOTexture"].SetValue(aoTexture);
+        //efecto.Parameters["SamplerType+EmissionTexture"].SetValue(emissionTexture);
+    }
+
+    public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
             //asignamos el modelo deseado
             modelo = contManager.Load<Model>(direccionModelo);
             //mismo caso para el efecto

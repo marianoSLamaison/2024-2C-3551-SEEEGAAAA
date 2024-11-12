@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using BepuPhysics;
 using BepuUtilities.Memory;
 using Escenografia;
+using Escenografia.TESTS;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
-using System.Linq;
+using Microsoft.Xna.Framework.Design;
 using Microsoft.Xna.Framework.Graphics;
-
 
 namespace Control
 {
@@ -138,7 +140,7 @@ namespace Control
         public void Update(float deltaTime)
         {
             //chequeamos si se puede o no colocar mas enemigos en pantalla
-            const int maximoAts = 1;
+            const int maximoAts = 0;
             
             if ( atacantes.Count < maximoAts && autos.Count != 0)
             {
@@ -167,14 +169,15 @@ namespace Control
 
             foreach( AgresiveIA atacante in atacantes)
             {
-                atacante.Update(deltaTime);
+                //Necesita mas revision ( esta cambiando direccion, pero por algun motivo impacta mas de lo normal con tra el aire)
+                //atacante.Update(deltaTime);
             }
             
         }
 
         public Vector3 GetPosFitsCar()
         {
-            return atacantes.Count > 0 ? atacantes.ElementAt(0).GetAuto().Posicion : Vector3.Zero;
+            return Utils.Matematicas.AssV3(autos.ElementAt(0).GetPos());
         }
         private Vector2 puntoEnAnillo(float radioAnillo, float minRad)
         {
@@ -189,17 +192,17 @@ namespace Control
             {//designamos modelos y efectos al azar, si necesitan que esten juntos, habria que dise
             //diseñar alguna sestructura que tenga a los dos para tener el modelo y la estruct juntos,
             //y pasar eso
-                String dEffecto = efectos[RNG.Next() % efectos.Length];
-                String dModelo = modelos[RNG.Next() % modelos.Length];
+                String dEffecto = efectos[0];
+                String dModelo = modelos[0];
                 auto.GetAuto().loadModel(dModelo, dEffecto, content);
             }
         }
-        public void draw(Matrix view, Matrix projeccion)
+        public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
         {
             foreach( IA auto in autos )
-                auto.GetAuto().dibujar(view, projeccion, Color.Navy);
+                auto.GetAuto().dibujar(view, projeccion, shadowMap);
             foreach( AgresiveIA atacante in atacantes )
-                atacante.GetAuto().dibujar(view, projeccion, Color.Navy);
+                atacante.GetAuto().dibujar(view, projeccion, shadowMap);
         }
 
         ////funciones robadas de generador de conos ( no las lei pero se que funcionan )
@@ -309,12 +312,11 @@ namespace Control
             return true;
         }
     }
-
     public class AdministradorConos
     {
         static Random RNG = new Random();
         List<Cono> conos;
-        float alturaConos = 300f; // Altura fija para todos los conos
+        float alturaConos = 400f; // Altura fija para todos los conos
 
         public void generarConos(Vector3 centro, float radio, int numeroNPCs, float distanciaMinima)
         {
@@ -450,12 +452,12 @@ namespace Control
             }
         }
 
-        public void drawConos(Matrix view, Matrix projection, Vector3 posicionCamara)
+        public void drawConos(Matrix view, Matrix projection)
         {
             // Dibujar todos los conos
             foreach (Cono cono in conos)
             {
-                cono.dibujar(view, projection, Color.Orange, posicionCamara);
+                cono.dibujar(view, projection, Color.Orange);
             }
         }
     }
