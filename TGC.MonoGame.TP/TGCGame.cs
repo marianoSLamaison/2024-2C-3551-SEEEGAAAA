@@ -49,7 +49,10 @@ namespace TGC.MonoGame.TP
 
         Luz luz;
 
-        private Primitiva prismaRectangular;
+        private Primitiva cajaPowerUp1;
+        private Primitiva cajaPowerUp2;
+        private Primitiva cajaPowerUp3;
+        private Primitiva cajaPowerUp4;
 
         /// <summary>
         ///     Constructor del juego.
@@ -113,7 +116,16 @@ namespace TGC.MonoGame.TP
 
             luz = new Luz(GraphicsDevice);
 
-            prismaRectangular = Primitiva.Prisma(new Vector3(0, 0, 0), new Vector3(100, 100, 100));
+            cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            cajaPowerUp2 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            cajaPowerUp3 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            cajaPowerUp4 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+
+            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+
             
             base.Initialize();
         }
@@ -147,7 +159,10 @@ namespace TGC.MonoGame.TP
             
             generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
-            prismaRectangular.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
+            cajaPowerUp1.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
+            cajaPowerUp2.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
+            cajaPowerUp3.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
+            cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
 
             base.LoadContent();
         }
@@ -208,10 +223,10 @@ namespace TGC.MonoGame.TP
             auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
 
-            prismaRectangular.dibujar(camarografo, new Vector3(6300f, 600f, 6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
-            prismaRectangular.dibujar(camarografo, new Vector3(6775f, 600, -6073f).ToNumerics()); //Caja en plataforma (abajo a la izq)
-            prismaRectangular.dibujar(camarografo, new Vector3(-7000f, 600f, -6000f).ToNumerics()); //Caja en plataforma (arriba a la derecha)
-            prismaRectangular.dibujar(camarografo, new Vector3(-5442f, 600f, -5722f).ToNumerics()); //Caja en plataforma (arriba a la izq)
+            cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
+            cajaPowerUp2.dibujar(camarografo, new Vector3(-6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la izq)
+            cajaPowerUp3.dibujar(camarografo, new Vector3(6100,600,-6100).ToNumerics()); //Caja en plataforma (arriba a la derecha)
+            cajaPowerUp4.dibujar(camarografo, new Vector3(-6100,600,-6100).ToNumerics()); //Caja en plataforma (arriba a la izq)
 
             #endregion
 
