@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.Constraints;
@@ -82,20 +82,27 @@ namespace TGC.MonoGame.TP
             // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
             var rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
-            GraphicsDevice.RasterizerState = rasterizerState; 
+            GraphicsDevice.RasterizerState = rasterizerState;
+
+            auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
 
             bufferPool = new BufferPool();
 
+            cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            cajaPowerUp2 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            cajaPowerUp3 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            cajaPowerUp4 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+
+            var callbacks = new CustomNarrowPhaseCallbacks(new SpringSettings(30f,1f), auto);
+
             _simulacion = Simulation.Create(bufferPool, 
-                                            new NarrowPhaseCallbacks(new SpringSettings(30f,1f)), 
-                                            //new CarCallbacks() { Properties = carProperties},
+                                           callbacks, 
                                             new PoseIntegratorCallbacks(new Vector3(0f, -1000f, 0f).ToNumerics()),
-                                            //new DemoPoseIntegratorCallbacks(new Vector3(0f, -1000f, 0f).ToNumerics()),
                                             new SolveDescription(8,1));
 
             AyudanteSimulacion.simulacion = _simulacion;
 
-            auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
+            
             auto.Misil = new Misil();
             
             //seteamos un colisionador para el auto
@@ -119,18 +126,13 @@ namespace TGC.MonoGame.TP
 
             luz = new Luz(GraphicsDevice);
 
-            cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp2 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp3 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp4 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+            cajaPowerUp1.staticHandle = _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
             _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
             _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
             _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
 
-            adminNPCs = new AdministradorNPCs();
-            adminNPCs.generarAutos(10, 7000f, _simulacion, bufferPool);
+            //adminNPCs = new AdministradorNPCs();
+            //adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
 
             base.Initialize();
         }
@@ -171,7 +173,7 @@ namespace TGC.MonoGame.TP
             cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             
 
-            adminNPCs.load(efectos, modelos, Content);
+            //adminNPCs.load(efectos, modelos, Content);
 
             base.LoadContent();
         }
@@ -190,9 +192,8 @@ namespace TGC.MonoGame.TP
             auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             auto.Misil.ActualizarPowerUp(gameTime);
             auto.Metralleta.ActualizarPowerUp(gameTime);
-            
 
-            adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
+            //adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             luz.BuildView(auto.Posicion);
             //para que el camarografo nos siga siempre
             camarografo.setPuntoAtencion(auto.Posicion);
@@ -221,30 +222,29 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.SetRenderTarget(null);
 
-            // Aca deberiamos poner toda la logia de renderizado del juego.
+            // Aca deberiamos poner toda la logica de renderizado del juego.
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.LightBlue, 1f, 0);
             
             Escenario.Dibujar(camarografo, GraphicsDevice);
             
-            //generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
+            generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
 
             auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
             
-            
             auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
 
-            cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
-            cajaPowerUp2.dibujar(camarografo, new Vector3(-6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la izq)
-            cajaPowerUp3.dibujar(camarografo, new Vector3(6100,600,-6100).ToNumerics()); //Caja en plataforma (arriba a la derecha)
-            cajaPowerUp4.dibujar(camarografo, new Vector3(-6100,600,-6100).ToNumerics()); //Caja en plataforma (arriba a la izq)
+            cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); 
+            cajaPowerUp2.dibujar(camarografo, new Vector3(-6100,600,6100).ToNumerics()); 
+            cajaPowerUp3.dibujar(camarografo, new Vector3(6100,600,-6100).ToNumerics()); 
+            cajaPowerUp4.dibujar(camarografo, new Vector3(-6100,600,-6100).ToNumerics()); 
 
             #endregion
 
             camarografo.DrawDatos(SpriteBatch);
 
-            adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
+            //adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
 
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
 

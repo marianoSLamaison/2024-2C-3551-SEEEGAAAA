@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 //si quieren hacer algo como tener dos camara, una mas cerca del auto o algo parecido
 namespace Control
 {
-    class Camara
+    public class Camara
     {
         public Vector3 posicion;
         private Vector3 puntoAtencion;

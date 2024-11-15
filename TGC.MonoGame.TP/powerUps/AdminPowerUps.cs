@@ -14,7 +14,7 @@ using System.Data;
 using System.Collections.Generic;
 using BepuUtilities.Memory;
 
-abstract class PowerUp
+public abstract class PowerUp
 {
     public string tipoPowerUp;
     public float DuracionPowerUp; // Duración del power-up en segundos
@@ -26,7 +26,7 @@ abstract class PowerUp
     public virtual void ActivarPowerUp(AutoJugador auto){}
 }
 
-class Turbo : PowerUp
+public class Turbo : PowerUp
 {
     private float boostVelocidad;
     public Turbo()
@@ -61,7 +61,7 @@ class Turbo : PowerUp
     }
 }
 
-class Misil : PowerUp
+public class Misil : PowerUp
 {
     private int MunicionMisiles = 0;
     public Model modelo;
@@ -214,7 +214,7 @@ class Misil : PowerUp
 
 
 
-class Metralleta : PowerUp
+public class Metralleta : PowerUp
 {
     private int municionMetralleta = 0;
     public Model modelo;

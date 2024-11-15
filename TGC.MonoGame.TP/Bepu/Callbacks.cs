@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using BepuPhysics;
@@ -6,6 +7,7 @@ using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities;
+using Escenografia;
 
 namespace TGC.MonoGame.Samples.Physics.Bepu;
 
@@ -122,24 +124,20 @@ public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
     }
 }
 
-public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
+public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
     private SpringSettings ContactSpringiness { get; set; }
     private float MaximumRecoveryVelocity { get; set; }
     private float FrictionCoefficient { get; set; }
+    private readonly AutoJugador auto;
 
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness) : this(contactSpringiness, 2f, 1f)
-    {
-    }
-
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity,
-        float frictionCoefficient)
+    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, AutoJugador autoJugador)
     {
         ContactSpringiness = contactSpringiness;
-        MaximumRecoveryVelocity = maximumRecoveryVelocity;
-        FrictionCoefficient = frictionCoefficient;
+        MaximumRecoveryVelocity = 2f;
+        FrictionCoefficient = 1f;
+        auto = autoJugador;
     }
-
     public void Initialize(Simulation simulation)
     {
         //Use a default if the springiness value wasn't initialized... at least until struct field initializers are supported outside of previews.
@@ -171,6 +169,24 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
     public bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold,
         out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
     {
+
+        if((pair.A.BodyHandle.Value == auto.handlerDeCuerpo.Value && (pair.B.StaticHandle.Value == 4 || pair.B.StaticHandle.Value == 5 || pair.B.StaticHandle.Value == 6 || pair.B.StaticHandle.Value == 7) || 
+            pair.B.BodyHandle.Value == auto.handlerDeCuerpo.Value && (pair.A.StaticHandle.Value == 4 || pair.A.StaticHandle.Value == 5 || pair.A.StaticHandle.Value == 6 || pair.A.StaticHandle.Value == 7))){
+                Console.WriteLine("Colisione con la caja");
+        }
+
+        if ( (pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Static) || 
+        (pair.A.Mobility == CollidableMobility.Static && pair.B.Mobility == CollidableMobility.Dynamic)){
+            if ( pair.A.Mobility != CollidableMobility.Dynamic)
+            {
+                var swaper = pair.A;
+                pair.A = pair.B;
+                pair.B = swaper;
+            }
+
+            
+        }
+
         pairMaterial.FrictionCoefficient = FrictionCoefficient;
         pairMaterial.MaximumRecoveryVelocity = MaximumRecoveryVelocity;
         pairMaterial.SpringSettings = ContactSpringiness;

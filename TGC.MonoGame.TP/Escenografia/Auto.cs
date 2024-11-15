@@ -29,7 +29,7 @@ namespace Escenografia
     /// <summary>
     /// Lo separe de Escenografia 3D para poder tener la Posicion ligada a nuestro objeto
     /// </summary>
-    abstract class Auto 
+    public abstract class Auto 
     {
         //ralacionadas con movimiento
 
@@ -123,7 +123,7 @@ namespace Escenografia
 
     }
 
-    class AutoJugador : Auto
+    public class AutoJugador : Auto
     {   
         float RotUp, RotFront, RotSide;
         
@@ -137,7 +137,7 @@ namespace Escenografia
         float comportamientoDeVelocidad;
         public TypedIndex referenciaAFigura;
         public float escalarDeVelocidad = 150f;
-        public ConstraintHandle constraintHandle;
+        public BodyHandle handlerDeCuerpo;
         public float anteriorFuerzaBuscada = 0f;
         public float anteriorVelocidadBuscada = 0f;
 
@@ -308,7 +308,9 @@ namespace Escenografia
         compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
         compoundBuilder.Reset();
 
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        handlerCuerpo.Value = 95;
+        handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        
         this.darCuerpo(handlerDeCuerpo);
 
     }

@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Control
 {
-    class Camarografo
+    public class Camarografo
     {
         public Control.Camara camaraAsociada;
         private Matrix projeccion;
