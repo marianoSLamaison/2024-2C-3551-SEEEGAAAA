@@ -54,6 +54,11 @@ namespace TGC.MonoGame.TP
         private Primitiva cajaPowerUp3;
         private Primitiva cajaPowerUp4;
 
+        private float tiempoTranscurrido = 0f;
+        private float Puntuacion = 0f;
+         
+        private SpriteFont fuente; // Fuente para el texto
+
         /// <summary>
         ///     Constructor del juego.
         /// </summary>
@@ -152,6 +157,9 @@ namespace TGC.MonoGame.TP
             terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
             terreno.SetEffect(_terrenoShader, Content);
 
+
+            fuente = Content.Load<SpriteFont>("debugFont");
+
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
 
             auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
@@ -185,6 +193,9 @@ namespace TGC.MonoGame.TP
             //para que el camarografo nos siga siempre
             camarografo.setPuntoAtencion(auto.Posicion);
             camarografo.GetInputs();
+            
+            tiempoTranscurrido += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
             _simulacion.Timestep(1/60f, ThreadDispatcher);//por ahora corre en el mismo thread que todo lo demas
             base.Update(gameTime);
         }
@@ -222,6 +233,12 @@ namespace TGC.MonoGame.TP
             
             auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
+
+
+            SpriteBatch.Begin();
+            SpriteBatch.DrawString(fuente, $"Tiempo Sobreviviendo: {tiempoTranscurrido:F2} ", new Vector2(10, 20), Color.White);
+            SpriteBatch.DrawString(fuente, $"Puntuacion : {Puntuacion:F2} ", new Vector2(1500, 20), Color.White);
+            SpriteBatch.End();
 
             cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
             cajaPowerUp2.dibujar(camarografo, new Vector3(-6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la izq)
