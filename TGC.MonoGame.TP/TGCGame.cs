@@ -238,11 +238,12 @@ namespace TGC.MonoGame.TP
             
             #region Default
 
+
             GraphicsDevice.SetRenderTarget(null);
 
             // Aca deberiamos poner toda la logia de renderizado del juego.
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.LightBlue, 1f, 0);
-            
+
             Escenario.Dibujar(camarografo, shadowMap);
             
             //generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
