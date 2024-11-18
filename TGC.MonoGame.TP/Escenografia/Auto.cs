@@ -553,9 +553,62 @@ namespace Escenografia
                                                         wheelWorld); // pos ultimo
                 }
                 mesh.Draw();    
-            }
+            }  
         }
         
+        public void dibujarSombras(Matrix view, Matrix projection){
+            efecto.CurrentTechnique = efecto.Techniques["DepthPass"];
+
+            efecto.Parameters["View"].SetValue(view);
+            // le cargamos el como quedaria projectado en la pantalla
+            efecto.Parameters["Projection"].SetValue(projection);
+
+            efecto.Parameters["LightViewProjection"]?.SetValue(view * projection);
+
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
+
         public override Matrix getWorldMatrix()
         {
             return orientacion * Matrix.CreateTranslation(Posicion);
@@ -586,8 +639,6 @@ namespace Escenografia
         efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
         efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
         efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
-        
-        
 
         efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
 
@@ -608,11 +659,6 @@ namespace Escenografia
             }
         }
 
-        //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
-        //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
-        //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
-        //efecto.Parameters["SamplerType+AOTexture"].SetValue(aoTexture);
-        //efecto.Parameters["SamplerType+EmissionTexture"].SetValue(emissionTexture);
     }
 
     public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
@@ -644,6 +690,8 @@ namespace Escenografia
 
         public void  Mover( float fuerzaAAplicar, float deltaTime)
         {//la logica de a donde moverse, se maneja en otro lado, a qui solo nos movemos
+
+
             float scuareLimit = (velocidad * velocidad) * 100f;
             //aceleramos solo lo que se necesite
             if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
@@ -671,14 +719,14 @@ namespace Escenografia
         }
 
         public float DarAceleracion(float fuerz) => refACuerpo.LocalInertia.InverseMass * fuerz;
-        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial, Dictionary<int, string> bodyHandleTags){
+        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial, Dictionary<int, object> bodyHandleTags){
 
             var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
             //var boxMainShape = new Box(280f, 100f, 500f);
             var boxMainShape = new Capsule(100, 400f);
             
-            var capsuleMainLocalPose = new RigidPose(new Vector3(posicionInicial.X,100f,posicionInicial.Y).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+            var capsuleMainLocalPose = new RigidPose(new Vector3(0,100f,0).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
             //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics());
 
             var ruedaShape = new Cylinder(35, 35);
@@ -696,9 +744,12 @@ namespace Escenografia
             compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
             compoundBuilder.Reset();
 
-            handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
-            bodyHandleTags.Add(handlerCuerpo.Value, "AutoNPC");
+            handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + new System.Numerics.Vector3(posicionInicial.X, 1000f, posicionInicial.Y) , compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+            bodyHandleTags.Add(handlerCuerpo.Value, this);
             this.darCuerpo(handlerCuerpo);
+
+            Console.WriteLine(refACuerpo.Pose.Position);
+
         }
 
         public override void Mover(float fuerzaAAplicar)

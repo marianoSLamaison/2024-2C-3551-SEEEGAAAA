@@ -24,7 +24,7 @@ namespace Control
 
         public Vector2 direccion;
         public IA(){}
-        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, string> bodyHandleTags)
+        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, object> bodyHandleTags)
         {
             AutoControlado = new AutoNPC();
             AutoControlado.CrearCollider(simulation, bufferPool, initPos, bodyHandleTags);
@@ -75,7 +75,7 @@ namespace Control
             public AgresiveIA(){
 
             }
-            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, string> bodyHandleTags) : base(initPos, simulation, bufferPool, bodyHandleTags)
+            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, object> bodyHandleTags) : base(initPos, simulation, bufferPool, bodyHandleTags)
             {
             }
             /*
@@ -105,36 +105,61 @@ namespace Control
         private Model[] modelos;
         List<IA> autos;
         List<AgresiveIA> atacantes;
-        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool, Dictionary<int, string> bodyHandleTags)
-        {//los genero de esta manera para reducir espacios sin nada en los bordes del escenario
+        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool, Dictionary<int, object> bodyHandleTags)
+        {
             int autosGen = numero / 4;
             int autosSob = numero % 4;
             float subRadio = radioArea / 2f;
             float anguloRot = MathF.PI / 2;
-            Vector2 direccion_centro = Vector2.Normalize(new Vector2(1,1));
+            Vector2 direccion_centro = Vector2.Normalize(new Vector2(1, 1));
             Vector2 puntoTemp;
             List<Vector2> puntosAutos = new(numero);
             IA auto;
             autos = new(numero);
-            for (int i=0; i<4; i++)
+
+            for (int i = 0; i < 4; i++)
             {
-                if ( autosGen != 0 )
+                if (autosGen != 0)
                 {
-                    puntoTemp = Vector2.Transform(direccion_centro  * subRadio * MathF.Sqrt(2), Matrix.CreateRotationZ(anguloRot*i));
+                    puntoTemp = Vector2.Transform(direccion_centro * subRadio * MathF.Sqrt(2), Matrix.CreateRotationZ(anguloRot * i));
                     puntosAutos.AddRange(
-                        Utils.Commons.map<Vector2>(GenerarPuntosPoissonDisk(radioArea, 1000f, autosGen),
-                        (Vector) => {return Vector + puntoTemp;})
-                        );
+                        GenerarPuntosValidos(radioArea, 1000f, autosGen, puntoTemp, 1000f)
+                    );
                 }
             }
-            if ( autosSob != 0)
-                puntosAutos.AddRange(GenerarPuntosPoissonDisk(subRadio*(MathF.Sqrt(2) - 1), 1000, autosSob));
-            foreach( Vector2 punto in puntosAutos )
+
+            if (autosSob != 0)
+            {
+                puntosAutos.AddRange(
+                    GenerarPuntosValidos(subRadio * (MathF.Sqrt(2) - 1), 1000f, autosSob, Vector2.Zero, 1000f)
+                );
+            }
+
+            foreach (Vector2 punto in puntosAutos)
             {
                 auto = new IA(punto, simulation, bufferpool, bodyHandleTags);
-                autos.Add(auto);  
+                autos.Add(auto);
             }
+
             atacantes = new(1);
+        }
+
+        // Método auxiliar para generar puntos válidos
+        private IEnumerable<Vector2> GenerarPuntosValidos(float radioArea, float distanciaMinima, int cantidad, Vector2 offset, float radioExclusion)
+        {
+            List<Vector2> puntosValidos = new();
+
+            while (puntosValidos.Count < cantidad)
+            {
+                // Generar nuevos puntos usando Poisson Disk
+                var nuevosPuntos = GenerarPuntosPoissonDisk(radioArea, distanciaMinima, cantidad - puntosValidos.Count)
+                    .Select(vector => vector + offset)
+                    .Where(vector => vector.Length() > radioExclusion);
+
+                puntosValidos.AddRange(nuevosPuntos);
+            }
+
+            return puntosValidos;
         }
 
         public void Update(float deltaTime)
@@ -203,6 +228,13 @@ namespace Control
                 auto.GetAuto().dibujar(view, projeccion, shadowMap);
             foreach( AgresiveIA atacante in atacantes )
                 atacante.GetAuto().dibujar(view, projeccion, shadowMap);
+        }
+        public void drawSombras(Matrix view, Matrix projeccion)
+        {
+            foreach( IA auto in autos )
+                auto.GetAuto().dibujarSombras(view, projeccion);
+            foreach( AgresiveIA atacante in atacantes )
+                atacante.GetAuto().dibujarSombras(view, projeccion);
         }
 
         ////funciones robadas de generador de conos ( no las lei pero se que funcionan )

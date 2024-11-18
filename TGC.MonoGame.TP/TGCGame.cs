@@ -57,8 +57,8 @@ namespace TGC.MonoGame.TP
         private Primitiva cajaPowerUp3;
         private Primitiva cajaPowerUp4;
         private AdministradorNPCs adminNPCs;
-        private Dictionary<int, string> bodyHandleTags;
-        private Dictionary<int, string> staticHandleTags;
+        private Dictionary<int, object> bodyHandleTags;
+        private Dictionary<int, object> staticHandleTags;
 
         /// <summary>
         ///     Constructor del juego.
@@ -87,8 +87,8 @@ namespace TGC.MonoGame.TP
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
 
-            bodyHandleTags = new Dictionary<int, string>();
-            staticHandleTags = new Dictionary<int, string>();
+            bodyHandleTags = new Dictionary<int, object>();
+            staticHandleTags = new Dictionary<int, object>();
 
             bufferPool = new BufferPool();
 
@@ -148,8 +148,8 @@ namespace TGC.MonoGame.TP
             Plataforma.setGScale(15f*1.75f);
             Escenario.CrearColliders(bufferPool, _simulacion);
             
-            //adminNPCs = new AdministradorNPCs();
-            //adminNPCs.generarAutos(2, 7000f, _simulacion, bufferPool, bodyHandleTags);
+            adminNPCs = new AdministradorNPCs();
+            adminNPCs.generarAutos(2, 7000f, _simulacion, bufferPool, bodyHandleTags);
 
             base.Initialize();
         }
@@ -186,7 +186,7 @@ namespace TGC.MonoGame.TP
             cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             
 
-            //adminNPCs.load(efectos, modelos, Content);
+            adminNPCs.load(efectos, modelos, Content);
 
             base.LoadContent();
         }
@@ -227,6 +227,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
 
             auto.dibujarSombras(luz.lightView, luz.lightProjection);
+            adminNPCs.drawSombras(luz.lightView, luz.lightProjection);
             terreno.dibujarSombras(luz.lightView, luz.lightProjection);
 
             #endregion
@@ -257,7 +258,7 @@ namespace TGC.MonoGame.TP
 
             camarografo.DrawDatos(SpriteBatch);
 
-            //adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
+            adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
 
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
 

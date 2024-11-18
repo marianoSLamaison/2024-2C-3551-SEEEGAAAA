@@ -7,6 +7,7 @@ using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities;
 using System.Collections.Generic;
+using Escenografia;
 
 namespace TGC.MonoGame.Samples.Physics.Bepu;
 
@@ -128,12 +129,12 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
     private SpringSettings ContactSpringiness { get; set; }
     private float MaximumRecoveryVelocity { get; set; }
     private float FrictionCoefficient { get; set; }
-    private readonly Dictionary<int, string> bodyTags;
-    private readonly Dictionary<int, string> staticTags;
+    private readonly Dictionary<int, object> bodyTags;
+    private readonly Dictionary<int, object> staticTags;
 
 
 
-    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, Dictionary<int, string> _bodyTags, Dictionary<int, string> _staticTags)
+    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, Dictionary<int, object> _bodyTags, Dictionary<int, object> _staticTags)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = 2f;
@@ -183,8 +184,21 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
             }
         }
 
-        if((bodyTags.TryGetValue(pair.A.BodyHandle.Value, out string tagA) && tagA == "Auto") && (staticTags.TryGetValue(pair.B.BodyHandle.Value, out string tagB) && tagB == "Caja")){
+        if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA) && objA is string tagA && tagA == "Auto" && 
+        staticTags.TryGetValue(pair.B.BodyHandle.Value, out object objB) && objB is string tagB && tagB == "Caja"){
             Console.WriteLine("Algo");
+        }
+
+        if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA2) && objA2 is string tagA2 && tagA2 == "Misil" &&
+        bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB2) && objB2 is AutoNPC){
+            ((AutoNPC)objB2).vida -= 50;
+            Console.WriteLine("QUITE VIDA");
+        }
+
+        if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB3) && objB3 is string tagB3 && tagB3 == "Misil" &&
+        bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA3) && objA3 is AutoNPC){
+            ((AutoNPC)objA2).vida -= 50;
+            Console.WriteLine("QUITE VIDA");
         }
 
         pairMaterial.FrictionCoefficient = FrictionCoefficient;
