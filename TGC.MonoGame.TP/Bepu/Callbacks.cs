@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using BepuPhysics;
@@ -7,7 +6,7 @@ using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities;
-using Escenografia;
+using System.Collections.Generic;
 
 namespace TGC.MonoGame.Samples.Physics.Bepu;
 
@@ -129,14 +128,18 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
     private SpringSettings ContactSpringiness { get; set; }
     private float MaximumRecoveryVelocity { get; set; }
     private float FrictionCoefficient { get; set; }
-    private readonly AutoJugador auto;
+    private readonly Dictionary<int, string> bodyTags;
+    private readonly Dictionary<int, string> staticTags;
 
-    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, AutoJugador autoJugador)
+
+
+    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, Dictionary<int, string> _bodyTags, Dictionary<int, string> _staticTags)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = 2f;
         FrictionCoefficient = 1f;
-        auto = autoJugador;
+        bodyTags = _bodyTags;
+        staticTags = _staticTags;
     }
     public void Initialize(Simulation simulation)
     {
@@ -170,11 +173,6 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
         out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
     {
 
-        if((pair.A.BodyHandle.Value == auto.handlerDeCuerpo.Value && (pair.B.StaticHandle.Value == 4 || pair.B.StaticHandle.Value == 5 || pair.B.StaticHandle.Value == 6 || pair.B.StaticHandle.Value == 7) || 
-            pair.B.BodyHandle.Value == auto.handlerDeCuerpo.Value && (pair.A.StaticHandle.Value == 4 || pair.A.StaticHandle.Value == 5 || pair.A.StaticHandle.Value == 6 || pair.A.StaticHandle.Value == 7))){
-                Console.WriteLine("Colisione con la caja");
-        }
-
         if ( (pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Static) || 
         (pair.A.Mobility == CollidableMobility.Static && pair.B.Mobility == CollidableMobility.Dynamic)){
             if ( pair.A.Mobility != CollidableMobility.Dynamic)
@@ -183,8 +181,10 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
                 pair.A = pair.B;
                 pair.B = swaper;
             }
+        }
 
-            
+        if((bodyTags.TryGetValue(pair.A.BodyHandle.Value, out string tagA) && tagA == "Auto") && (staticTags.TryGetValue(pair.B.BodyHandle.Value, out string tagB) && tagB == "Caja")){
+            Console.WriteLine("Algo");
         }
 
         pairMaterial.FrictionCoefficient = FrictionCoefficient;

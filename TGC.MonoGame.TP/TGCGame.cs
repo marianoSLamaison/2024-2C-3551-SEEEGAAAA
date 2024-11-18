@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 
 
@@ -56,6 +57,8 @@ namespace TGC.MonoGame.TP
         private Primitiva cajaPowerUp3;
         private Primitiva cajaPowerUp4;
         private AdministradorNPCs adminNPCs;
+        private Dictionary<int, string> bodyHandleTags;
+        private Dictionary<int, string> staticHandleTags;
 
         /// <summary>
         ///     Constructor del juego.
@@ -84,16 +87,14 @@ namespace TGC.MonoGame.TP
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
 
-            auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
+            bodyHandleTags = new Dictionary<int, string>();
+            staticHandleTags = new Dictionary<int, string>();
 
             bufferPool = new BufferPool();
 
-            cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp2 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp3 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp4 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
+            
 
-            var callbacks = new CustomNarrowPhaseCallbacks(new SpringSettings(30f,1f), auto);
+            var callbacks = new CustomNarrowPhaseCallbacks(new SpringSettings(30f,1f), bodyHandleTags, staticHandleTags);
 
             _simulacion = Simulation.Create(bufferPool, 
                                            callbacks, 
@@ -101,13 +102,15 @@ namespace TGC.MonoGame.TP
                                             new SolveDescription(8,1));
 
             AyudanteSimulacion.simulacion = _simulacion;
-
             
-            auto.Misil = new Misil();
+            auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
             
-            //seteamos un colisionador para el auto
             auto.CrearCollider(_simulacion, bufferPool);
+            bodyHandleTags.Add(auto.handlerDeCuerpo.Value, "Auto");
+
+            auto.Misil = new Misil();
             auto.Misil.CrearColliderMisil(_simulacion);
+            bodyHandleTags.Add(auto.Misil.handlerCuerpo.Value, "Misil");
 
             AyudanteSimulacion.SetScenario();
 
@@ -121,18 +124,32 @@ namespace TGC.MonoGame.TP
             Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
 
             terreno = new Terreno();
+            terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
 
             shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
 
             luz = new Luz(GraphicsDevice);
 
-            cajaPowerUp1.staticHandle = _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+            cajaPowerUp1 = Primitiva.Prisma(new Vector3(100, 100, 100), -new Vector3(100, 100, 100));
+            cajaPowerUp2 = Primitiva.Prisma(new Vector3(100, 100, 100), -new Vector3(100, 100, 100));
+            cajaPowerUp3 = Primitiva.Prisma(new Vector3(100, 100, 100), -new Vector3(100, 100, 100));
+            cajaPowerUp4 = Primitiva.Prisma(new Vector3(100, 100, 100), -new Vector3(100, 100, 100));
 
+            cajaPowerUp1.staticHandle = _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,6100)),_simulacion.Shapes.Add(new Box(200,200,200))));
+            cajaPowerUp2.staticHandle = _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,6100)),_simulacion.Shapes.Add(new Box(200,200,200))));
+            cajaPowerUp3.staticHandle = _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,-6100)),_simulacion.Shapes.Add(new Box(200,200,200))));
+            cajaPowerUp4.staticHandle = _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(200,200,200))));
+
+            staticHandleTags.Add(cajaPowerUp1.staticHandle.Value, "Caja");
+            staticHandleTags.Add(cajaPowerUp2.staticHandle.Value, "Caja");
+            staticHandleTags.Add(cajaPowerUp3.staticHandle.Value, "Caja");
+            staticHandleTags.Add(cajaPowerUp4.staticHandle.Value, "Caja");
+
+            Plataforma.setGScale(15f*1.75f);
+            Escenario.CrearColliders(bufferPool, _simulacion);
+            
             //adminNPCs = new AdministradorNPCs();
-            //adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
+            //adminNPCs.generarAutos(2, 7000f, _simulacion, bufferPool, bodyHandleTags);
 
             base.Initialize();
         }
@@ -152,12 +169,8 @@ namespace TGC.MonoGame.TP
             //_vehicleCombatShader = Content.Load<Effect>(ContentFolderEffects + "VehicleCombatShader");
             _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
             
-            
-            Plataforma.setGScale(15f*1.75f);
             Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
-            Escenario.CrearColliders(bufferPool, _simulacion);
 
-            terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
             terreno.SetEffect(_terrenoShader, Content);
 
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);

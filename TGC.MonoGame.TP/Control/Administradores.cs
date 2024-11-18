@@ -24,10 +24,10 @@ namespace Control
 
         public Vector2 direccion;
         public IA(){}
-        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool)
+        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, string> bodyHandleTags)
         {
             AutoControlado = new AutoNPC();
-            AutoControlado.CrearCollider(simulation, bufferPool, initPos);
+            AutoControlado.CrearCollider(simulation, bufferPool, initPos, bodyHandleTags);
             fuerzaMov = 251;//despues setear a un rango
             aceleracion = AutoControlado.DarAceleracion(fuerzaMov) / 2f;
             AutoControlado.velocidad = 0;
@@ -75,7 +75,7 @@ namespace Control
             public AgresiveIA(){
 
             }
-            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool) : base(initPos, simulation, bufferPool)
+            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, string> bodyHandleTags) : base(initPos, simulation, bufferPool, bodyHandleTags)
             {
             }
             /*
@@ -105,7 +105,7 @@ namespace Control
         private Model[] modelos;
         List<IA> autos;
         List<AgresiveIA> atacantes;
-        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool)
+        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool, Dictionary<int, string> bodyHandleTags)
         {//los genero de esta manera para reducir espacios sin nada en los bordes del escenario
             int autosGen = numero / 4;
             int autosSob = numero % 4;
@@ -131,7 +131,7 @@ namespace Control
                 puntosAutos.AddRange(GenerarPuntosPoissonDisk(subRadio*(MathF.Sqrt(2) - 1), 1000, autosSob));
             foreach( Vector2 punto in puntosAutos )
             {
-                auto = new IA(punto, simulation, bufferpool);
+                auto = new IA(punto, simulation, bufferpool, bodyHandleTags);
                 autos.Add(auto);  
             }
             atacantes = new(1);

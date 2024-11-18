@@ -72,6 +72,7 @@ namespace Escenografia
         protected float revolucionDeRuedas;
 
         public float velocidad = 500000f;
+        public int vida = 100;
 
 
      ///////Cosas de textureo//////////////   
@@ -497,6 +498,7 @@ namespace Escenografia
     class AutoNPC : Auto
     {
 
+        public BodyHandle handlerCuerpo;
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
@@ -669,7 +671,7 @@ namespace Escenografia
         }
 
         public float DarAceleracion(float fuerz) => refACuerpo.LocalInertia.InverseMass * fuerz;
-        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial){
+        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial, Dictionary<int, string> bodyHandleTags){
 
             var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
@@ -694,8 +696,9 @@ namespace Escenografia
             compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
             compoundBuilder.Reset();
 
-            BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
-            this.darCuerpo(handlerDeCuerpo);
+            handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+            bodyHandleTags.Add(handlerCuerpo.Value, "AutoNPC");
+            this.darCuerpo(handlerCuerpo);
         }
 
         public override void Mover(float fuerzaAAplicar)

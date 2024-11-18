@@ -71,7 +71,7 @@ public class Misil : PowerUp
     Vector3 posicionRelativaAlAuto = new Vector3(0, 150, 0);
 
     protected float fuerza;
-    protected BodyHandle handlerCuerpo;
+    public BodyHandle handlerCuerpo;
     protected BodyReference refACuerpo;
     public Matrix orientacionAutoSalida;
 
@@ -104,8 +104,8 @@ public class Misil : PowerUp
         //compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
 
         // Agregar el cuerpo cinemático a la simulación
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
-        this.darCuerpo(handlerDeCuerpo);
+        handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
+        this.darCuerpo(handlerCuerpo);
     }
 
     public void darCuerpo(BodyHandle handler)
