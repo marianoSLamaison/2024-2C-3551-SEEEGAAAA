@@ -186,15 +186,16 @@ namespace Control
             ret = Vector2.Transform(Vector2.UnitX, Matrix.CreateRotationZ(RNG.NextSingle() * MathF.Tau));
             return ret * radioVerdadero;
         }
-        public void load(String [] efectos, String [] modelos, ContentManager content)
+        public void load(Effect efecto, String [] modelos, Texture2D[] texturas, ContentManager content)
         {
             foreach( IA auto in autos )
             {//designamos modelos y efectos al azar, si necesitan que esten juntos, habria que dise
             //diseñar alguna sestructura que tenga a los dos para tener el modelo y la estruct juntos,
             //y pasar eso
-                String dEffecto = efectos[0];
-                String dModelo = modelos[0];
-                auto.GetAuto().loadModel(dModelo, dEffecto, content);
+                String dModelo = modelos[RNG.Next() % modelos.Length];
+                Model modelo = content.Load<Model>(dModelo);
+
+                auto.GetAuto().CargarModelo(efecto, modelo, texturas);
             }
         }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)

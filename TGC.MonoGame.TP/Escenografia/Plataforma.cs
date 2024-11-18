@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using BepuPhysics;
+using Control;
 
 namespace Escenografia
 {
@@ -31,9 +32,11 @@ namespace Escenografia
         {
             g_scale = scale;
         }
-        public override void loadModel(string direcionModelo, string direccionEfecto, ContentManager contManager) 
+        public void loadModel(Model modelo, Effect efecto) 
         {
-            base.loadModel(direcionModelo, direccionEfecto, contManager);
+            //base.loadModel(direcionModelo, direccionEfecto, contManager);
+            this.modelo = modelo;
+            this.efecto = efecto;
             foreach ( ModelMesh mesh in modelo.Meshes )
             {
                 foreach ( ModelMeshPart meshPart in mesh.MeshParts)
@@ -42,9 +45,102 @@ namespace Escenografia
                 }
             }
         }
+        public override void loadModel(String a, String b, ContentManager c)
+        {
+            //Deprecado pero retirarlo tomaria mas tiempo del que tengo
+        }
+private void getModelData(out List<Vector3> vertices, out List<int> indices)
+{
+    vertices = new List<Vector3>();
+    indices = new List<int>();
+    int vertexOffset = 0;
+
+    foreach (ModelMesh mesh in modelo.Meshes)
+    {
+        foreach (ModelMeshPart part in mesh.MeshParts)
+        {
+            VertexBuffer vertexBuffer = part.VertexBuffer;
+            IndexBuffer indexBuffer = part.IndexBuffer;
+
+            VertexPositionNormalTexture[] vertexData = new VertexPositionNormalTexture[vertexBuffer.VertexCount];
+            vertexBuffer.GetData(vertexData);
+
+            foreach (var vertex in vertexData)
+            {
+                vertices.Add(vertex.Position);
+            }
+
+            // Read indices as 16-bit values
+            ushort[] indexData = new ushort[indexBuffer.IndexCount];
+            indexBuffer.GetData(indexData);
+
+            // Adjust indices to account for the vertex offset and convert to 32-bit integers
+            for (int i = 0; i < indexData.Length; i++)
+            {
+                indices.Add(indexData[i] + vertexOffset);
+            }
+
+            // Update the vertex offset
+            vertexOffset += vertexBuffer.VertexCount;
+        }
+    }
+}
+
+
+//Por algun motivo no funciona _/\(°_°)/\_ No tengo idea por que
+//en teoria deberia funcionar pero no lo hace
+//ya veo que sera algo como con el dibujado de poligonos, 
+//pero ahora no tengo tiempo para eso a si que lo dejare aqui
+public void CrearColliderExp(BufferPool bufferPool, Simulation simulacion)
+{
+    // Load the data needed to obtain the shape
+    List<Vector3> vertices;
+    List<int> indices;
+    getModelData(out vertices, out indices);
+
+    // Calculate the number of triangles
+    int triangleCount = indices.Count / 3;
+
+    // Allocate a buffer for the triangles using the buffer pool
+    bufferPool.Take<Triangle>(triangleCount, out var triangleBuffer);
+    Triangle t;
+    // Fill the buffer with triangle data
+    for (int i = 0; i < triangleBuffer.Length; i++)
+    {
+        int index0 = indices[i * 3];
+        int index1 = indices[i * 3 + 1];
+        int index2 = indices[i * 3 + 2];
         
+        t = new Triangle(vertices[index0].ToNumerics(), vertices[index1].ToNumerics(), vertices[index2].ToNumerics());
+        triangleBuffer[i] = t;
+    }
+
+    // Create the mesh and add it to the simulation
+    Mesh mesh = new Mesh(triangleBuffer, Vector3.One.ToNumerics(), bufferPool);
+    var shapeIndex = simulacion.Shapes.Add(mesh);
+
+    // Return the buffer to the pool after use
+    bufferPool.Return(ref triangleBuffer);
+
+    // For a static body
+    var staticDescription = new StaticDescription(
+        posicion.ToNumerics(),  // Position of the static body
+        Quaternion.Identity.ToNumerics(),     // Orientation of the static body
+        shapeIndex              // Shape index
+    );
+    Console.WriteLine($"Collider Position: {posicion}");
+    Console.WriteLine($"Shape Index: {shapeIndex}");
+
+    // Debugging information
+    var staticBody = simulacion.Statics.GetStaticReference(simulacion.Statics.Add(staticDescription));
+    Console.WriteLine($"Static Body Position: {staticBody.Pose.Position}");
+    Console.WriteLine($"Static Body Orientation: {staticBody.Pose.Orientation}");
+}
+
+
         public void CrearCollider(BufferPool bufferPool, Simulation simulacion)
         {
+            VertexBuffer buffer;
             // Definir las formas de cada sección
             var plataformaPrincipal = new Box(3000 * 1.75f, 500, 3000 * 1.75f);
             var plataformaPrincipalPose = new RigidPose(new System.Numerics.Vector3 (posicion.X, 250, posicion.Z), 

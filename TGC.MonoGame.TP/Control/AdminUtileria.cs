@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using BepuUtilities;
 using BepuUtilities.Memory;
 using Escenografia;
 using Microsoft.Xna.Framework;
@@ -15,30 +16,53 @@ namespace Control
     {
         Escenografia.LimBox limites;
         private List<Escenografia.Escenografia3D> objetosFijos;
-
-        private Texture2D texturePlataforma1;
-        private Texture2D texturePlataforma2;
-        private Texture2D texturePlataforma3;
-        private Texture2D texturePlataforma4;
-
-        private Escenografia.Plataforma plataforma1;
-        private Escenografia.Plataforma plataforma2;
-        private Escenografia.Plataforma plataforma3;
-        private Escenografia.Plataforma plataforma4;
-        public AdminUtileria(Vector3 minLims, Vector3 maxLims)
+        Terreno suelo;
+        ThreadDispatcher threadDispatcher;
+        public AdminUtileria(float ScuareSide, float desiredHeigth, float desiredScale, Simulation simulacion)
         {
-            limites = new Escenografia.LimBox(minLims, maxLims);
-            Vector3 dimensiones = maxLims - minLims;
-            objetosFijos = new List<Escenografia.Escenografia3D>
-            {
-                new Escenografia.Plataforma(3*MathF.PI / 2, minLims),
-                new Escenografia.Plataforma(MathF.PI, new Vector3(minLims.X + dimensiones.X, 400f, minLims.Z)),
-                new Escenografia.Plataforma(0,  new Vector3(minLims.X, 400f, minLims.Z + dimensiones.Z)),
-                new Escenografia.Plataforma(MathF.PI / 2, maxLims)
+            //creamos un dos puntos que definen los limites del area total
+            //cada 
+            float sqr2 = MathF.Sqrt(2);
+            const float bRotation = MathF.PI / 2f;
+            Vector3 esquina = new Vector3(sqr2, 0f, sqr2) * ScuareSide / 2f;
+            Vector3 bHeigth = new Vector3(0f, desiredHeigth, 0f);
+            limites = new Escenografia.LimBox(-esquina , esquina );
+            objetosFijos = new List<Escenografia.Escenografia3D>{
+                new Escenografia.Plataforma(bRotation, esquina + bHeigth),
+                new Escenografia.Plataforma(
+                    bRotation * 2f, Vector3.Transform(esquina, Microsoft.Xna.Framework.Matrix.CreateRotationY(bRotation)) + bHeigth),
+                new Escenografia.Plataforma(
+                    bRotation * 3f, Vector3.Transform(esquina, Microsoft.Xna.Framework.Matrix.CreateRotationY(bRotation * 2f)) + bHeigth),
+                new Escenografia.Plataforma(
+                    0, Vector3.Transform(esquina, Microsoft.Xna.Framework.Matrix.CreateRotationY( bRotation * 3f)) + bHeigth)
             };
+            Escenografia.Plataforma.setGScale(desiredScale);
+            suelo = new Terreno();
         }
 
-    
+        public void setThreadDispatcher(ThreadDispatcher dispatcher)
+        {
+            threadDispatcher = dispatcher;
+        }
+
+    private void SetParedes(Simulation simulacion)
+    {
+        const float grosorPared = 500f;
+        float ladoParedEjeZ = MathF.Abs(limites.maxVertice.X - limites.minVertice.X) + grosorPared;
+        float ladoParedEjeX = MathF.Abs(limites.maxVertice.Z - limites.minVertice.Z) + grosorPared;
+        var paredEjeX = simulacion.Shapes.Add(new Box(grosorPared, ladoParedEjeX, ladoParedEjeX));
+        var paredEjeZ = simulacion.Shapes.Add(new Box(ladoParedEjeZ, ladoParedEjeZ, grosorPared));
+
+        RigidPose poseParedEjeX1 = new RigidPose(Vector3.UnitX.ToNumerics() * ladoParedEjeZ / 2f);
+        RigidPose poseParedEjeX2 = new RigidPose(-1 * Vector3.UnitX.ToNumerics() * ladoParedEjeZ / 2f); 
+        RigidPose poseParedEjeZ1 = new RigidPose(Vector3.UnitZ.ToNumerics() * ladoParedEjeX / 2f);
+        RigidPose poseParedEjeZ2 = new RigidPose(-1 * Vector3.UnitZ.ToNumerics() * ladoParedEjeX / 2f);
+
+        simulacion.Statics.Add(new StaticDescription(poseParedEjeX1, paredEjeX));
+        simulacion.Statics.Add(new StaticDescription(poseParedEjeX2, paredEjeX));
+        simulacion.Statics.Add(new StaticDescription(poseParedEjeZ1, paredEjeZ));
+        simulacion.Statics.Add(new StaticDescription(poseParedEjeZ2, paredEjeZ));
+    }
 
     public void SetTexturePlataform(Escenografia.Plataforma unaPlataforma, Texture2D unaTextura){
         unaPlataforma.SetTexture(unaTextura);
@@ -46,26 +70,46 @@ namespace Control
     public void loadPlataformas(string direcionModelo, string direccionEfecto, ContentManager contManager)
     {
         if (objetosFijos.Count > 4) throw new Exception("Esto era un metodo de prueba");
-    
+        
+        Effect efecto = contManager.Load<Effect>(direccionEfecto);
+        Model modelo = contManager.Load<Model>(direcionModelo);
+
         foreach(Plataforma plataforma in objetosFijos)
         {
-            plataforma.loadModel(direcionModelo,direccionEfecto,contManager);
+            plataforma.loadModel(modelo,efecto);
         }
+    }
+    public void loadTerreno(Effect efecto, ContentManager content)
+    {
+        suelo.SetEffect(efecto, content);
     }
 
     public void CrearColliders(BufferPool bufferPool, Simulation simulacion){
+        //creamos los coliders de todas las plataformas
         foreach(Plataforma plataforma in objetosFijos)
         {
             plataforma.CrearCollider(bufferPool, simulacion);
         }
+        //creamos el colider del suelo
+        suelo.CrearCollider(bufferPool, simulacion, threadDispatcher,
+         (int)MathF.Abs(limites.maxVertice.X - limites.minVertice.X), 
+         (int)MathF.Abs(limites.maxVertice.Z - limites.minVertice.Z));
+        
+        //creamos las paredes
+        SetParedes(simulacion);;
     }
 
-    public void Dibujar(Camarografo camarografo, GraphicsDevice graphicsDevice)
-    {
-        foreach (Plataforma objeto in objetosFijos)
+        public void Dibujar(Camarografo camarografo, RenderTarget2D shadowMap)
         {
-            objeto.dibujarPlataforma(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Silver);
+            foreach (Plataforma objeto in objetosFijos)
+            {
+                objeto.dibujarPlataforma(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Silver);
+            }
+            suelo.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
         }
-    }
+        public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+        {
+            suelo.dibujarSombras(view, projection);
+        }
     }
 }

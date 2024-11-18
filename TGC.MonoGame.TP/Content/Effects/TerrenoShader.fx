@@ -69,9 +69,12 @@ struct VertexShaderOutput
     float4 Position : SV_Position;//posicion del vertice transformada ( la que se usara para el raster)
     float2 TextureCoordinates : TEXCOORD0;//coordenadas de textura
     float4 localPosition : TEXCOORD1;    // POS EN LA MATRIZ DE MUNDO (¿? Sera la de abajo o se dio un problema aqui)
-    float4 WorldPosition : TEXCOORD3;
     float4 Normal : TEXCOORD2;//normal del vector
+    float4 WorldPosition : TEXCOORD3;
     float4 LightSpacePosition : TEXCOORD4;//possicion de la luz
+    float4 ligthDirection : TEXCOORD5;
+    float4 cameraDirection : TEXCOORD6;
+    float4 ligthCameraMedium : TEXCOORD7;
 };
 
 struct DepthPassVertexShaderInput
@@ -128,6 +131,10 @@ VertexShaderOutput VS(VertexShaderInput input)
     output.Normal = input.Normal;
     output.TextureCoordinates = input.TextureCoordinates;
 	
+    output.ligthDirection = normalize(float4(lightPosition, 0.0) - output.WorldPosition);
+    output.cameraDirection = normalize(float4(CameraPosition, 0.0) - output.WorldPosition);
+    output.ligthCameraMedium = normalize(output.ligthDirection + output.cameraDirection);
+
     return output;
 }
 
@@ -140,9 +147,9 @@ float4 PS(VertexShaderOutput input) : COLOR
     //invertimos las coordenadas en la region y
     shadowMapTextureCoordinates.y = 1.0f - shadowMapTextureCoordinates.y;
 
-    float3 lightDirection = normalize(lightPosition - input.WorldPosition.xyz);
-    float3 viewDirection = normalize(CameraPosition - input.WorldPosition.xyz);
-    float3 halfVector = normalize(lightDirection + viewDirection);
+    //float3 lightDirection = normalize(lightPosition - input.WorldPosition.xyz);
+    //float3 viewDirection = normalize(CameraPosition - input.WorldPosition.xyz);
+    //float3 halfVector = normalize(lightDirection + viewDirection);
 
     //normales
     float3 normal = normalize(input.Normal.rgb);
@@ -152,7 +159,7 @@ float4 PS(VertexShaderOutput input) : COLOR
     //esto estaba multiplicando el argumento antes 0.000000000001
     float dynamicEpsilon = saturate(distanceToLight * 0.000000000001);
     //sesgo de inclinacion
-    float inclinationBias = max(dynamicEpsilon * (1.0 - dot(normal, lightDirection)), maxEpsilon);
+    float inclinationBias = max(dynamicEpsilon * (1.0 - dot(normal, input.ligthDirection.xyz)), maxEpsilon);
 
     //prfundidad del shadowMap
     float shadowMapDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates).x + inclinationBias;
@@ -164,27 +171,27 @@ float4 PS(VertexShaderOutput input) : COLOR
 
     // Calculate the diffuse light with a minimum light
     //
-    float NdotL = saturate(dot(input.Normal.xyz, lightDirection));
+    float NdotL = saturate(dot(input.Normal.xyz, input.ligthDirection.xyz));
     float3 minLight = float3(0.05, 0.05, 0.05); // Luz mínima para zonas oscuras
     float3 diffuseLight = KDiffuse * diffuseColor * NdotL + minLight;
 
     // Compare the shadowmap with the REAL depth of this fragment
 	// in light space
     //antes era 0.0 
-    float notInShadow = 0.0;
+    float notInShadow = 1.0;
     //
     float2 texelSize = 1.0 / shadowMapSize;
+    const float epsilon = 0.09;
     for (int x = -1; x <= 1; x++)
         for (int y = -1; y <= 1; y++)
         {
             float pcfDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates + float2(x, y) * texelSize).r + inclinationBias;
-       
-            notInShadow += step(pcfDepth, lightSpacePosition.z) / 9.0 ;
+            notInShadow -= step(lightSpacePosition.z, pcfDepth + epsilon) / 9.0;
             //Preguntar a nacho despues
         }
 
     // Calculate the specular light
-    float NdotH = dot(input.Normal.xyz, halfVector);
+    float NdotH = dot(input.Normal.xyz, input.ligthCameraMedium.xyz);
     float3 specularLight = sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
 
     // Final calculation

@@ -46,7 +46,6 @@ namespace TGC.MonoGame.TP
         private BufferPool bufferPool;
         private ThreadDispatcher ThreadDispatcher;
         private Terreno terreno;
-
         RenderTarget2D shadowMap;
 
         Luz luz;
@@ -102,21 +101,20 @@ namespace TGC.MonoGame.TP
             auto.CrearCollider(_simulacion, bufferPool);
             auto.Misil.CrearColliderMisil(_simulacion);
 
-            AyudanteSimulacion.SetScenario();
-
             auto.Metralleta = new Metralleta();
             auto.Metralleta.CrearColliderMetralleta(_simulacion);
             
             generadorConos = new AdministradorConos();
             generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
-            
-            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-            Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
+
+
+            Escenario = new AdminUtileria(10000f, 700f, 9f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
 
             terreno = new Terreno();
 
-            shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
 
+            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
+            shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
             luz = new Luz(GraphicsDevice);
 
             cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
@@ -130,9 +128,13 @@ namespace TGC.MonoGame.TP
             _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
 
             adminNPCs = new AdministradorNPCs();
-            adminNPCs.generarAutos(10, 7000f, _simulacion, bufferPool);
+            adminNPCs.generarAutos(0, 7000f, _simulacion, bufferPool);
 
             base.Initialize();
+            //TODO: 
+            //agregar el shader de terreno a los muros
+            //ver por que el glitching en la pared
+            //modificar forma del auto para que toque el suelo
         }
 
         protected override void LoadContent()
@@ -141,6 +143,19 @@ namespace TGC.MonoGame.TP
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             String[] modelos = {ContentFolder3D + "Auto/RacingCar"};
             String[] efectos = {ContentFolderEffects + "VehicleShader"};
+
+            Effect efectoDeAutos = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
+            Texture2D[] texturasParaAutos = {
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_basecolor_0"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_normal"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_metallic"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_rougness"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_ao"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_emission")
+            };
+
+
+
             
             camarografo.loadTextFont(ContentFolderEffects, Content);
 
@@ -152,11 +167,14 @@ namespace TGC.MonoGame.TP
             
             
             Plataforma.setGScale(15f*1.75f);
-            Escenario.loadPlataformas(ContentFolder3D+"Plataforma/Plataforma", ContentFolderEffects + "BasicShader", Content);
+            //Nota esto toma el string, pero es por que maneja el tema del cargado de plataformas
+            //en el metodo dado eso incluye un loop para cargar todas las plataformas con mismo modelo
+            Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "BasicShader", Content);
+            Escenario.loadTerreno(_terrenoShader, Content);
             Escenario.CrearColliders(bufferPool, _simulacion);
 
-            terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
-            terreno.SetEffect(_terrenoShader, Content);
+            //terreno.CrearCollider(bufferPool, _simulacion, ThreadDispatcher);
+            //terreno.SetEffect(_terrenoShader, Content);
 
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
 
@@ -171,7 +189,7 @@ namespace TGC.MonoGame.TP
             cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             
 
-            adminNPCs.load(efectos, modelos, Content);
+            adminNPCs.load(efectoDeAutos, modelos, texturasParaAutos, Content);
 
             base.LoadContent();
         }
@@ -205,7 +223,7 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
 
-            #region Shadows
+            #region CalculoSombras
 
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             // Set the render target as our shadow map, we are drawing the depth into this texture
@@ -213,7 +231,8 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
 
             auto.dibujarSombras(luz.lightView, luz.lightProjection);
-            terreno.dibujarSombras(luz.lightView, luz.lightProjection);
+            //terreno.dibujarSombras(luz.lightView, luz.lightProjection);
+            Escenario.dibujarSombras(luz.lightView, luz.lightProjection);
 
             #endregion
             
@@ -224,12 +243,12 @@ namespace TGC.MonoGame.TP
             // Aca deberiamos poner toda la logia de renderizado del juego.
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.LightBlue, 1f, 0);
             
-            Escenario.Dibujar(camarografo, GraphicsDevice);
+            Escenario.Dibujar(camarografo, shadowMap);
             
             //generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion);
 
             auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
-            terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
+            //terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
             
             
             auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);

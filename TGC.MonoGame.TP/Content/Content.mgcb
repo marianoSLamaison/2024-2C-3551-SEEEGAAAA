@@ -278,6 +278,18 @@
 /processorParam:TextureFormat=Color
 /build:Models/Plataforma/BlueRockTexture.png
 
+#begin Models/Plataforma/LavaTexture.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/Plataforma/LavaTexture.png
+
 #begin Models/Plataforma/MountaintRockTexure.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -290,7 +302,7 @@
 /processorParam:TextureFormat=Color
 /build:Models/Plataforma/MountaintRockTexure.png
 
-#begin Models/Plataforma/Plataforma.fbx
+#begin Models/Plataforma/Plataformas.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
 /processorParam:ColorKeyColor=0,0,0,0
@@ -307,7 +319,7 @@
 /processorParam:Scale=1
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
-/build:Models/Plataforma/Plataforma.fbx
+/build:Models/Plataforma/Plataformas.fbx
 
 #begin Models/Plataforma/WoodTexture.png
 /importer:TextureImporter

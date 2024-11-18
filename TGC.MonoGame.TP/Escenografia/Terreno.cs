@@ -75,12 +75,13 @@ namespace Escenografia
             }
         }
 
-        public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher){
-            var planeWidth = 500;
+        public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher, int ancho, int alto){
+            //var planeWidth = 500;
             var scale = 35;
-            Vector2 terrainPosition = new Vector2(1 - planeWidth, 1 - planeWidth) * scale * 0.5f;
+            //esto estaba multiplicado por scale antes
+            Vector2 terrainPosition = new Vector2(1 - ancho, 1 - alto) * 0.5f;
 
-            var planeMesh = DemoMeshHelper.CreateDeformedPlane(planeWidth, planeWidth,
+            var planeMesh = DemoMeshHelper.CreateDeformedPlane(500, 500,
                 (int vX, int vY) =>
                 {
                     // Alturas basadas en combinaciones de funciones seno y coseno
@@ -93,7 +94,7 @@ namespace Escenografia
 
                     // Sumar diferentes contribuciones para lograr más irregularidad
                     var totalHeight = octave1 + octave2 + octave3;
-
+                    //
                     var vertexPosition = new Vector2(vX * scale, vY * scale) + terrainPosition;
 
                     // Devolver la posición del vértice con la altura calculada
@@ -149,7 +150,7 @@ namespace Escenografia
                 //vertices[i].Normal = Vector3.One * 0.8f;
             }
             
-            AyudanteSimulacion.agregarCuerpoEstatico(_simulacion, new RigidPose(new Vector3(0, -15, 0).ToNumerics()), _simulacion.Shapes.Add(planeMesh));
+            AyudanteSimulacion.agregarCuerpoEstatico(_simulacion, new RigidPose(new Vector3(0, 0, 0).ToNumerics()), _simulacion.Shapes.Add(planeMesh));
             //handlerTerreno = _simulacion.Statics.Add(new StaticDescription(new Vector3(0, -15, 0).ToNumerics(), _simulacion.Shapes.Add(planeMesh)));
         }
 
