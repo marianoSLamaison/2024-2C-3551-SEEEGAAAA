@@ -184,9 +184,11 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
             }
         }
 
+        //SE COMPARAN LOS OBJETOS DE LOS DICCIONARIOS CON LOS PARES DE HANDLERS QUE COLISIONARON CON SUS VALUES (algunos son solo strings -como cajas de powerups- y otros son objetos, como los autos NPC)
+
         if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA) && objA is string tagA && tagA == "Auto" && 
         staticTags.TryGetValue(pair.B.BodyHandle.Value, out object objB) && objB is string tagB && tagB == "Caja"){
-            Console.WriteLine("Algo");
+            Console.WriteLine("Agarré un powerup");
         }
 
         if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA2) && objA2 is string tagA2 && tagA2 == "Misil" &&

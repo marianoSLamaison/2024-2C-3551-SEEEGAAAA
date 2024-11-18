@@ -87,7 +87,8 @@ namespace TGC.MonoGame.TP
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
 
-            bodyHandleTags = new Dictionary<int, object>();
+            //DICCIONARIO PARA CHEQUEAR EN LAS CALLBACKS, SE PUEDEN AGREGAR TANTO STRINGS COMO LOS PROPIOS OBJETOS PARA HACERLES REFERENCIA, LA KEY ES EL VALUE DEL HANDLER
+            bodyHandleTags = new Dictionary<int, object>(); 
             staticHandleTags = new Dictionary<int, object>();
 
             bufferPool = new BufferPool();
@@ -149,7 +150,7 @@ namespace TGC.MonoGame.TP
             Escenario.CrearColliders(bufferPool, _simulacion);
             
             adminNPCs = new AdministradorNPCs();
-            adminNPCs.generarAutos(2, 7000f, _simulacion, bufferPool, bodyHandleTags);
+            adminNPCs.generarAutos(2, 7000f, _simulacion, bufferPool, bodyHandleTags); //Baje la cantidad de autos (por las pruebas) y le paso el diccionario para agregar sus handlers
 
             base.Initialize();
         }
@@ -185,7 +186,6 @@ namespace TGC.MonoGame.TP
             cajaPowerUp3.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             
-
             adminNPCs.load(efectos, modelos, Content);
 
             base.LoadContent();
@@ -227,7 +227,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
 
             auto.dibujarSombras(luz.lightView, luz.lightProjection);
-            adminNPCs.drawSombras(luz.lightView, luz.lightProjection);
+            adminNPCs.drawSombras(luz.lightView, luz.lightProjection); //Agregue las sombras de los otros autos
             terreno.dibujarSombras(luz.lightView, luz.lightProjection);
 
             #endregion

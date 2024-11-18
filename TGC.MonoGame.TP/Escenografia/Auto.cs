@@ -745,11 +745,10 @@ namespace Escenografia
             compoundBuilder.Reset();
 
             handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + new System.Numerics.Vector3(posicionInicial.X, 1000f, posicionInicial.Y) , compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+            //Cambie la pose de la generacion del collider por que no se generaba donde queríamos
+            
             bodyHandleTags.Add(handlerCuerpo.Value, this);
             this.darCuerpo(handlerCuerpo);
-
-            Console.WriteLine(refACuerpo.Pose.Position);
-
         }
 
         public override void Mover(float fuerzaAAplicar)
