@@ -16,6 +16,8 @@ namespace Control
         private bool deboDibujarDatos;
         private bool teclaOprimida;
 
+        public BoundingFrustum frustum;
+
         public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float AspectRatio, float minVista, float maxVista)
         {
             camaraAsociada = new Control.Camara(posicion, puntoDeFoco);
@@ -33,6 +35,15 @@ namespace Control
         public Matrix getProjectionMatrix()
         {
             return projeccion;
+        }
+
+        public BoundingFrustum GetFrustum(){
+            // Combinar las matrices de vista y proyección
+            Matrix viewProjection = getViewMatrix() * getProjectionMatrix();
+
+            // Crear el frustum basado en la matriz combinada
+            frustum = new BoundingFrustum(viewProjection);
+            return frustum;
         }
 
         public void GetInputs()
@@ -69,6 +80,6 @@ namespace Control
         {
             Font = contManager.Load<SpriteFont>(CarpetaEfectos + "debugFont");
         }
-    }
+    } 
 
 }

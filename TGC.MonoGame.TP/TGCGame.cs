@@ -119,7 +119,7 @@ namespace TGC.MonoGame.TP
             auto.Metralleta.CrearColliderMetralleta(_simulacion);
             
             generadorConos = new AdministradorConos();
-            generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
+            generadorConos.generarConos(Vector3.Zero, 6000f, 1, 1000f);
             
             camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
             Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
@@ -241,7 +241,7 @@ namespace TGC.MonoGame.TP
             
             Escenario.Dibujar(camarografo, GraphicsDevice);
             
-            generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
+            generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.GetFrustum());
 
             auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
@@ -254,11 +254,11 @@ namespace TGC.MonoGame.TP
             cajaPowerUp3.dibujar(camarografo, new Vector3(6100,600,-6100).ToNumerics()); 
             cajaPowerUp4.dibujar(camarografo, new Vector3(-6100,600,-6100).ToNumerics()); 
 
+            adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
+
             #endregion
 
             camarografo.DrawDatos(SpriteBatch);
-
-            adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
 
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
 

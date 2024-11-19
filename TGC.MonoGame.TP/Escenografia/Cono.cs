@@ -72,6 +72,7 @@ namespace Escenografia
             this.posicion = posicion;
             BodyHandle handler = simulation.Bodies.Add(BodyDescription.CreateDynamic(posicion.ToNumerics(), conoInertia, simulation.Shapes.Add(conoCollider), 0.01f));
             refACuerpo = AyudanteSimulacion.getRefCuerpoDinamico(handler);
+
         }
         public void dibujar(Matrix view, Matrix projection, Color color, Vector3 posicionCamara)
         {

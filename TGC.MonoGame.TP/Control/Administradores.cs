@@ -484,12 +484,25 @@ namespace Control
             }
         }
 
-        public void drawConos(Matrix view, Matrix projection)
+        public void drawConos(Matrix view, Matrix projection, BoundingFrustum frustum)
         {
-            // Dibujar todos los conos
             foreach (Cono cono in conos)
             {
-                cono.dibujar(view, projection, Color.Orange);
+                // Obtener la posición del cono desde su BodyReference
+                Vector3 position = cono.refACuerpo.Pose.Position;
+
+                // Construir el BoundingBox (De XNA) del cono
+                BoundingBox boundingBox = new BoundingBox(
+                    position - new Vector3(140 / 2, 150 / 2, 140 / 2), //Largo, Ancho y Alto de la Box del cono
+                    position + new Vector3(140 / 2, 150 / 2, 140 / 2)
+                );
+
+                // Verificar si el BoundingBox interseca con el frustum
+                if (frustum.Intersects(boundingBox))
+                {
+                    cono.dibujar(view, projection, Color.Orange);
+                    //Console.WriteLine("Me dibuje");
+                }
             }
         }
     }
