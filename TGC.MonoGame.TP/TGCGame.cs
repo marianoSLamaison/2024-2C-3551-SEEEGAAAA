@@ -119,7 +119,7 @@ namespace TGC.MonoGame.TP
             auto.Metralleta.CrearColliderMetralleta(_simulacion);
             
             generadorConos = new AdministradorConos();
-            generadorConos.generarConos(Vector3.Zero, 6000f, 1, 1000f);
+            generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
             
             camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
             Escenario = new AdminUtileria(new Vector3(-6100f,400f,-6100f), new Vector3(6100f,400f,6100f));
