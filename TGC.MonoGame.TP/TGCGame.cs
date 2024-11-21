@@ -8,11 +8,10 @@ using Control;
 using Escenografia;
 using TGC.MonoGame.Samples.Physics.Bepu;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 
 
@@ -113,6 +112,7 @@ namespace TGC.MonoGame.TP
             bodyHandleTags.Add(auto.handlerDeCuerpo.Value, "Auto");
 
             auto.adminMisiles = new AdminMisiles(_simulacion, bodyHandleTags);
+            auto.adminMetralleta = new AdminMetralleta(_simulacion, bodyHandleTags);
 
             //auto.Misil = new Misil();
             //auto.Misil.CrearColliderMisil(_simulacion);
@@ -120,8 +120,8 @@ namespace TGC.MonoGame.TP
 
             AyudanteSimulacion.SetScenario();
 
-            auto.Metralleta = new Metralleta();
-            auto.Metralleta.CrearColliderMetralleta(_simulacion);
+            //auto.Metralleta = new Metralleta();
+            //auto.Metralleta.CrearColliderMetralleta(_simulacion);
             
             generadorConos = new AdministradorConos();
             generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
@@ -182,8 +182,11 @@ namespace TGC.MonoGame.TP
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
 
             auto.adminMisiles.loadMisiles(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
+            auto.adminMetralleta.loadMetralleta(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
+            
+            
             //auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
-            auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
+            //auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
             
             generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
 
@@ -213,8 +216,10 @@ namespace TGC.MonoGame.TP
             auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             
             auto.adminMisiles.ActualizarMisiles(gameTime);
+            auto.adminMetralleta.ActualizarMetralleta(gameTime);
+            
             //auto.Misil.ActualizarPowerUp(gameTime);
-            auto.Metralleta.ActualizarPowerUp(gameTime);
+            //auto.Metralleta.ActualizarPowerUp(gameTime);
 
             tiempoTranscurrido += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -260,7 +265,9 @@ namespace TGC.MonoGame.TP
             
             //auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.adminMisiles.dibujarMisiles(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
-            auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
+            auto.adminMetralleta.dibujarBalas(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Red);
+
+            //auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
 
             cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); 
             cajaPowerUp2.dibujar(camarografo, new Vector3(-6100,600,6100).ToNumerics()); 

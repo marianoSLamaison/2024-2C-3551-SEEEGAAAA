@@ -547,6 +547,47 @@ namespace Control
         }
 
     }
+
+    public class AdminMetralleta{
+
+        List<Metralleta> balas;
+
+        public AdminMetralleta(Simulation simulacion, Dictionary<int, object> bodyHandleTags){
+            
+            balas = new List<Metralleta>();
+
+            for(int i = 0; i < 30; i++){
+                balas.Add(new Metralleta());
+            }
+
+            foreach(Metralleta bala in balas){
+                bala.CrearColliderMetralleta(simulacion, bodyHandleTags);
+            }
+
+        }
+
+        public void loadMetralleta(string direccionModelo, string direccionEfecto, ContentManager contManager){
+            foreach(Metralleta bala in balas){
+                bala.loadModel(direccionModelo, direccionEfecto, contManager);
+            }
+        }
+
+        public void DispararBala(int baladisparada, Matrix orientacion, Vector3 autoPosicion){
+            balas[baladisparada].ActivarPowerUp(orientacion, autoPosicion);
+        }
+
+        public void ActualizarMetralleta(GameTime gametime){
+            foreach(Metralleta bala in balas){
+                bala.ActualizarPowerUp(gametime);
+            }
+        }
+
+        public void dibujarBalas(Matrix view, Matrix projection, Color color){
+            foreach(Metralleta bala in balas){
+                bala.dibujar(view, projection, color);
+            }
+        }
+    }
 }
 
     

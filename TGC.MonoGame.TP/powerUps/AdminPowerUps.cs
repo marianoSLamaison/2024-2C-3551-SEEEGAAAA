@@ -246,23 +246,20 @@ public class Metralleta : PowerUp
         municionMetralleta = 2;
         this.fuerza = 50;
     }
-    public void CrearColliderMetralleta(Simulation _simulacion)
+    public void CrearColliderMetralleta(Simulation _simulacion, Dictionary<int, object> bodyHandleTags)
     {
-        //var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
-        var capsuleShape = new Capsule(30f, 120f); // Ajusta dimensiones
+        var capsuleShape = new Sphere(10f); // Ajusta dimensiones
         var capsuleLocalPose = 
             new RigidPose(System.Numerics.Vector3.UnitY * -10000f);
             //Quaternion.CreateFromYawPitchRoll(MathF.PI/2, 0, 0).ToNumerics());
 
         BodyInertia bodyInertia = capsuleShape.ComputeInertia(.5f);
 
-        //compoundBuilder.Add(capsuleShape, capsuleLocalPose, 5f);
-        // Llamada corregida: solo devuelve los hijos y el centro
-        //compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
-
         // Agregar el cuerpo cinemático a la simulación
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
-        this.darCuerpo(handlerDeCuerpo);
+        handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
+        bodyHandleTags.Add(handlerCuerpo.Value, this);
+
+        this.darCuerpo(handlerCuerpo);
     }
 
     public void darCuerpo(BodyHandle handler)
@@ -283,7 +280,6 @@ public class Metralleta : PowerUp
         refACuerpo.Velocity.Linear = new Vector3(orientacionAutoSalida.Backward.X, orientacionAutoSalida.Backward.Y, orientacionAutoSalida.Backward.Z).ToNumerics() * 4000f;
         activado = true;
         DuracionPowerUp = 1;
-        Console.WriteLine("Metralleta activada");
     }
 
     public override void DesactivarPowerUp(AutoJugador auto)
@@ -308,6 +304,10 @@ public class Metralleta : PowerUp
 
         activado = DuracionPowerUp >= 0;
         //Console.WriteLine(DuracionPowerUp);
+    }
+
+    public void GuardarBalaEnMundo(){
+        refACuerpo.Pose.Position = System.Numerics.Vector3.UnitY * -10000f;
     }
 
 

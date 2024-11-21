@@ -196,9 +196,24 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
             if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB3) && objB3 is Misil &&
             bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA3) && objA3 is AutoNPC){
                 ((Misil)objB3).GuardarMisilEnMundo();
-                ((AutoNPC)objA2).QuitarVida(50, auto);
+                ((AutoNPC)objA3).QuitarVida(50, auto);
                 Console.WriteLine("QUITE VIDA");
             }
+
+            if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA4) && objA4 is Metralleta &&
+            bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB4) && objB4 is AutoNPC){
+                ((Metralleta)objA4).GuardarBalaEnMundo();
+                ((AutoNPC)objB4).QuitarVida(10, auto);
+                Console.WriteLine("QUITE 10 VIDA");
+            }
+
+            if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB5) && objB5 is Metralleta &&
+            bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA5) && objA5 is AutoNPC){
+                ((Metralleta)objB5).GuardarBalaEnMundo();
+                ((AutoNPC)objA5).QuitarVida(10, auto);
+                Console.WriteLine("QUITE 10 VIDA");
+            }
+
         }
 
         

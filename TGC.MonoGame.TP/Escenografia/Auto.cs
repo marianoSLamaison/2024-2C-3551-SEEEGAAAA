@@ -148,6 +148,7 @@ namespace Escenografia
         public int score = 0;
 
         public AdminMisiles adminMisiles;
+        public AdminMetralleta adminMetralleta;
 
         public Misil Misil;
         public Metralleta Metralleta;
@@ -175,8 +176,12 @@ namespace Escenografia
 
         private float duracionTurbo = 0f;  // Variable para controlar la duración del turbo
         private int cantidadMisiles = 0;
+        private int cantidadBalas = 0;
         private bool turboActivo = false; 
         private bool teclaMAnterior = false;
+
+        private float tiempoEntreDisparos = 0.15f; // 200 ms entre disparos
+        private float tiempoDesdeUltimoDisparo = 0f;
 
         
         public void RecogerPowerUp(PowerUp powerUp)
@@ -187,8 +192,9 @@ namespace Escenografia
         public void RecogerPowerUp(){
             if(!powerUpActivo){
                 Console.WriteLine("Agarré un powerup");
-                var random = RandomNumberGenerator.GetInt32(1);
-                //var random = 1;
+                
+                var random = RandomNumberGenerator.GetInt32(3);
+                random = 2;
 
                 powerUpActivo = true;
 
@@ -200,10 +206,9 @@ namespace Escenografia
                         break;
                     case 1:
                         cantidadMisiles = 3;
-                        //administradorMisil.ActivarPowerUp();
                         break;
                     case 2:
-                        //administradorMetralleta.ActivarPowerUp();
+                        cantidadBalas = 30;
                         break;
                 }
                 
@@ -216,10 +221,10 @@ namespace Escenografia
         /// </summary>
         override public void Mover(float deltaTime)
         {
-                //Console.WriteLine(refACuerpo.Pose.Position);
-                if ( !estaSaltando )
-                {
-                
+            //Console.WriteLine(refACuerpo.Pose.Position);
+            if ( !estaSaltando )
+            {
+            
                 float vAngularInst = velocidadAngular * deltaTime;
                 float velocidadGRuedas = vAngularInst * 2.00f;//es solo un poco mas rapida que el giro del auto
                 //si estamos en la 
@@ -282,7 +287,7 @@ namespace Escenografia
                 bool teclaMPresionada = Keyboard.GetState().IsKeyDown(Keys.M);
                 if (teclaMPresionada && !teclaMAnterior && cantidadMisiles > 0)
                 {
-                    int misilDisparado = cantidadMisiles == 3 ? 0 : cantidadMisiles == 2 ? 1 : 2;
+                    int misilDisparado = 3 - cantidadMisiles;
                     adminMisiles.DispararMisil(misilDisparado, orientacion, refACuerpo.Pose.Position);
                     cantidadMisiles--;
 
@@ -290,10 +295,16 @@ namespace Escenografia
                 }
                 teclaMAnterior = teclaMPresionada;
 
-                if(Keyboard.GetState().IsKeyDown(Keys.P))
-                {
-                    
-                    RecogerPowerUp(Metralleta);
+                tiempoDesdeUltimoDisparo += deltaTime;
+
+                if(Keyboard.GetState().IsKeyDown(Keys.N) && cantidadBalas > 0 && tiempoDesdeUltimoDisparo >= tiempoEntreDisparos){
+                    int baladisparada = 30 - cantidadBalas;
+                    adminMetralleta.DispararBala(baladisparada, orientacion, refACuerpo.Pose.Position);
+                    cantidadBalas--;
+
+                    tiempoDesdeUltimoDisparo = 0f;
+
+                    if (cantidadBalas == 0) powerUpActivo = false;
                 }
                 
                 //evitamos que las ruedas den una vuelta entera
