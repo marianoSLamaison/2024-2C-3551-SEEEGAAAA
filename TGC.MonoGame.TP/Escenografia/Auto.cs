@@ -10,6 +10,7 @@ using Escenografia;
 using System;
 using System.Collections.Generic;
 using BepuUtilities.Memory;
+using System.Security.Cryptography;
 
 
 
@@ -142,6 +143,12 @@ namespace Escenografia
         public float anteriorFuerzaBuscada = 0f;
         public float anteriorVelocidadBuscada = 0f;
 
+        public bool powerUpActivo = false;
+
+        public int score = 0;
+
+        public AdminMisiles adminMisiles;
+
         public Misil Misil;
         public Metralleta Metralleta;
         public AutoJugador(Vector3 direccion, float velocidadGiro, float fuerzaDireccional)
@@ -167,14 +174,42 @@ namespace Escenografia
         public override Matrix getWorldMatrix() =>  orientacion * Matrix.CreateTranslation(Posicion);
 
         private float duracionTurbo = 0f;  // Variable para controlar la duración del turbo
+        private int cantidadMisiles = 0;
         private bool turboActivo = false; 
+        private bool teclaMAnterior = false;
 
         
         public void RecogerPowerUp(PowerUp powerUp)
         {
             powerUp.ActivarPowerUp(orientacion, refACuerpo.Pose.Position);   
         }
-        
+
+        public void RecogerPowerUp(){
+            if(!powerUpActivo){
+                Console.WriteLine("Agarré un powerup");
+                var random = RandomNumberGenerator.GetInt32(1);
+                //var random = 1;
+
+                powerUpActivo = true;
+
+                switch (random){
+                    case 0: //Turbo
+                        turboActivo = true;
+                        escalarDeVelocidad *= 2;
+                        duracionTurbo = 15;
+                        break;
+                    case 1:
+                        cantidadMisiles = 3;
+                        //administradorMisil.ActivarPowerUp();
+                        break;
+                    case 2:
+                        //administradorMetralleta.ActivarPowerUp();
+                        break;
+                }
+                
+            }
+        }
+
         /// <summary>
         /// Este metodo tomara los imputs del jugador y seteara las variables necesarias
         /// para mover el mismo con el metodo mover
@@ -197,7 +232,15 @@ namespace Escenografia
 
                 if (turboActivo)
                 {
-                    refACuerpo.ApplyLinearImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad * 5f); // Turbo multiplicador
+                    if(duracionTurbo > 0){
+                        duracionTurbo -= deltaTime;
+                    }else{
+                        turboActivo = false;
+                        escalarDeVelocidad /= 2;
+                        powerUpActivo = false;
+                        Console.WriteLine("Se acabo el turbo");
+                    }
+
                 }
 
 
@@ -236,25 +279,23 @@ namespace Escenografia
                     RotUp -= vAngularInst * sentidoMov;
                 }
 
-                if (Keyboard.GetState().IsKeyDown(Keys.T))
+                bool teclaMPresionada = Keyboard.GetState().IsKeyDown(Keys.M);
+                if (teclaMPresionada && !teclaMAnterior && cantidadMisiles > 0)
                 {
-                    //Turbo turbo = new Turbo();
-                    turboActivo = true;
-                    //RecogerPowerUp(turbo);
-                    //escalarDeVelocidad = 300f;
+                    int misilDisparado = cantidadMisiles == 3 ? 0 : cantidadMisiles == 2 ? 1 : 2;
+                    adminMisiles.DispararMisil(misilDisparado, orientacion, refACuerpo.Pose.Position);
+                    cantidadMisiles--;
+
+                    if (cantidadMisiles == 0) powerUpActivo = false;
                 }
-                else{
-                    turboActivo= false;
-                }
-                if (Keyboard.GetState().IsKeyDown(Keys.M))
-                {
-                    RecogerPowerUp(Misil);
-                }
-                else if(Keyboard.GetState().IsKeyDown(Keys.P))
+                teclaMAnterior = teclaMPresionada;
+
+                if(Keyboard.GetState().IsKeyDown(Keys.P))
                 {
                     
                     RecogerPowerUp(Metralleta);
                 }
+                
                 //evitamos que las ruedas den una vuelta entera
                 rotacionRuedasDelanteras = Convert.ToSingle(Math.Clamp(rotacionRuedasDelanteras, -Math.PI/4f, Math.PI/4f));
                 //para no tener el problema de estar girando por siempre a un mismo lado
@@ -283,6 +324,10 @@ namespace Escenografia
 
             
         }
+
+    public void SumarPuntos(int puntosSumados){
+        score += puntosSumados;
+    }
 
     public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool){
 
@@ -501,6 +546,8 @@ namespace Escenografia
         public BodyHandle handlerCuerpo;
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
+
+        private bool muerto = false;
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
@@ -691,31 +738,41 @@ namespace Escenografia
         public void  Mover( float fuerzaAAplicar, float deltaTime)
         {//la logica de a donde moverse, se maneja en otro lado, a qui solo nos movemos
 
-
-            float scuareLimit = (velocidad * velocidad) * 100f;
-            //aceleramos solo lo que se necesite
-            if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
-                refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
-            const float epsilon = 0.01f;
-            float VAInstantanea = velocidadAngular * deltaTime;
-            //para alinear el auto
-            if (anguloCorreccion > epsilon || anguloCorreccion < -epsilon)
-            {
-                VAInstantanea *= MathF.Sign(anguloCorreccion);
-                refACuerpo.Velocity.Angular += Vector3.UnitY.ToNumerics() * VAInstantanea ;
-                anguloCorreccion -= VAInstantanea;
+            if(!muerto){
+                float scuareLimit = (velocidad * velocidad) * 100f;
+                //aceleramos solo lo que se necesite
+                if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
+                    refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
+                const float epsilon = 0.01f;
+                float VAInstantanea = velocidadAngular * deltaTime;
+                //para alinear el auto
+                if (anguloCorreccion > epsilon || anguloCorreccion < -epsilon)
+                {
+                    VAInstantanea *= MathF.Sign(anguloCorreccion);
+                    refACuerpo.Velocity.Angular += Vector3.UnitY.ToNumerics() * VAInstantanea ;
+                    anguloCorreccion -= VAInstantanea;
+                }
+                //si estamos mirando hacia abajo
+                if ( Vector3.Dot(Vector3.UnitY, orientacion.Up) < 0.85f)
+                    refACuerpo.Velocity.Angular += Vector3.Cross(orientacion.Up, Vector3.UnitY).ToNumerics() * VAInstantanea * 2f;
+                //para ajustar las ruedas delanteras de a poco
+                if ( MathF.Sign(rotacionRuedasDelanteras) < MathF.Sign(MaxRuedaRotacion) )
+                    rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
+                
+                revolucionDeRuedas += VAInstantanea * 3f;
+                revolucionDeRuedas = revolucionDeRuedas > MathF.Tau ? 0f : revolucionDeRuedas;
+                refACuerpo.Velocity.Angular *= 0.98f;
             }
-            //si estamos mirando hacia abajo
-            if ( Vector3.Dot(Vector3.UnitY, orientacion.Up) < 0.85f)
-                refACuerpo.Velocity.Angular += Vector3.Cross(orientacion.Up, Vector3.UnitY).ToNumerics() * VAInstantanea * 2f;
-            //para ajustar las ruedas delanteras de a poco
-            if ( MathF.Sign(rotacionRuedasDelanteras) < MathF.Sign(MaxRuedaRotacion) )
-                rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
-            
-            revolucionDeRuedas += VAInstantanea * 3f;
-            revolucionDeRuedas = revolucionDeRuedas > MathF.Tau ? 0f : revolucionDeRuedas;
-            refACuerpo.Velocity.Angular *= 0.98f;
-            
+        }
+
+        public void QuitarVida(int vidaQuitada, AutoJugador auto){
+            vida -= vidaQuitada;
+
+            if(vida <= 0){
+                muerto = true;
+                refACuerpo.Pose.Position = System.Numerics.Vector3.One * 1000000f;
+                auto.SumarPuntos(10);
+            }
         }
 
         public float DarAceleracion(float fuerz) => refACuerpo.LocalInertia.InverseMass * fuerz;

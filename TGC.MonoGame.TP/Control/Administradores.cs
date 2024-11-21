@@ -506,6 +506,47 @@ namespace Control
             }
         }
     }
+
+    public class AdminMisiles{
+        List<Misil> misiles;
+
+        public AdminMisiles(Simulation simulacion, Dictionary<int, object> bodyHandleTags){
+            
+            misiles = new List<Misil>();
+
+            for(int i = 0; i < 3; i++){
+                misiles.Add(new Misil());
+            }
+
+            foreach(Misil misil in misiles){
+                misil.CrearColliderMisil(simulacion, bodyHandleTags);
+            }
+
+        }
+
+        public void loadMisiles(string direccionModelo, string direccionEfecto, ContentManager contManager){
+            foreach(Misil misil in misiles){
+                misil.loadModel(direccionModelo, direccionEfecto, contManager);
+            }
+        }
+
+        public void DispararMisil(int misilDisparado, Matrix orientacion, Vector3 autoPosicion){
+            misiles[misilDisparado].ActivarPowerUp(orientacion, autoPosicion);
+        }
+
+        public void ActualizarMisiles(GameTime gametime){
+            foreach(Misil misil in misiles){
+                misil.ActualizarPowerUp(gametime);
+            }
+        }
+
+        public void dibujarMisiles(Matrix view, Matrix projection, Color color){
+            foreach(Misil misil in misiles){
+                misil.dibujar(view, projection, color);
+            }
+        }
+
+    }
 }
 
     

@@ -59,6 +59,11 @@ namespace TGC.MonoGame.TP
         private AdministradorNPCs adminNPCs;
         private Dictionary<int, object> bodyHandleTags;
         private Dictionary<int, object> staticHandleTags;
+        
+        private float tiempoTranscurrido = 0f;
+        private float Puntuacion = 0f;
+         
+        private SpriteFont fuente; // Fuente para el texto
 
         /// <summary>
         ///     Constructor del juego.
@@ -93,9 +98,9 @@ namespace TGC.MonoGame.TP
 
             bufferPool = new BufferPool();
 
-            
+            auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
 
-            var callbacks = new CustomNarrowPhaseCallbacks(new SpringSettings(30f,1f), bodyHandleTags, staticHandleTags);
+            var callbacks = new CustomNarrowPhaseCallbacks(new SpringSettings(30f,1f), bodyHandleTags, staticHandleTags, auto);
 
             _simulacion = Simulation.Create(bufferPool, 
                                            callbacks, 
@@ -104,14 +109,14 @@ namespace TGC.MonoGame.TP
 
             AyudanteSimulacion.simulacion = _simulacion;
             
-            auto = new AutoJugador( Vector3.Backward,(Convert.ToSingle(Math.PI)/2f) * 5, 15f);
-            
             auto.CrearCollider(_simulacion, bufferPool);
             bodyHandleTags.Add(auto.handlerDeCuerpo.Value, "Auto");
 
-            auto.Misil = new Misil();
-            auto.Misil.CrearColliderMisil(_simulacion);
-            bodyHandleTags.Add(auto.Misil.handlerCuerpo.Value, "Misil");
+            auto.adminMisiles = new AdminMisiles(_simulacion, bodyHandleTags);
+
+            //auto.Misil = new Misil();
+            //auto.Misil.CrearColliderMisil(_simulacion);
+            //bodyHandleTags.Add(auto.Misil.handlerCuerpo.Value, auto.Misil);
 
             AyudanteSimulacion.SetScenario();
 
@@ -176,7 +181,8 @@ namespace TGC.MonoGame.TP
 
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
 
-            auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
+            auto.adminMisiles.loadMisiles(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
+            //auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
             auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
             
             generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
@@ -186,6 +192,8 @@ namespace TGC.MonoGame.TP
             cajaPowerUp3.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             
+            fuente = Content.Load<SpriteFont>("debugFont");
+
             adminNPCs.load(efectos, modelos, Content);
 
             base.LoadContent();
@@ -203,8 +211,12 @@ namespace TGC.MonoGame.TP
             }
             
             auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
-            auto.Misil.ActualizarPowerUp(gameTime);
+            
+            auto.adminMisiles.ActualizarMisiles(gameTime);
+            //auto.Misil.ActualizarPowerUp(gameTime);
             auto.Metralleta.ActualizarPowerUp(gameTime);
+
+            tiempoTranscurrido += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             //adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             luz.BuildView(auto.Posicion);
@@ -246,7 +258,8 @@ namespace TGC.MonoGame.TP
             auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             terreno.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
             
-            auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
+            //auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
+            auto.adminMisiles.dibujarMisiles(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
 
             cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); 
@@ -255,6 +268,11 @@ namespace TGC.MonoGame.TP
             cajaPowerUp4.dibujar(camarografo, new Vector3(-6100,600,-6100).ToNumerics()); 
 
             adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
+
+            SpriteBatch.Begin();
+            SpriteBatch.DrawString(fuente, $"Tiempo Sobreviviendo: {tiempoTranscurrido:F2} ", new Vector2(10, 20), Color.White);
+            SpriteBatch.DrawString(fuente, $"Puntuacion : {auto.score:F2} ", new Vector2(1500, 20), Color.White);
+            SpriteBatch.End();
 
             #endregion
 

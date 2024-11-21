@@ -89,7 +89,7 @@ public class Misil : PowerUp
         this.fuerza = 50f;
 
     }
-    public void CrearColliderMisil(Simulation _simulacion)
+    public void CrearColliderMisil(Simulation _simulacion, Dictionary<int, object> bodyHandleTags)
     {
         //var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
         var capsuleShape = new Capsule(30f, 120f); // Ajusta dimensiones
@@ -105,6 +105,8 @@ public class Misil : PowerUp
 
         // Agregar el cuerpo cinemático a la simulación
         handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
+        bodyHandleTags.Add(handlerCuerpo.Value, this);
+
         this.darCuerpo(handlerCuerpo);
     }
 
@@ -171,6 +173,10 @@ public class Misil : PowerUp
           DesactivarPowerUp(auto);
         }
 */
+    }
+
+    public void GuardarMisilEnMundo(){
+        refACuerpo.Pose.Position = System.Numerics.Vector3.UnitY * -10000f;
     }
 
     public void loadModel(string direcionModelo, string direccionEfecto, ContentManager contManager)

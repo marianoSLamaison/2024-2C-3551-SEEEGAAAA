@@ -131,16 +131,18 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
     private float FrictionCoefficient { get; set; }
     private readonly Dictionary<int, object> bodyTags;
     private readonly Dictionary<int, object> staticTags;
+    private AutoJugador auto;
 
 
 
-    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, Dictionary<int, object> _bodyTags, Dictionary<int, object> _staticTags)
+    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, Dictionary<int, object> _bodyTags, Dictionary<int, object> _staticTags, AutoJugador autoJugador)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = 2f;
         FrictionCoefficient = 1f;
         bodyTags = _bodyTags;
         staticTags = _staticTags;
+        auto = autoJugador;
     }
     public void Initialize(Simulation simulation)
     {
@@ -174,34 +176,32 @@ public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
         out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
     {
 
-        if ( (pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Static) || 
-        (pair.A.Mobility == CollidableMobility.Static && pair.B.Mobility == CollidableMobility.Dynamic)){
-            if ( pair.A.Mobility != CollidableMobility.Dynamic)
-            {
-                var swaper = pair.A;
-                pair.A = pair.B;
-                pair.B = swaper;
+        if (pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Static){
+            if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA) && objA is string tagA && tagA == "Auto" && 
+                staticTags.TryGetValue(pair.B.BodyHandle.Value, out object objB) && objB is string tagB && tagB == "Caja"){
+                    auto.RecogerPowerUp();
             }
         }
 
         //SE COMPARAN LOS OBJETOS DE LOS DICCIONARIOS CON LOS PARES DE HANDLERS QUE COLISIONARON CON SUS VALUES (algunos son solo strings -como cajas de powerups- y otros son objetos, como los autos NPC)
 
-        if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA) && objA is string tagA && tagA == "Auto" && 
-        staticTags.TryGetValue(pair.B.BodyHandle.Value, out object objB) && objB is string tagB && tagB == "Caja"){
-            Console.WriteLine("Agarré un powerup");
+        if(pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Dynamic){
+            if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA2) && objA2 is Misil &&
+            bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB2) && objB2 is AutoNPC){
+                ((Misil)objA2).GuardarMisilEnMundo();
+                ((AutoNPC)objB2).QuitarVida(50, auto);
+                Console.WriteLine("QUITE VIDA");
+            }
+
+            if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB3) && objB3 is Misil &&
+            bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA3) && objA3 is AutoNPC){
+                ((Misil)objB3).GuardarMisilEnMundo();
+                ((AutoNPC)objA2).QuitarVida(50, auto);
+                Console.WriteLine("QUITE VIDA");
+            }
         }
 
-        if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA2) && objA2 is string tagA2 && tagA2 == "Misil" &&
-        bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB2) && objB2 is AutoNPC){
-            ((AutoNPC)objB2).vida -= 50;
-            Console.WriteLine("QUITE VIDA");
-        }
-
-        if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB3) && objB3 is string tagB3 && tagB3 == "Misil" &&
-        bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA3) && objA3 is AutoNPC){
-            ((AutoNPC)objA2).vida -= 50;
-            Console.WriteLine("QUITE VIDA");
-        }
+        
 
         pairMaterial.FrictionCoefficient = FrictionCoefficient;
         pairMaterial.MaximumRecoveryVelocity = MaximumRecoveryVelocity;
