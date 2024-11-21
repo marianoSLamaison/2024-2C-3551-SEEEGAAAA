@@ -194,7 +194,6 @@ namespace Escenografia
                 Console.WriteLine("Agarré un powerup");
                 
                 var random = RandomNumberGenerator.GetInt32(3);
-                random = 2;
 
                 powerUpActivo = true;
 
