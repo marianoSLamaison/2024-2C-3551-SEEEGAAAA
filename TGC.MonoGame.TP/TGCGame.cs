@@ -225,7 +225,7 @@ namespace TGC.MonoGame.TP
 
             tiempoTranscurrido += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            //adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
+            adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds), new Vector2(auto.Posicion.X, auto.Posicion.Z));
             luz.BuildView(auto.Posicion);
             //para que el camarografo nos siga siempre
             camarografo.setPuntoAtencion(auto.Posicion);

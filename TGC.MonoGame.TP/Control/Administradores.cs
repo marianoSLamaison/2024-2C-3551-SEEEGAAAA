@@ -23,6 +23,8 @@ namespace Control
         private float maxVelocity;
 
         public Vector2 direccion;
+
+        public float tiempoUltimaActualizacion;
         public IA(){}
         public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, object> bodyHandleTags)
         {
@@ -162,7 +164,27 @@ namespace Control
             return puntosValidos;
         }
 
-        public void Update(float deltaTime)
+        public void Update(float deltaTime, Vector2 posicionAutoJugador)
+        {
+            foreach (IA auto in autos)
+            {
+                auto.Update(deltaTime);
+
+                // Calcular dirección hacia el jugador
+                Vector2 direccionHaciaJugador = Vector2.Normalize(posicionAutoJugador - auto.GetPos());
+
+                auto.tiempoUltimaActualizacion += deltaTime;
+                // Aplicar la dirección al auto
+                if (auto.tiempoUltimaActualizacion > 0.2f)
+                {
+                    auto.SetDireccion(Vector2.Lerp(Vector2.Normalize(auto.direccion), Vector2.Normalize(direccionHaciaJugador), 0.25f));
+                    auto.tiempoUltimaActualizacion = 0;
+                }
+
+            }
+        }
+        /*
+         public void Update(float deltaTime)
         {
             //chequeamos si se puede o no colocar mas enemigos en pantalla
             const int maximoAts = 0;
@@ -199,6 +221,7 @@ namespace Control
             }
             
         }
+        */
 
         public Vector3 GetPosFitsCar()
         {
