@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using BepuUtilities.Memory;
 using System.Security.Cryptography;
+using Microsoft.Xna.Framework.Audio;
 
 
 
@@ -557,6 +558,8 @@ namespace Escenografia
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
 
+        private SoundEffect sonidoAutoMuerto;
+
         private bool muerto = false;
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
@@ -690,35 +693,35 @@ namespace Escenografia
         public void anguloDeGiro(float angulo){
 
         }
-    public void ApplyTexturesToShader()
-    {
-        efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
-        efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
-        efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
-        efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
-
-        efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
-
-        efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
-        efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.75f, 0.75f, 0.75f));
-        efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
-
-        efecto.Parameters["KAmbient"]?.SetValue(0.4f);
-        efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
-        efecto.Parameters["KSpecular"]?.SetValue(0.25f);
-        efecto.Parameters["shininess"]?.SetValue(4.0f);
-
-        foreach ( ModelMesh mesh in modelo.Meshes )
+        public void ApplyTexturesToShader()
         {
-            foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+            efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
+            efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
+            efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
+            efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
+
+            efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+            efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+            efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.75f, 0.75f, 0.75f));
+            efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+            efecto.Parameters["KAmbient"]?.SetValue(0.4f);
+            efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efecto.Parameters["KSpecular"]?.SetValue(0.25f);
+            efecto.Parameters["shininess"]?.SetValue(4.0f);
+
+            foreach ( ModelMesh mesh in modelo.Meshes )
             {
-                meshPart.Effect = efecto;
+                foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efecto;
+                }
             }
+
         }
 
-    }
-
-    public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
+        public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
             //asignamos el modelo deseado
             modelo = contManager.Load<Model>(direccionModelo);
             //mismo caso para el efecto
@@ -743,6 +746,10 @@ namespace Escenografia
                     meshPart.Effect = efecto;
                 }
             }
+        }
+
+        public void loadSonido(string direccionSonido, ContentManager contManager){
+            sonidoAutoMuerto = contManager.Load<SoundEffect>(direccionSonido);
         }
 
         public void  Mover( float fuerzaAAplicar, float deltaTime)
@@ -782,6 +789,7 @@ namespace Escenografia
                 muerto = true;
                 refACuerpo.Pose.Position = System.Numerics.Vector3.One * 1000000f;
                 auto.SumarPuntos(10);
+                sonidoAutoMuerto.Play();
             }
         }
 

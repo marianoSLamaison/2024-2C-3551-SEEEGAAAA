@@ -220,6 +220,7 @@ namespace Control
                 String dEffecto = efectos[0];
                 String dModelo = modelos[0];
                 auto.GetAuto().loadModel(dModelo, dEffecto, content);
+                auto.GetAuto().loadSonido("SonidoAutoMuerto", content);
             }
         }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
