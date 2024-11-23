@@ -208,6 +208,7 @@ namespace Escenografia
 
                 if (Keyboard.GetState().IsKeyDown(Keys.W))
                 {
+                    Console.WriteLine("Esto deberia estar escribiendo algo"+ Posicion);
                     comportamientoDeVelocidad += 1f;
                     //refACuerpo.Velocity.Linear += orientacion.Backward.ToNumerics() * escalarDeVelocidad;
                     //refACuerpo.ApplyImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad, Vector3.Zero.ToNumerics());
@@ -359,12 +360,6 @@ namespace Escenografia
                 meshPart.Effect = efecto;
             }
         }
-
-        //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
-        //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
-        //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
-        //efecto.Parameters["SamplerType+AOTexture"].SetValue(aoTexture);
-        //efecto.Parameters["SamplerType+EmissionTexture"].SetValue(emissionTexture);
     }
 
     public void CargarModelo(Effect efecto, Model modelo, Texture2D[] texturas )
@@ -378,7 +373,7 @@ namespace Escenografia
         AOTexture = texturas[4];
         emissionTexture = texturas[5];
 
-        this.ApplyTexturesToShader();
+        //this.ApplyTexturesToShader();
 
         // Asignar el shader a cada parte del modelo
         foreach (ModelMesh mesh in modelo.Meshes)
@@ -417,14 +412,59 @@ namespace Escenografia
                 }
             }
         }
+        public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
 
-        /// <summary>
-        /// Este metodo se encarga de dibujar no solo el auto, si no tambien cada una de sus ruedas
-        /// individualmente
-        /// </summary>
-        /// <param name="view"></param>
-        /// <param name="projection"></param>
-        /// <param name="color"></param>
+            efecto.Parameters["View"].SetValue(view);
+            // le cargamos el como quedaria projectado en la pantalla
+            efecto.Parameters["Projection"].SetValue(projection);
+            //seteamos aqui las texturas
+            MonoHelper.loadShaderTextures(efecto, baseColorTexture, metallicTexture, AOTexture, roughnessTexture);
+
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
@@ -540,6 +580,7 @@ namespace Escenografia
 
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
+        public BoundingSphere BoundingVolume;
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
@@ -616,13 +657,11 @@ namespace Escenografia
         {
             this.velocidadAngular = vAngular;
         }
-        public void anguloDeGiro(float angulo){
-
-        }
 
     
     public void ApplyTexturesToShader()
     {
+        //Thake that OOP >:D Nobody needs you when you have Ctrl + c and Ctrl + v
         efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
         efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
         efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
@@ -648,15 +687,9 @@ namespace Escenografia
                 meshPart.Effect = efecto;
             }
         }
-
-        //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
-        //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
-        //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
-        //efecto.Parameters["SamplerType+AOTexture"].SetValue(aoTexture);
-        //efecto.Parameters["SamplerType+EmissionTexture"].SetValue(emissionTexture);
     }
 
-        public void CargarModelo(Effect efecto, Model modelo, Texture2D[] texturas )
+    public void CargarModelo(Effect efecto, Model modelo, Texture2D[] texturas )
     {
         this.efecto = efecto;
         this.modelo = modelo;
@@ -678,6 +711,7 @@ namespace Escenografia
                 meshPart.Effect = efecto;
             }
         }
+        BoundingVolume = MonoHelper.GenerarBoundingSphere(modelo, 1.8f);
     }
 
     public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
@@ -705,6 +739,9 @@ namespace Escenografia
                     meshPart.Effect = efecto;
                 }
             }
+            //generamos una Bounding box para optimizar el juego un poco
+            //estas cosas tienen demaciados poligonos
+            BoundingVolume = MonoHelper.GenerarBoundingSphere(modelo);
         }
 
         public void  Mover( float fuerzaAAplicar, float deltaTime)

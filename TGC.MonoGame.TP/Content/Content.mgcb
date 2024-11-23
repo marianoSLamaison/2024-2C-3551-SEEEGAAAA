@@ -32,6 +32,12 @@
 /processorParam:TextureFormat=Compressed
 /build:Effects/debugFont.spritefont
 
+#begin Effects/DeferredShadows.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/DeferredShadows.fx
+
 #begin Effects/TerrenoShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor

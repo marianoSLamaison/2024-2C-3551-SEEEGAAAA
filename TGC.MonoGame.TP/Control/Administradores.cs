@@ -15,6 +15,8 @@ namespace Control
 {
     public class AdministradorNPCs 
     {
+        
+    #region IAs
         //leer ese ejmplo si que dio muchas ideas AJAJ
     private class IA//para el manejo de los autos
     {
@@ -99,7 +101,7 @@ namespace Control
             }
         }
 
-
+    #endregion
         Random RNG = new Random();
         private Effect [] efectos;
         private Model[] modelos;
@@ -200,10 +202,22 @@ namespace Control
         }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
         {
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * projeccion);
+            AutoNPC autoR;
             foreach( IA auto in autos )
-                auto.GetAuto().dibujar(view, projeccion, shadowMap);
+            {
+                autoR = auto.GetAuto(); 
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume) )
+                    auto.GetAuto().dibujar(view, projeccion, shadowMap);
+            }
             foreach( AgresiveIA atacante in atacantes )
-                atacante.GetAuto().dibujar(view, projeccion, shadowMap);
+            {
+                autoR = atacante.GetAuto();
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume))
+                    atacante.GetAuto().dibujar(view, projeccion, shadowMap);
+            }
         }
 
         ////funciones robadas de generador de conos ( no las lei pero se que funcionan )
@@ -317,6 +331,8 @@ namespace Control
     {
         static Random RNG = new Random();
         List<Cono> conos;
+        BoundingSphere BoundingVolume;
+        private const float EscalaDeConos = 20f;
         float alturaConos = 400f; // Altura fija para todos los conos
 
         public void generarConos(Vector3 centro, float radio, int numeroNPCs, float distanciaMinima)
@@ -329,7 +345,7 @@ namespace Control
             {
                 Vector3 puntoPlano = new Vector3(punto.X, alturaConos, punto.Y);
                 Cono nuevoCono = new Cono(puntoPlano + centro);
-                nuevoCono.SetScale(20f); // Ajustar escala de los conos
+                nuevoCono.SetScale(EscalaDeConos); // Ajustar escala de los conos
                 conos.Add(nuevoCono);
 
             }
@@ -445,20 +461,56 @@ namespace Control
 
         public void loadModelosConos(string direccionesModelos, string direccionesEfectos, ContentManager content, BufferPool bufferPool, Simulation simulacion)
         {
+            Model modeloComun = content.Load<Model>(direccionesModelos);
+            Effect efectoComun = content.Load<Effect>(direccionesEfectos);
+            //OK lo chequee mono es listo, chequea si el modelo ya existe y si si lo hace
+            //al llamar muchas veces a load, solamente devuelve el valor pedido.
+            //no vuelvo a confiar en IAs nunca mas...
+            #region Setup de el efecto y el modelo comunes a los conos
+            efectoComun.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+            efectoComun.Parameters["ambientColor"]?.SetValue(new Vector3(0.5f, 0.2f, 0.15f));
+            efectoComun.Parameters["diffuseColor"]?.SetValue(new Vector3(0.9f, 0.7f, 0.3f));
+            efectoComun.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+            efectoComun.Parameters["KAmbient"]?.SetValue(0.4f);
+            efectoComun.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efectoComun.Parameters["KSpecular"]?.SetValue(0.25f);
+            efectoComun.Parameters["shininess"]?.SetValue(32.0f);
+
+            foreach ( ModelMesh mesh in modeloComun.Meshes )
+            {
+                foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efectoComun;
+                }
+            }
+            #endregion
+            //generamos una bounding box que encapsula al cono normal
+            //luego solo la transofrmamos para chequear con cada cono
+            BoundingVolume = MonoHelper.GenerarBoundingSphere(modeloComun, EscalaDeConos * 2.5f);
+
             // Cargar modelos de conos
             foreach (Cono cono in conos)
             {
-                cono.loadModel(direccionesModelos, direccionesEfectos, content);
+                //cono.loadModel(direccionesModelos, direccionesEfectos, content);
+                //de esta manera solo hay un modelo cargado en memoria relamente, simplemente esta siendo dibujado todo el rato igual
+                cono.loadApariencia(modeloComun, efectoComun);
                 cono.CrearCollider(bufferPool, simulacion, cono.posicion);
             }
         }
 
         public void drawConos(Matrix view, Matrix projection)
         {
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * projection);
             // Dibujar todos los conos
             foreach (Cono cono in conos)
             {
-                cono.dibujar(view, projection, Color.Orange);
+                //ajustamos la esfera comunal a la posicion del cono
+                BoundingVolume.Center = cono.Position;
+                //si esta visible, la dibujamos
+                if ( frustrumCamara.Intersects(BoundingVolume))
+                    cono.dibujar(view, projection, Color.Orange);
             }
         }
     }

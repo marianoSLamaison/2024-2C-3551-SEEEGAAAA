@@ -17,6 +17,7 @@ namespace Control
         Escenografia.LimBox limites;
         private List<Escenografia.Escenografia3D> objetosFijos;
         Terreno suelo;
+        public luzConica luna;
         ThreadDispatcher threadDispatcher;
         public AdminUtileria(float ScuareSide, float desiredHeigth, float desiredScale, Simulation simulacion)
         {
@@ -38,6 +39,12 @@ namespace Control
             };
             Escenografia.Plataforma.setGScale(desiredScale);
             suelo = new Terreno();
+            luna = new luzConica(
+                                new Vector3(0f, 10000f, 0f),
+                                new Vector3(0f, -1f, 0f),
+                                Color.IndianRed,
+                                0f,
+                                1);
         }
 
         public void setThreadDispatcher(ThreadDispatcher dispatcher)
@@ -81,15 +88,14 @@ namespace Control
     }
     public void loadTerreno(Effect efecto, ContentManager content)
     {
-        suelo.SetEffect(efecto, content);
+        //suelo.SetEffect(efecto, content);
+        suelo.setEffect2(efecto, content);
     }
 
     public void CrearColliders(BufferPool bufferPool, Simulation simulacion){
         //creamos los coliders de todas las plataformas
-        foreach(Plataforma plataforma in objetosFijos)
-        {
-            plataforma.CrearCollider(bufferPool, simulacion);
-        }
+        //foreach(Plataforma plataforma in objetosFijos)
+            //plataforma.CrearColliderExp(bufferPool, simulacion);
         //creamos el colider del suelo
         suelo.CrearCollider(bufferPool, simulacion, threadDispatcher,
          (int)MathF.Abs(limites.maxVertice.X - limites.minVertice.X), 
@@ -106,6 +112,11 @@ namespace Control
                 objeto.dibujarPlataforma(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Silver);
             }
             suelo.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.camaraAsociada.posicion, shadowMap);
+        }
+        public void LlenarGbuffer(Camarografo camarografo)
+        {
+            suelo.LlenarGbuffer(camarografo.getViewMatrix(),
+                            camarografo.getProjectionMatrix());
         }
         public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
         {

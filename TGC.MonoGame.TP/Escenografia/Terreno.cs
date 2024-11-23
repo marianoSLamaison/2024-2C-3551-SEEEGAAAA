@@ -11,6 +11,7 @@ using BepuUtilities;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices;
 using Microsoft.VisualBasic;
+using System.Collections.Generic;
 
 namespace Escenografia
 {
@@ -18,16 +19,14 @@ namespace Escenografia
     {
         private VertexPositionNormalTexture[] vertices;
         private int[] indices;
-        private Texture2D heightMapTexture;
         private Texture2D terrenoTextureDiffuse;
-        private Texture2D terrenoTextureNormal;
-        private Texture2D terrenoTextureHeight;
 
         StaticHandle handlerTerreno;
 
         private int width, height;
 
         public void SetEffect (Effect effect, ContentManager content){
+            //damos el objeto, luego damos sus texturas
             this.efecto = effect;
             this.ApplyTexturesToShader(content);
         }
@@ -186,6 +185,36 @@ namespace Escenografia
                 GraphicsDevice device = efecto.GraphicsDevice;
                 device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
             }
+        }
+        //se usa durante el load
+        public void setEffect2(Effect efecto, ContentManager content)
+        {//para cargar el efecto del terreno
+            this.efecto = efecto;
+            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainDiffuse_3");
+                        //cargamos los kvalues y los colores basicos del escenario para blinphong
+            Dictionary<String, float> kvlues = new Dictionary<String, float>{
+                {MonoHelper.kambient, 0.6f},
+                {MonoHelper.kdiffuse, 0.4f},
+                {MonoHelper.kspecular, 0.8f},
+                {MonoHelper.shininess, 3f}
+            };
+            Vector3 ambient = Color.BlueViolet.ToVector3(), difuseColor = Color.Peru.ToVector3(), specularColor = Color.DimGray.ToVector3();
+            //esto es asi para poder tener diferentes valores K en diferentes objetos
+            MonoHelper.loadShaderLigthValues(efecto, kvlues, ambient, difuseColor, specularColor);            
+        }
+        //se usa en la primera mitad de draw
+        public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix proj)
+        {
+            //aclaramos que tecnica estamos ussando
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            //cargamos las primeras partes del shader 
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj);
+                                    //cargamos las texturas necesarias
+            MonoHelper.loadShaderTextures(efecto, terrenoTextureDiffuse, null, null, null);
+            //aplicamos el primer pass, que carga todo en el GBuffer
+            efecto.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = efecto.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
         }
 
         public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection){

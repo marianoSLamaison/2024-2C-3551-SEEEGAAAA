@@ -5,6 +5,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Escenografia
 {
@@ -386,4 +389,85 @@ namespace Escenografia
 
         } 
     }
+class FullScreenCuad
+{
+    private GraphicsDevice device;
+    private short[] indices;
+    private Effect effect;
+    private VertexPositionTexture[] vertices;
+    int numeroTriangulos;
+    // Guardo aqui todos los render targets intermedios
+    // GBuffer
+    public RenderTarget2D positions;
+    public RenderTarget2D normals;
+    public RenderTarget2D albedo;
+    public RenderTarget2D especular;
+
+    public FullScreenCuad(GraphicsDevice screen)
+    {
+        Vector3 vertice1 = new Vector3(-1, -1, 0),
+                vertice2 = new Vector3(1, -1, 0),
+                vertice3 = new Vector3(1, 1, 0), 
+                vertice4 = new Vector3(-1, 1, 0);
+
+        Vector2 esquina1 = new Vector2(0, 1),
+                esquina2 = new Vector2(1, 1),
+                esquina3 = new Vector2(1, 0),
+                esquina4 = new Vector2(0, 0);
+
+        vertices = new VertexPositionTexture[4];
+        vertices[0] = new VertexPositionTexture(vertice1, esquina1);
+        vertices[1] = new VertexPositionTexture(vertice2, esquina2);
+        vertices[2] = new VertexPositionTexture(vertice3, esquina3);
+        vertices[3] = new VertexPositionTexture(vertice4, esquina4);
+
+        indices = new short[] { 0, 2, 1, 0, 3, 2 }; // Corrected winding order
+
+        numeroTriangulos = 2;
+        
+        // Creando todos los targets con las configuraciones básicas
+        int height = screen.Viewport.Bounds.Height;
+        int width = screen.Viewport.Bounds.Width;
+
+        positions = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+        normals   = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+        albedo    = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+        especular = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+
+        device = screen;
+    }
+
+    public void LoadTargets(Effect effect)
+    {
+        // Cargamos los targets en nuestro shader
+        effect.Parameters["position"]?.SetValue(positions);
+        effect.Parameters["normal"]?.SetValue(normals);
+        effect.Parameters["albedo"]?.SetValue(albedo);
+        effect.Parameters["especular"]?.SetValue(especular);
+        this.effect = effect;
+    }
+
+    private T[] mapLight<T>(List<luzConica> luces, Func<luzConica, T> getValue)
+    {
+        T[] ret = new T[luces.Count];
+        for (int i = 0; i < luces.Count; i++)
+            ret[i] = getValue(luces.ElementAt<luzConica>(i));
+        return ret;
+    }
+
+    public void Dibujar(GraphicsDevice screen, List<luzConica> luces, Matrix view)
+    {
+        effect.CurrentTechnique = effect.Techniques["Lighting"];
+        effect.Parameters["posicionesLuces"]?.SetValue(mapLight<Vector3>(luces, luz => luz.posicion));
+        effect.Parameters["direcciones"]?.SetValue(mapLight<Vector3>(luces, luz => luz.direccion));
+        effect.Parameters["projeccionVorde"]?.SetValue(mapLight<float>(luces, luz => luz.porcentajeDeProjeccionVorde));
+        effect.Parameters["colores"]?.SetValue(mapLight<Vector3>(luces, luz => luz.color));
+        effect.Parameters["numero_luces"]?.SetValue(luces.Count);
+        effect.Parameters["View"].SetValue(view);
+
+        effect.CurrentTechnique.Passes[0].Apply();
+        screen.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
+    }
+}
+
 }
