@@ -15,7 +15,7 @@ namespace Control
     class AdminUtileria
     {
         Escenografia.LimBox limites;
-        private List<Escenografia.Escenografia3D> objetosFijos;
+        private List<Plataforma> objetosFijos;
         Terreno suelo;
         public luzConica luna;
         ThreadDispatcher threadDispatcher;
@@ -28,7 +28,7 @@ namespace Control
             Vector3 esquina = new Vector3(sqr2, 0f, sqr2) * ScuareSide / 2f;
             Vector3 bHeigth = new Vector3(0f, desiredHeigth, 0f);
             limites = new Escenografia.LimBox(-esquina , esquina );
-            objetosFijos = new List<Escenografia.Escenografia3D>{
+            objetosFijos = new List<Plataforma>{
                 new Escenografia.Plataforma(bRotation, esquina + bHeigth),
                 new Escenografia.Plataforma(
                     bRotation * 2f, Vector3.Transform(esquina, Microsoft.Xna.Framework.Matrix.CreateRotationY(bRotation)) + bHeigth),
@@ -94,8 +94,8 @@ namespace Control
 
     public void CrearColliders(BufferPool bufferPool, Simulation simulacion){
         //creamos los coliders de todas las plataformas
-        //foreach(Plataforma plataforma in objetosFijos)
-            //plataforma.CrearColliderExp(bufferPool, simulacion);
+        foreach(Plataforma plataforma in objetosFijos)
+            plataforma.CrearCollider(bufferPool, simulacion);
         //creamos el colider del suelo
         suelo.CrearCollider(bufferPool, simulacion, threadDispatcher,
          (int)MathF.Abs(limites.maxVertice.X - limites.minVertice.X), 
@@ -115,8 +115,13 @@ namespace Control
         }
         public void LlenarGbuffer(Camarografo camarografo)
         {
-            suelo.LlenarGbuffer(camarografo.getViewMatrix(),
-                            camarografo.getProjectionMatrix());
+            Microsoft.Xna.Framework.Matrix view = camarografo.getViewMatrix(), proj = camarografo.getProjectionMatrix() ;
+            suelo.LlenarGbuffer(view,
+                            proj);
+            foreach(Plataforma obj in objetosFijos)
+            {
+                obj.LlenarGbuffer(view, proj);
+            }
         }
         public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
         {

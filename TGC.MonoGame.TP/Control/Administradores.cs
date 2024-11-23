@@ -10,10 +10,11 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Design;
 using Microsoft.Xna.Framework.Graphics;
+using TGC.MonoGame.TP;
 
 namespace Control
 {
-    public class AdministradorNPCs 
+    class AdministradorNPCs 
     {
         
     #region IAs
@@ -200,6 +201,26 @@ namespace Control
                 auto.GetAuto().CargarModelo(efecto, modelo, texturas);
             }
         }
+        public void LlenarGbuffer(Camarografo camarografo)
+        {
+            Matrix view = camarografo.getViewMatrix(), proj = camarografo.getProjectionMatrix();
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
+            AutoNPC autoR;
+            foreach( IA auto in autos )
+            {
+                autoR = auto.GetAuto(); 
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume) )
+                    auto.GetAuto().LlenarGbuffer(view, proj);
+            }
+            foreach( AgresiveIA atacante in atacantes )
+            {
+                autoR = atacante.GetAuto();
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume))
+                    atacante.GetAuto().LlenarGbuffer(view, proj);
+            }
+        }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
         {
             BoundingFrustum frustrumCamara = new BoundingFrustum(view * projeccion);
@@ -327,7 +348,7 @@ namespace Control
             return true;
         }
     }
-    public class AdministradorConos
+    class AdministradorConos
     {
         static Random RNG = new Random();
         List<Cono> conos;
@@ -466,6 +487,8 @@ namespace Control
             //OK lo chequee mono es listo, chequea si el modelo ya existe y si si lo hace
             //al llamar muchas veces a load, solamente devuelve el valor pedido.
             //no vuelvo a confiar en IAs nunca mas...
+
+            /*NOTA Chequear de poner algo como esto para setear diferentes valores para el shader
             #region Setup de el efecto y el modelo comunes a los conos
             efectoComun.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
 
@@ -477,7 +500,8 @@ namespace Control
             efectoComun.Parameters["KDiffuse"]?.SetValue(1.5f);
             efectoComun.Parameters["KSpecular"]?.SetValue(0.25f);
             efectoComun.Parameters["shininess"]?.SetValue(32.0f);
-
+            #endregion
+            */
             foreach ( ModelMesh mesh in modeloComun.Meshes )
             {
                 foreach ( ModelMeshPart meshPart in mesh.MeshParts)
@@ -485,7 +509,6 @@ namespace Control
                     meshPart.Effect = efectoComun;
                 }
             }
-            #endregion
             //generamos una bounding box que encapsula al cono normal
             //luego solo la transofrmamos para chequear con cada cono
             BoundingVolume = MonoHelper.GenerarBoundingSphere(modeloComun, EscalaDeConos * 2.5f);
@@ -499,7 +522,20 @@ namespace Control
                 cono.CrearCollider(bufferPool, simulacion, cono.posicion);
             }
         }
-
+        public void LlenarGbuffer( Control.Camarografo juan)
+        {
+            Matrix view = juan.getViewMatrix(), proj = juan.getProjectionMatrix();
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
+            //chequear si los conos estan en el frustrum
+            foreach(Cono cono in conos)
+            {
+                //como es una bounding sphere da igual que los conos esten rotados, 
+                //solo tenemos que moverla de lugar
+                BoundingVolume.Center = cono.posicion;
+                if (frustrumCamara.Intersects(BoundingVolume))
+                    cono.LlenarGbuffer(view, proj);
+            }
+        }
         public void drawConos(Matrix view, Matrix projection)
         {
             BoundingFrustum frustrumCamara = new BoundingFrustum(view * projection);
@@ -513,6 +549,7 @@ namespace Control
                     cono.dibujar(view, projection, Color.Orange);
             }
         }
+
     }
 }
 

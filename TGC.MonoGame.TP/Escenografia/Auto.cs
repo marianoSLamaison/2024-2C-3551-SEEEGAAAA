@@ -208,7 +208,6 @@ namespace Escenografia
 
                 if (Keyboard.GetState().IsKeyDown(Keys.W))
                 {
-                    Console.WriteLine("Esto deberia estar escribiendo algo"+ Posicion);
                     comportamientoDeVelocidad += 1f;
                     //refACuerpo.Velocity.Linear += orientacion.Backward.ToNumerics() * escalarDeVelocidad;
                     //refACuerpo.ApplyImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad, Vector3.Zero.ToNumerics());
@@ -581,6 +580,55 @@ namespace Escenografia
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
         public BoundingSphere BoundingVolume;
+
+        public void LlenarGbuffer(Matrix view, Matrix proj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj);
+            MonoHelper.loadShaderTextures(efecto, baseColorTexture, metallicTexture, AOTexture, roughnessTexture);
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
@@ -699,8 +747,8 @@ namespace Escenografia
         roughnessTexture = texturas[3];
         AOTexture = texturas[4];
         emissionTexture = texturas[5];
-
-        this.ApplyTexturesToShader();
+        //si no quitamos eso, la cosa va a sobre escribir las texturas
+        //this.ApplyTexturesToShader();
 
         // Asignar el shader a cada parte del modelo
         foreach (ModelMesh mesh in modelo.Meshes)

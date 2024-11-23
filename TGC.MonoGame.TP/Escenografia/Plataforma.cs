@@ -150,9 +150,6 @@ namespace Escenografia
             var posicionBaranda2 = Vector3.Zero;
             var posicionBaranda3 = Vector3.Zero;
             var posicionBaranda4 = Vector3.Zero;
-
-            
-
             
 
             switch (rotacionY){
@@ -275,6 +272,20 @@ namespace Escenografia
                 mesh.Draw();
             }
 
+        }
+        public void LlenarGbuffer(Matrix view, Matrix proj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj);
+            MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            foreach(ModelMesh mesh in modelo.Meshes)
+            {
+                efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform
+                                                * Matrix.CreateScale(g_scale)
+                                                * Matrix.CreateRotationY(rotacionY)
+                                                * Matrix.CreateTranslation(posicion));
+                mesh.Draw();
+            }
         }
        
     }

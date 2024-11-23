@@ -116,7 +116,7 @@ namespace TGC.MonoGame.TP
             generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
             Escenario = new AdminUtileria(10000f, 700f, 26f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
             adminNPCs = new AdministradorNPCs();
-            adminNPCs.generarAutos(0, 7000f, _simulacion, bufferPool);
+            adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
             #endregion
             #region cosas experimentales
             cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
@@ -162,19 +162,14 @@ namespace TGC.MonoGame.TP
             //_vehicleCombatShader = Content.Load<Effect>(ContentFolderEffects + "VehicleCombatShader");
             _terrenoShader = Content.Load<Effect>(ContentFolderEffects + "TerrenoShader");
             #endregion
-            #region verdadera carga de modelos
             //Plataforma.setGScale(15f*1.75f);
+            #region verdadera carga de modelos
             //Nota esto toma el string, pero es por que maneja el tema del cargado de plataformas
             //en el metodo dado eso incluye un loop para cargar todas las plataformas con mismo modelo
             camarografo.loadTextFont(ContentFolderEffects, Content);
-            Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "BasicShader", Content);
             Escenario.loadTerreno(_terrenoShader, Content);
             Escenario.CrearColliders(bufferPool, _simulacion);
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "VehicleShader", Content);
-            auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
-            auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
-            generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "BasicShader", Content, bufferPool, _simulacion);
-            adminNPCs.load(efectoDeAutos, modelos, texturasParaAutos, Content);
             #endregion
             #region Testeo de cosas nuevas
             cajaPowerUp1.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
@@ -186,12 +181,33 @@ namespace TGC.MonoGame.TP
             //cargamos las bases para la prueba
             //Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "BasicShader", Content);
             //Escenario.CrearColliders(bufferPool, _simulacion);
+            //camarografo.loadTextFont(ContentFolderEffects, Content);
+            //Nota importante:
+            //como todos los elementos comparten shader, 
+            //todos los elementos tienen que setear sus texturas antes de ser dibujados
+            //no durante el load
+            //si lo hacen durante el load, van a sobre escribir la textura en el shader
+            //y vas a tener algo como campo de pasto morado que se ve horrible
+            String[] modelos = {ContentFolder3D + "Auto/RacingCar"};
+            Texture2D[] texturasParaAutos = {
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_basecolor_0"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_normal"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_metallic"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_rougness"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_ao"),
+                Content.Load<Texture2D>("Models/Auto/" + "Vehicle_emission")
+            };
+
             Effect renderer = Content.Load<Effect>(ContentFolderEffects + "DeferredShadows");
             ScreenCuad.LoadTargets(renderer);//tenemos los targets cargados
-            //camarografo.loadTextFont(ContentFolderEffects, Content);
+            Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "DeferredShadows", Content);
             Escenario.loadTerreno(renderer, Content);
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "DeferredShadows", Content);
+            generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "DeferredShadows", Content, bufferPool, _simulacion);
             Escenario.CrearColliders(bufferPool, _simulacion);
+            auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "DeferredShadows", Content);
+            auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "DeferredShadows", Content);
+            adminNPCs.load(renderer, modelos, texturasParaAutos, Content);
             base.LoadContent();
         }
 
@@ -278,10 +294,6 @@ namespace TGC.MonoGame.TP
             auto.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             auto.Misil.dibujar(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), Color.Cyan);
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
-            cajaPowerUp1.dibujar(camarografo, new Vector3(6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la derecha)
-            cajaPowerUp2.dibujar(camarografo, new Vector3(-6100,600,6100).ToNumerics()); //Caja en plataforma (abajo a la izq)
-            cajaPowerUp3.dibujar(camarografo, new Vector3(6100,600,-6100).ToNumerics()); //Caja en plataforma (arriba a la derecha)
-            cajaPowerUp4.dibujar(camarografo, new Vector3(-6100,600,-6100).ToNumerics()); //Caja en plataforma (arriba a la izq)
             adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             #endregion
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;           
@@ -293,17 +305,37 @@ namespace TGC.MonoGame.TP
         }
         private void DibujarScreenCuad(GameTime gameTime)
         {
+            #region Calculo de shadowMap
+            //NOTA: solo tenemos una luz que produce sombras,
+            //mi computadora no puede manejar hacer 41 shadowmaps en tan poco tiempo
+            #endregion
+            #region Dibujado en Geometry buffer
             //primero hacemos el pass con tooodas las cosas de escena para dibujar sus BGbuffers
             GraphicsDevice.SetRenderTargets(ScreenCuad.positions, ScreenCuad.normals, ScreenCuad.albedo, ScreenCuad.especular);
-
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.BlanchedAlmond, 1f, 0);
+            //NOTA: Esta implementacion esta dejando conos y plataforma por igual a la merced de la luz de ambiente
+            //y las luces normales, despues agregar una manera de resolver el problema 
+            //un render target de 1x1 con un color solido tal vez podria ser una solucion
+            //si no, se podria intentar modificar el shader para pasarle un color y hacer un calculo
+            //simple con step para seleccionar el color si es que no esta lellendo nada desde memoria
+            //despues agrego Texturas a la plataforma, ya que ya quedo arreglada en teoria ( ahora es olo una pieza )
+
             Escenario.LlenarGbuffer(camarografo);
+            generadorConos.LlenarGbuffer(camarografo);
+            adminNPCs.LlenarGbuffer(camarografo);
+
             auto.LlenarGbuffer(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
+            #endregion
+            #region Light pass para calcular iluminacion total
             //luego hacemos el pass con todas las luzes
+            //Por ahora solo hay una, la idea es que cada auto tenga sus lucens con posicion
+            //relativa a su centro, y simplemente sacarlas
+            //de la lista de autos cuando llegue el momento
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Red, 1f, 0);
             List<luzConica> lucesEnEscena = new List<luzConica>{ Escenario.luna };
             ScreenCuad.Dibujar(GraphicsDevice, lucesEnEscena, camarografo.getViewMatrix());
+            #endregion
         }
         private void Dibujar( GameTime gameTime )
         {

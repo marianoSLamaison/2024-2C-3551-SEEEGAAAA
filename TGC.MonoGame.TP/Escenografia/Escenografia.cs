@@ -74,6 +74,21 @@ namespace Escenografia
                 mesh.Draw();
             }
         }
+        public void LlenarGbuffer(Matrix view, Matrix Proj)
+        {
+            //aclaramos la tecnica a usar
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            //cargamos las matrices para esto
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj);
+            //cargams las texturas (si las hubiera)
+            MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            foreach(ModelMesh mesh in modelo.Meshes)
+            {
+                efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                                                    getWorldMatrix());
+                mesh.Draw();
+            }
+        }
     }
     /// <summary>
     /// Esta es la clase que te permite generar las figuras primitivas
