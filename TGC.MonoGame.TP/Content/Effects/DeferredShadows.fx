@@ -7,9 +7,10 @@ uniform float4x4 Projection;
 uniform float3 ambientColor;
 uniform float3 diffuseColor;
 uniform float3 specularColor;
-uniform float KAmbient;
-uniform float KDiffuse;
+uniform float KLuzAmbiental;
+uniform float KLuzDifusa;
 uniform float KSpecular;
+uniform float brillantes;//esto es particular de cada objeto que alla
 
 ///////////TEXTURAS BASICAS////////
 uniform texture2D baseTexture;
@@ -87,6 +88,7 @@ sampler2D especularSampler :register(s3)
 
 /*
 //NOTA: Todas las luces tienen el mismo color, y la misma intensidad
+//A mono no le gustan las structs al parecer a si que toca tener 5 arrays
 struct Luz 
 {//NOTA: se presume la direccion esta normalizada
     float3 posicion;
@@ -142,9 +144,6 @@ struct PSoutput
 };
 
 
-const float maxDist = 1000.0, minDist = -1000.0;
-
-
 VSoutput VS(in VSinput input)
 {
     VSoutput output = (VSoutput)0;
@@ -164,9 +163,9 @@ PSoutput GBuffer_PS(in VSoutput input)
     
     PSoutput output = (PSoutput)0;
     output.position = input.viewPos;
-    output.normal = input.normal * 0.5 + 0.5;//remapeamos por el tema de como guardan los colores
+    output.normal = input.normal;//remapeamos por el tema de como guardan los colores
     output.albedo = tex2D(textureSampler, input.textCoord);
-    output.especular = float4(tex2D(metallicSampler, input.textCoord).r * specularColor * KSpecular, 1.0);
+    output.especular.r = tex2D(metallicSampler, input.textCoord).r  + brillantes ;
     return output;
 }
 
@@ -184,45 +183,68 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
     //recojemos los valores de el Buffer 
     float4 viewPos = tex2D(positionSampler, input.textCoord); 
     float4 normalV = tex2D(normalSampler, input.textCoord); 
-    normalV = (normalV - 0.5) * 2.0; 
     float4 albedoV = tex2D(albedoSampler, input.textCoord); 
-    float4 especularV = tex2D(especularSampler, input.textCoord); 
+    float  especularV = tex2D(especularSampler, input.textCoord).r; 
     ////////////////////////// 
+    //Luz nuestraLuz; ////////////////Valores de coloracion 
     float4 direccionALuz; 
     float projeccion; 
+    float3 LuzAmbiental; 
+    float3 LuzDifusa;
+    float3 LuzEspeculativa;
+    float4 direccionView;
+    float4 reflexion;
+    float3 currentLigthPos;
+    float3 currentLigthDir;
     float3 finalColor = (float3)0; 
-    //Luz nuestraLuz; ////////////////Valores de coloracion 
-    float4 ambient; float4 diffuse; float4 especulativa; float AO; 
-    float projectionLigthOnNormal; float4 vectorRefleccion; float3 currentLigthPos; 
-    float3 currentLigthDir; 
+
     for ( int i=0; i<numero_luces; i++) 
     { 
-        //sacamos la direccion acia el punto en cuestion 
-        //nuestraLuz = luces[i]; 
+        //para tenerlas mas a mano
         currentLigthPos = posicionesLuces[i]; 
-        currentLigthPos = mul(float4(currentLigthPos, 0), View);
-        //para trasladarla 
+        currentLigthPos = (float3)mul(float4(currentLigthPos, 0), View);
         currentLigthDir = direcciones[i]; 
-        currentLigthDir = mul(currentLigthDir, (float3x3)View);
-        //para rotarlo a donde deba 
-        direccionALuz = float4(posicionesLuces[i] - viewPos.xyz, 0.0); 
-        projeccion = dot(direccionALuz.xyz, direcciones[i]); 
+        currentLigthDir = mul(currentLigthDir, (float3x3)View);//Nota: Los multiplicamos por 3x3 view para rotarlos nada mas no nos interesa re escalar un normal
+        direccionALuz = float4(normalize(currentLigthPos - viewPos.xyz),0);
+        direccionView = float4(normalize(-currentLigthPos), 0.0);// direccion a la camara ( recuerda estamos en espacio de view)
+
+
+        LuzAmbiental = ambientColor;//los que llega desde el LuzAmbientale ( es una simplificacion )
+        LuzDifusa = dot(normalV, direccionALuz) * (diffuseColor*0.15 + albedoV.xyz*0.7 + colores[i] * 0.15);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
+        reflexion = 2.0 * normalV * dot(normalV, direccionALuz) - direccionALuz;
+        reflexion = normalize(reflexion);
+        LuzEspeculativa = specularColor * pow(dot(reflexion, direccionView), especularV);//la luz LuzEspeculativa;que es reflejada directamente hasta la camara
+        direccionALuz = normalize(float4(currentLigthPos - viewPos.xyz, 0.0)); //apunta desde este punto hasta la luz
+        
+        projeccion = dot(-direccionALuz.xyz, currentLigthDir);//lo ponemos en negativo, por que si no estaria apuntando desde el objeto hasta la luz
+        //lo sumamos por que se supone debe dar mas vueltas que solo 1
+        finalColor += KLuzDifusa * LuzDifusa + KSpecular * saturate(LuzEspeculativa) + KLuzAmbiental * LuzAmbiental;
+        //finalColor = float3(1,1,1);
+        finalColor *= step(projeccionVorde[i], projeccion);//si es mayor que lo esperado, no lo afecta, caso contrario, lo vuelve 0
+    }
+    //return normalV;
+    return float4(finalColor,1.0);
+}
         ///AJAJAJAJJAJAAJJ 
+        /*
         if ( (projeccion* projeccion) / dot(direccionALuz, direccionALuz) > projeccionVorde[i] ) 
         { 
             //normalizamos los datos 
-            float3 normal = normalize(normalV.xyz); 
-            float3 lightDir = normalize(currentLigthPos - viewPos.xyz); 
-            float3 viewDir = normalize(-viewPos.xyz); 
+            float3 normal = normalize(normalV.xyz);
+            float3 viewDir = normalize(-viewPos.xyz);
             // View direction in view space // calculamos la luz 
-            float3 ambient = ambientColor * KAmbient; 
-            float3 diffuse = max(dot(normal, lightDir), 0.0) * diffuseColor * KDiffuse * 0.15 + colores[i] * 0.15 + albedoV.xyz * 0.7; 
-            float3 specular = pow(max(dot(reflect(-lightDir, normal), viewDir), 0.0), 0.3) * specularColor * KSpecular; 
-            finalColor = ambient + diffuse + specular * 0.5; 
-        } 
+            float3 LuzAmbiental
+     = LuzAmbiental
+    Color * KLuzAmbiental
+    ; 
+            float3 LuzDifusa = max(dot(normal, direccionALuz.xyz), 0.0) * LuzDifusaColor * KLuzDifusa * 0.15 + colores[i] * 0.15 + albedoV.xyz * 0.7; 
+            float3 specular LuzEspeculativa;= pow(max(dot(reflect(-direccionALuz.xyz, normal), viewLuzEspeculativa;Dir), 0.0), 0.3) *LuzEspeculativa; specularColor * KSpecular; 
+            finalColor = LuzAmbiental
+     + LuzDifusa + specular * 0.5; 
+        } LuzEspeculativa;
     } 
-    return float4(finalColor, 1.0); 
-}
+        */
+
 //shader diferido
 technique DeferredShading
 {

@@ -472,7 +472,10 @@ class FullScreenCuad
 
     public void Dibujar(GraphicsDevice screen, List<luzConica> luces, Matrix view)
     {
+        
         effect.CurrentTechnique = effect.Techniques["Lighting"];
+        MonoHelper.loadKColorValues(effect, 0.3f, 0.5f, 0.2f);
+        MonoHelper.loadShaderLigthColors(effect, Color.Black, Color.White, Color.White);
         effect.Parameters["posicionesLuces"]?.SetValue(mapLight<Vector3>(luces, luz => luz.posicion));
         effect.Parameters["direcciones"]?.SetValue(mapLight<Vector3>(luces, luz => luz.direccion));
         effect.Parameters["projeccionVorde"]?.SetValue(mapLight<float>(luces, luz => luz.porcentajeDeProjeccionVorde));

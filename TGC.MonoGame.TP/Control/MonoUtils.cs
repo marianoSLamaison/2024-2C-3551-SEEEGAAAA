@@ -76,8 +76,8 @@ class MonoHelper {
                 parte.VertexBuffer.GetData(datosMesh);
                 foreach( VertexPositionNormalTexture vert in datosMesh )
                 {
-                    min = Vector3.Min(min, vert.Position);
-                    max = Vector3.Max(max, vert.Position);
+                    min = new Vector3(MathF.Min(min.X, vert.Position.X), MathF.Min(min.Y, vert.Position.Y), MathF.Min(min.Z, vert.Position.Z) );
+                    max = new Vector3(MathF.Max(min.X, vert.Position.X), MathF.Max(min.Y, vert.Position.Y), MathF.Max(min.Z, vert.Position.Z) );
                 }
             }
         }
@@ -99,16 +99,17 @@ class MonoHelper {
         //pero igual por si acaso les pongo la marga de precausion
     }
     public const String kambient = "KAmbient", kdiffuse = "KDiffuse", kspecular = "KSpecular", shininess = "shininess";
-    //creo estas funciones por que no voy a escribir esto en cada objeto
-    public static void loadShaderLigthValues(Effect efecto, Dictionary<String, float> values, Vector3 ambient, Vector3 diffuse, Vector3 especular)
+    public static void loadKColorValues(Effect efecto, float kambient, float kdiffuse, float kspecular)
     {
-        efecto.Parameters["ambientColor"]?.SetValue(ambient);
-        efecto.Parameters["diffuseColor"]?.SetValue(diffuse);
-        efecto.Parameters["specularColor"]?.SetValue(especular);
-        efecto.Parameters[kambient]?.SetValue(values[kambient]);
-        efecto.Parameters[kdiffuse]?.SetValue(values[kdiffuse]);
-        efecto.Parameters[kspecular]?.SetValue(values[kspecular]);
-        efecto.Parameters[shininess]?.SetValue(values[shininess]);
+        efecto.Parameters["KLuzAmbiental"]?.SetValue(kambient);
+        efecto.Parameters["KLuzDifusa"].SetValue(kdiffuse);
+        efecto.Parameters["KSpecular"]?.SetValue(kspecular);
+    }
+    public static void loadShaderLigthColors(Effect efecto, Color  ambiente, Color difuso, Color especular)
+    {
+        efecto.Parameters["ambientColor"]?.SetValue(ambiente.ToVector3());
+        efecto.Parameters["diffuseColor"]?.SetValue(difuso.ToVector3());
+        efecto.Parameters["specularColor"]?.SetValue(especular.ToVector3());
     }
     public static void loadShaderTextures(Effect efecto, Texture2D color, Texture2D metalic, Texture2D AO, Texture2D rougness)
     {

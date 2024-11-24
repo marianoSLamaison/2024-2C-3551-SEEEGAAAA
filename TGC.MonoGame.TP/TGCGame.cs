@@ -58,6 +58,8 @@ namespace TGC.MonoGame.TP
         private Primitiva cajaPowerUp4;
         private AdministradorNPCs adminNPCs;
         private FullScreenCuad ScreenCuad;//para dibujar todo lo preprocesado
+        private const float ALTURA_ESCENARIO = 700f;
+        private const float LONGITUD_ESCENARIO = 10000f;
 
         /// <summary>
         ///     Constructor del juego.
@@ -89,7 +91,10 @@ namespace TGC.MonoGame.TP
             rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
             GraphicsDevice.RasterizerState = rasterizerState; 
 
-            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
+            //camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
+            camarografo = new Camarografo(new Vector3(1f, 1, -0.5f) * 1000f,
+            Vector3.Zero, 
+            2000, 1500, 1, 6000);
             shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
             luz = new Luz(GraphicsDevice);
             //para tener ya todo iniciado
@@ -114,7 +119,7 @@ namespace TGC.MonoGame.TP
             auto.Metralleta.CrearColliderMetralleta(_simulacion);
             generadorConos = new AdministradorConos();
             generadorConos.generarConos(Vector3.Zero, 6000f, 100, 1000f);
-            Escenario = new AdminUtileria(10000f, 700f, 26f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
+            Escenario = new AdminUtileria(LONGITUD_ESCENARIO, ALTURA_ESCENARIO, 26f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
             adminNPCs = new AdministradorNPCs();
             adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
             #endregion
@@ -301,7 +306,7 @@ namespace TGC.MonoGame.TP
         
         private void DibujarMenuInicial()
         {
-            
+            Vector3 puntoAntencionCamara = new Vector3(0f, ALTURA_ESCENARIO + 1000f, 0f);
         }
         private void DibujarScreenCuad(GameTime gameTime)
         {

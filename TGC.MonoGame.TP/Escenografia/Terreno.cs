@@ -192,15 +192,11 @@ namespace Escenografia
             this.efecto = efecto;
             terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainDiffuse_3");
                         //cargamos los kvalues y los colores basicos del escenario para blinphong
-            Dictionary<String, float> kvlues = new Dictionary<String, float>{
-                {MonoHelper.kambient, 0.6f},
-                {MonoHelper.kdiffuse, 0.4f},
-                {MonoHelper.kspecular, 0.8f},
-                {MonoHelper.shininess, 3f}
-            };
+
             Vector3 ambient = Color.BlueViolet.ToVector3(), difuseColor = Color.Peru.ToVector3(), specularColor = Color.DimGray.ToVector3();
             //esto es asi para poder tener diferentes valores K en diferentes objetos
-            MonoHelper.loadShaderLigthValues(efecto, kvlues, ambient, difuseColor, specularColor);            
+            MonoHelper.loadKColorValues(efecto, 0.7f, 0.8f, 0.3f);
+            MonoHelper.loadShaderLigthColors(efecto, Color.BurlyWood, Color.LightCyan, Color.IndianRed);      
         }
         //se usa en la primera mitad de draw
         public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix proj)
@@ -211,6 +207,7 @@ namespace Escenografia
             MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj);
                                     //cargamos las texturas necesarias
             MonoHelper.loadShaderTextures(efecto, terrenoTextureDiffuse, null, null, null);
+            MonoHelper.loadShaderLigthColors(efecto, Color.SandyBrown, Color.LawnGreen, Color.White);
             //aplicamos el primer pass, que carga todo en el GBuffer
             efecto.CurrentTechnique.Passes[0].Apply();
             GraphicsDevice device = efecto.GraphicsDevice;

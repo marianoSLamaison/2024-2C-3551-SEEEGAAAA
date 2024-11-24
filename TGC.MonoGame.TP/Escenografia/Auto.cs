@@ -635,6 +635,8 @@ namespace Escenografia
 
             efecto.Parameters["shadowMap"]?.SetValue(shadowMap);
             efecto.Parameters["shadowMapSize"]?.SetValue(Vector2.One * 16384);
+            MonoHelper.loadKColorValues(efecto, 1f, 0.7f, 0.2f);
+            efecto.Parameters["brillantes"]?.SetValue(0.3f);
 
             efecto.Parameters["View"].SetValue(view);
             // le cargamos el como quedaria projectado en la pantalla
