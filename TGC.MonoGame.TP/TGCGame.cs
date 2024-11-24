@@ -11,8 +11,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 
 
@@ -62,6 +60,9 @@ namespace TGC.MonoGame.TP
         private Dictionary<int, object> staticHandleTags;
         
         private float tiempoTranscurrido = 0f;
+
+        private Song playingMusic;
+        private Song menuMusic;
         private float Puntuacion = 0f;
          
         private SpriteFont fuente; // Fuente para el texto
@@ -171,7 +172,6 @@ namespace TGC.MonoGame.TP
             
             camarografo.loadTextFont(ContentFolderEffects, Content);
 
-
             _basicShader = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             _vehicleShader = Content.Load<Effect>(ContentFolderEffects + "VehicleShader");
             //_vehicleCombatShader = Content.Load<Effect>(ContentFolderEffects + "VehicleCombatShader");
@@ -201,6 +201,9 @@ namespace TGC.MonoGame.TP
 
             adminNPCs.load(efectos, modelos, Content);
 
+            playingMusic = Content.Load<Song>("Danger Zone - Instrumental  TOP GUN");
+            menuMusic = Content.Load<Song>("Gran Turismo 4 Soundtrack - Race Menu 2");
+
             base.LoadContent();
         }
 
@@ -213,6 +216,13 @@ namespace TGC.MonoGame.TP
             {
                 //Salgo del juego.
                 Exit();
+            }
+
+            if (MediaPlayer.State != MediaState.Playing)
+            {
+                MediaPlayer.IsRepeating = true; //Loop
+                MediaPlayer.Volume = 1f;     
+                MediaPlayer.Play(playingMusic);
             }
             
             auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));

@@ -13,6 +13,12 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Danger Zone - Instrumental  TOP GUN.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Danger Zone - Instrumental  TOP GUN.wav
+
 #begin debugFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
@@ -50,6 +56,18 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Effects/VehicleShader.fx
+
+#begin Gran Turismo 4 Soundtrack - Race Menu 2.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Gran Turismo 4 Soundtrack - Race Menu 2.wav
+
+#begin Laser Shot - Sound Effect.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Laser Shot - Sound Effect.wav
 
 #begin Models/Auto/RacingCar.fbx
 /importer:FbxImporter
@@ -532,4 +550,40 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:SonidoAutoMuerto.wav
+
+#begin SonidoMetralleta.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoMetralleta.wav
+
+#begin SonidoMisil.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoMisil.wav
+
+#begin SonidoPowerUps.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoPowerUps.wav
+
+#begin Sounds/SonidoMetralleta.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/SonidoMetralleta.wav;SonidoMetralleta.wav
+
+#begin Sounds/SonidoMisil.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/SonidoMisil.wav;SonidoMisil.wav
+
+#begin Sounds/SonidoPowerUps.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/SonidoPowerUps.wav;SonidoPowerUps.wav
 

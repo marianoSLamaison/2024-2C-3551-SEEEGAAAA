@@ -150,6 +150,9 @@ namespace Escenografia
 
         public AdminMisiles adminMisiles;
         public AdminMetralleta adminMetralleta;
+        public SoundEffect sonidoMetralleta;
+        public SoundEffect sonidoMisil;
+        public SoundEffect sonidoPowerUp;    
 
         public Misil Misil;
         public Metralleta Metralleta;
@@ -193,6 +196,7 @@ namespace Escenografia
         public void RecogerPowerUp(){
             if(!powerUpActivo){
                 Console.WriteLine("Agarré un powerup");
+                sonidoPowerUp.Play();
                 
                 var random = RandomNumberGenerator.GetInt32(3);
 
@@ -289,6 +293,7 @@ namespace Escenografia
                 {
                     int misilDisparado = 3 - cantidadMisiles;
                     adminMisiles.DispararMisil(misilDisparado, orientacion, refACuerpo.Pose.Position);
+                    sonidoMisil.Play();
                     cantidadMisiles--;
 
                     if (cantidadMisiles == 0) powerUpActivo = false;
@@ -300,6 +305,7 @@ namespace Escenografia
                 if(Keyboard.GetState().IsKeyDown(Keys.N) && cantidadBalas > 0 && tiempoDesdeUltimoDisparo >= tiempoEntreDisparos){
                     int baladisparada = 30 - cantidadBalas;
                     adminMetralleta.DispararBala(baladisparada, orientacion, refACuerpo.Pose.Position);
+                    sonidoMetralleta.Play();
                     cantidadBalas--;
 
                     tiempoDesdeUltimoDisparo = 0f;
@@ -423,6 +429,8 @@ namespace Escenografia
 
             this.ApplyTexturesToShader();
 
+            loadSonido("SonidoMisil", "SonidoMetralleta", "SonidoPowerUps",  contManager);
+
             // Asignar el shader a cada parte del modelo
             foreach (ModelMesh mesh in modelo.Meshes)
             {   
@@ -432,6 +440,11 @@ namespace Escenografia
                     meshPart.Effect = efecto;
                 }
             }
+        }
+        public void loadSonido(string direccionSonidoMisil, string direccionSonidoMetralleta, string direccionSonidoPowerUps,  ContentManager contManager){
+            sonidoMetralleta = contManager.Load<SoundEffect>(direccionSonidoMetralleta);
+            sonidoMisil = contManager.Load<SoundEffect>(direccionSonidoMisil);
+            sonidoPowerUp = contManager.Load<SoundEffect>(direccionSonidoPowerUps);
         }
 
         /// <summary>
