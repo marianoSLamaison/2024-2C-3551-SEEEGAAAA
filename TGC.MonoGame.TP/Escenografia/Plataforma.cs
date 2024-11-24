@@ -273,10 +273,10 @@ namespace Escenografia
             }
 
         }
-        public void LlenarGbuffer(Matrix view, Matrix proj)
+        public void LlenarGbuffer(Matrix view, Matrix proj, Matrix lightViewProj)
         {
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
-            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj);
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj, lightViewProj);
             MonoHelper.loadShaderTextures(efecto, null, null, null, null);
             foreach(ModelMesh mesh in modelo.Meshes)
             {

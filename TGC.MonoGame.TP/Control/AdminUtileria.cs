@@ -17,7 +17,6 @@ namespace Control
         Escenografia.LimBox limites;
         private List<Plataforma> objetosFijos;
         Terreno suelo;
-        public luzConica luna;
         ThreadDispatcher threadDispatcher;
         public AdminUtileria(float ScuareSide, float desiredHeigth, float desiredScale, Simulation simulacion)
         {
@@ -39,19 +38,12 @@ namespace Control
             };
             Escenografia.Plataforma.setGScale(desiredScale);
             suelo = new Terreno();
-            luna = new luzConica(
-                                new Vector3(0f, 10000f, 0f),
-                                new Vector3(0f, -1f, 0f),
-                                Color.IndianRed,
-                                0f,
-                                1);
         }
 
         public void setThreadDispatcher(ThreadDispatcher dispatcher)
         {
             threadDispatcher = dispatcher;
         }
-
     private void SetParedes(Simulation simulacion)
     {
         const float grosorPared = 500f;
@@ -115,12 +107,24 @@ namespace Control
         }
         public void LlenarGbuffer(Camarografo camarografo)
         {
-            Microsoft.Xna.Framework.Matrix view = camarografo.getViewMatrix(), proj = camarografo.getProjectionMatrix() ;
-            suelo.LlenarGbuffer(view,
-                            proj);
+            Microsoft.Xna.Framework.Matrix view = camarografo.getViewMatrix(), 
+            proj = camarografo.getProjectionMatrix(),
+            ligthViewProj = camarografo.GetLigthViewProj();
+            suelo.LlenarGbuffer(view, proj, ligthViewProj);
             foreach(Plataforma obj in objetosFijos)
             {
-                obj.LlenarGbuffer(view, proj);
+                obj.LlenarGbuffer(view, proj, ligthViewProj);
+            }
+        }
+        public void LlenarEfectsBuffer(Camarografo camarografo)
+        {
+            Microsoft.Xna.Framework.Matrix view = camarografo.getViewMatrix(), 
+            proj = camarografo.getProjectionMatrix(),
+            ligthViewProj = camarografo.GetLigthViewProj();
+            suelo.LlenarEfectsBuffer(view, proj, ligthViewProj);
+            foreach(Plataforma obj in objetosFijos)
+            {
+                obj.LlenarEfectsBuffer(view, proj, ligthViewProj);
             }
         }
         public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)

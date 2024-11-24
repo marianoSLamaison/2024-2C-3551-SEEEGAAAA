@@ -203,7 +203,9 @@ namespace Control
         }
         public void LlenarGbuffer(Camarografo camarografo)
         {
-            Matrix view = camarografo.getViewMatrix(), proj = camarografo.getProjectionMatrix();
+            Matrix view = camarografo.getViewMatrix(),
+            proj = camarografo.getProjectionMatrix(),
+            ligthViewProj = camarografo.GetLigthViewProj();
             BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
             AutoNPC autoR;
             foreach( IA auto in autos )
@@ -211,14 +213,14 @@ namespace Control
                 autoR = auto.GetAuto(); 
                 autoR.BoundingVolume.Center = autoR.Posicion;
                 if ( frustrumCamara.Intersects(autoR.BoundingVolume) )
-                    auto.GetAuto().LlenarGbuffer(view, proj);
+                    auto.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
             }
             foreach( AgresiveIA atacante in atacantes )
             {
                 autoR = atacante.GetAuto();
                 autoR.BoundingVolume.Center = autoR.Posicion;
                 if ( frustrumCamara.Intersects(autoR.BoundingVolume))
-                    atacante.GetAuto().LlenarGbuffer(view, proj);
+                    atacante.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
             }
         }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
@@ -524,7 +526,9 @@ namespace Control
         }
         public void LlenarGbuffer( Control.Camarografo juan)
         {
-            Matrix view = juan.getViewMatrix(), proj = juan.getProjectionMatrix();
+            Matrix view = juan.getViewMatrix(),
+            proj = juan.getProjectionMatrix(),
+            ligthViewProj = juan.GetLigthViewProj();
             BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
             //chequear si los conos estan en el frustrum
             foreach(Cono cono in conos)
@@ -533,7 +537,7 @@ namespace Control
                 //solo tenemos que moverla de lugar
                 BoundingVolume.Center = cono.posicion;
                 if (frustrumCamara.Intersects(BoundingVolume))
-                    cono.LlenarGbuffer(view, proj);
+                    cono.LlenarGbuffer(view, proj, ligthViewProj);
             }
         }
         public void drawConos(Matrix view, Matrix projection)

@@ -38,6 +38,7 @@ namespace TGC.MonoGame.TP
         private Effect _basicShader;
         private Effect _vehicleShader;
         private Effect _terrenoShader;
+        private Microsoft.Xna.Framework.Matrix ligthViewProj;//esto siempre es igual por que el sol no se mueve
         private Simulation _simulacion;
         //Control.Camera camara;
         Control.Camarografo camarografo;
@@ -60,6 +61,7 @@ namespace TGC.MonoGame.TP
         private FullScreenCuad ScreenCuad;//para dibujar todo lo preprocesado
         private const float ALTURA_ESCENARIO = 700f;
         private const float LONGITUD_ESCENARIO = 10000f;
+        private const float NEAR_PLANE = 10f, FAR_PLANE = 10000f;
 
         /// <summary>
         ///     Constructor del juego.
@@ -91,10 +93,10 @@ namespace TGC.MonoGame.TP
             rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
             GraphicsDevice.RasterizerState = rasterizerState; 
 
-            //camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 1f, 6000f);
-            camarografo = new Camarografo(new Vector3(1f, 1, -0.5f) * 1000f,
-            Vector3.Zero, 
-            2000, 1500, 1, 6000);
+            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, NEAR_PLANE, FAR_PLANE);
+            //camarografo = new Camarografo(new Vector3(1.5f, 1, 1) * 1000f,
+            //Vector3.Zero, 
+            //2000, 1500, 1, 10000);
             shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
             luz = new Luz(GraphicsDevice);
             //para tener ya todo iniciado
@@ -122,6 +124,7 @@ namespace TGC.MonoGame.TP
             Escenario = new AdminUtileria(LONGITUD_ESCENARIO, ALTURA_ESCENARIO, 26f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
             adminNPCs = new AdministradorNPCs();
             adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
+
             #endregion
             #region cosas experimentales
             cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
@@ -204,6 +207,7 @@ namespace TGC.MonoGame.TP
             };
 
             Effect renderer = Content.Load<Effect>(ContentFolderEffects + "DeferredShadows");
+
             ScreenCuad.LoadTargets(renderer);//tenemos los targets cargados
             Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "DeferredShadows", Content);
             Escenario.loadTerreno(renderer, Content);
@@ -310,9 +314,12 @@ namespace TGC.MonoGame.TP
         }
         private void DibujarScreenCuad(GameTime gameTime)
         {
-            #region Calculo de shadowMap
-            //NOTA: solo tenemos una luz que produce sombras,
-            //mi computadora no puede manejar hacer 41 shadowmaps en tan poco tiempo
+            //esto solo soporta hasta 4 render targes, a si que toca manejarlo a la antigua
+            #region Datos Para Efectos
+            GraphicsDevice.SetRenderTargets(ScreenCuad.ShadowMap);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+            Escenario.LlenarEfectsBuffer(camarografo);
+            auto.LlenarEfectsBuffer(camarografo);
             #endregion
             #region Dibujado en Geometry buffer
             //primero hacemos el pass con tooodas las cosas de escena para dibujar sus BGbuffers
@@ -324,6 +331,8 @@ namespace TGC.MonoGame.TP
             //si no, se podria intentar modificar el shader para pasarle un color y hacer un calculo
             //simple con step para seleccionar el color si es que no esta lellendo nada desde memoria
             //despues agrego Texturas a la plataforma, ya que ya quedo arreglada en teoria ( ahora es olo una pieza )
+            
+            
 
             Escenario.LlenarGbuffer(camarografo);
             generadorConos.LlenarGbuffer(camarografo);
@@ -338,7 +347,7 @@ namespace TGC.MonoGame.TP
             //de la lista de autos cuando llegue el momento
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Red, 1f, 0);
-            List<luzConica> lucesEnEscena = new List<luzConica>{ Escenario.luna };
+            List<luzConica> lucesEnEscena = new List<luzConica>{ camarografo.AmbientLight };
             ScreenCuad.Dibujar(GraphicsDevice, lucesEnEscena, camarografo.getViewMatrix());
             #endregion
         }

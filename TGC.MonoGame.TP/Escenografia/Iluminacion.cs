@@ -1,6 +1,7 @@
+using Control;
 using Microsoft.Xna.Framework;
 
-struct luzConica
+public struct luzConica
 {//es conica pero en teoria la puedes usar para lo que quieras
     public Vector3 posicion;
     public Vector3 direccion;

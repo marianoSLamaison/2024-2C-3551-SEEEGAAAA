@@ -3,6 +3,7 @@
 uniform float4x4 World;
 uniform float4x4 View;
 uniform float4x4 Projection;
+uniform float4x4 LightViewProjection;//Esta es desde la pespectiva de la luz
 
 uniform float3 ambientColor;
 uniform float3 diffuseColor;
@@ -51,25 +52,26 @@ uniform texture2D position;
 uniform texture2D normal;
 uniform texture2D albedo;
 uniform texture2D especular;
+uniform texture2D shadowMap;
    
-  sampler2D positionSampler : register(s0)   
+sampler2D positionSampler = sampler_state   
 {
     Texture = <position>;
     MagFilter = Linear;
     MinFilter = Linear;
     MipFilter = Linear;
-    AddressU = Wrap;
-    AddressV = Wrap;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
-sampler2D normalSampler : register(s1)
+sampler2D normalSampler = sampler_state
 {
     Texture = (normal);
     MagFilter = Linear;
     MinFilter = Linear;
-    AddressU = Wrap;
-    AddressV = Wrap;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
-sampler2D albedoSampler : register(s2)
+sampler2D albedoSampler = sampler_state
 {
     Texture = (albedo);
     MagFilter = Linear;
@@ -77,13 +79,23 @@ sampler2D albedoSampler : register(s2)
     AddressU = Wrap;
     AddressV = Wrap;
 };
-sampler2D especularSampler :register(s3)
+sampler2D especularSampler = sampler_state
 {
     Texture = (especular);
     MagFilter = Linear;
     MinFilter = Linear;
     AddressU = Wrap;
     AddressV = Wrap;
+};
+
+sampler2D shadowMapSampler = sampler_state
+{
+    Texture = <shadowMap>;
+    MagFilter = Linear;
+    MinFilter = Linear;
+    MipFilter = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 /*
@@ -116,10 +128,18 @@ struct VSinput
 
 struct VSoutput
 {
-    float4 finalPos : SV_Position;
-    float4 normal : TEXCOORD0;
-    float2 textCoord : TEXCOORD1;
-    float4 viewPos : TEXCOORD2;
+    float4 finalPos   : SV_Position;
+    float4 normal     : TEXCOORD0;
+    float2 textCoord  : TEXCOORD1;
+    float4 position   : TEXCOORD2;
+};
+
+struct PSoutput
+{
+    float4 position  : SV_Target0;
+    float4 normal    : SV_Target1;
+    float4 albedo    : SV_Target2;
+    float4 especular : SV_Target3;
 };
 
 struct Light_VSinput
@@ -135,14 +155,37 @@ struct Light_VSoutput
     float2 textCoord : TEXCOORD0;
 };
 
-struct PSoutput
+struct Depth_VSinput
 {
-    float4 position : SV_Target0;
-    float4 normal : SV_Target1;
-    float4 albedo : SV_Target2;
-    float4 especular : SV_Target3;
+    float4 position : POSITION0;
 };
 
+struct Depth_VSoutput
+{
+    float4 position : SV_Position;
+    float4 projPos  : TEXCOORD0;//la posicion en espacio projeccion
+};
+
+struct Depth_PSoutput
+{
+    float4 shadowLightDist : SV_Target0;
+};
+
+Depth_VSoutput DepthPass_VS(in Depth_VSinput input)
+{
+    Depth_VSoutput output = (Depth_VSoutput)0;
+    float4 worldPos = mul(input.position, World);
+    output.position = mul(worldPos, LightViewProjection);
+    output.projPos = output.position;
+    return output;
+}
+
+Depth_PSoutput DepthPass_PS(in Depth_VSoutput input)
+{//escribimos la profundidad en el target
+    Depth_PSoutput output = (Depth_PSoutput)0;
+    output.shadowLightDist.r = input.projPos.z / input.projPos.w;
+    return output;
+}
 
 VSoutput VS(in VSinput input)
 {
@@ -151,21 +194,22 @@ VSoutput VS(in VSinput input)
     float4 worldPos = mul(input.localPos, World);
     float4 viewPos = mul(worldPos, View);
     float4 projPos = mul(viewPos, Projection);
+
     output.textCoord = input.textPos;
     output.finalPos = projPos;
-    output.viewPos = viewPos;
+    output.position = worldPos;//lo guardamos en mundo por que lo necesitamos luego para el light pass
     output.normal = normalize(float4(mul(input.normal.xyz, (float3x3)worldView), 0.0));
+
     return output;
 }
 //carga todo al buffer objetivo
 PSoutput GBuffer_PS(in VSoutput input)
 {
-    
     PSoutput output = (PSoutput)0;
-    output.position = input.viewPos;
+    output.position = input.position;
     output.normal = input.normal;//remapeamos por el tema de como guardan los colores
     output.albedo = tex2D(textureSampler, input.textCoord);
-    output.especular.r = tex2D(metallicSampler, input.textCoord).r  + brillantes ;
+    output.especular.r = tex2D(metallicSampler, input.textCoord).r  + brillantes;//todo lo que afecte el brillo de la cosa
     return output;
 }
 
@@ -173,7 +217,7 @@ Light_VSoutput LightPass_VS(in Light_VSinput input)
 {
     //como es un fullScreenCuad, una de sus coordenadas esta anulada todo el tiempo
     Light_VSoutput output = (Light_VSoutput)0;
-    output.position = input.posicion;
+    output.position  = input.posicion;
     output.textCoord = input.texcoord;
     return output;
 }
@@ -181,10 +225,14 @@ Light_VSoutput LightPass_VS(in Light_VSinput input)
 float4 LightPass_PS(in Light_VSoutput input) : COLOR0 
 { 
     //recojemos los valores de el Buffer 
-    float4 viewPos = tex2D(positionSampler, input.textCoord); 
+    float4 worlPos = tex2D(positionSampler, input.textCoord);
+    float4 viewPos = mul(worlPos, View);//para pasarla a espacio de mundo 
     float4 normalV = tex2D(normalSampler, input.textCoord); 
     float4 albedoV = tex2D(albedoSampler, input.textCoord); 
-    float  especularV = tex2D(especularSampler, input.textCoord).r; 
+    float  especularV = tex2D(especularSampler, input.textCoord).r;
+    float  shadowDist = tex2D(shadowMapSampler, input.textCoord).r;//sacamos la minima distancia registrada a la luz
+    float4 LigthProjPos = mul(worlPos, LightViewProjection);  
+    float  distanceToLight = LigthProjPos.z / LigthProjPos.w;//sacamos la distancia a la luz de nuestro punto
     ////////////////////////// 
     //Luz nuestraLuz; ////////////////Valores de coloracion 
     float4 direccionALuz; 
@@ -213,7 +261,7 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         LuzDifusa = dot(normalV, direccionALuz) * (diffuseColor*0.15 + albedoV.xyz*0.7 + colores[i] * 0.15);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
         reflexion = 2.0 * normalV * dot(normalV, direccionALuz) - direccionALuz;
         reflexion = normalize(reflexion);
-        LuzEspeculativa = specularColor * pow(dot(reflexion, direccionView), especularV);//la luz LuzEspeculativa;que es reflejada directamente hasta la camara
+        LuzEspeculativa = specularColor * pow(abs(dot(reflexion, direccionView)), especularV);//la luz LuzEspeculativa;que es reflejada directamente hasta la camara
         direccionALuz = normalize(float4(currentLigthPos - viewPos.xyz, 0.0)); //apunta desde este punto hasta la luz
         
         projeccion = dot(-direccionALuz.xyz, currentLigthDir);//lo ponemos en negativo, por que si no estaria apuntando desde el objeto hasta la luz
@@ -221,6 +269,9 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         finalColor += KLuzDifusa * LuzDifusa + KSpecular * saturate(LuzEspeculativa) + KLuzAmbiental * LuzAmbiental;
         //finalColor = float3(1,1,1);
         finalColor *= step(projeccionVorde[i], projeccion);//si es mayor que lo esperado, no lo afecta, caso contrario, lo vuelve 0
+        //finalColor *= step(distanceToLight, shadowDist);//si esta en sombra, solo le ponemos 0-
+        
+        finalColor = float3(abs(distanceToLight) ,0,0);
     }
     //return normalV;
     return float4(finalColor,1.0);
@@ -245,13 +296,16 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
     } 
         */
 
+
+//Me di  cuenta que puedo calcular las sombras directamente en la pasado de geometria
+//Esta cosa va a ser enorme
 //shader diferido
 technique DeferredShading
 {
     pass pass0
     {
         VertexShader = compile vs_3_0 VS();
-        PixelShader = compile ps_3_0 GBuffer_PS();
+        PixelShader  = compile ps_3_0 GBuffer_PS();
     }
     /*
     pass pass1
@@ -267,14 +321,17 @@ technique Lighting
     pass pass0
     {
         VertexShader = compile vs_3_0 LightPass_VS();//este renderiza a un fullScreenCuad
-        PixelShader = compile ps_3_0 LightPass_PS();
+        PixelShader  = compile ps_3_0 LightPass_PS();
     }
 }
 
-technique Bloom
-{//solo un pass por que es nada mas para agregar el bloom
+//tenemos que hacer una pasada por shadows antes por que 
+//esto no soporta mas de 4 render targets a la vez 
+technique EffectsPass
+{
     pass pass0
     {
-
+        VertexShader = compile vs_3_0 DepthPass_VS();
+        PixelShader  = compile ps_3_0 DepthPass_PS();
     }
 }

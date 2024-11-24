@@ -98,11 +98,20 @@ class MonoHelper {
         efecto.Parameters["Projection"]?.SetValue(proj);
         //pero igual por si acaso les pongo la marga de precausion
     }
+    public static void loadShaderMatrices(Effect efecto, Matrix world, Matrix view, Matrix proj, Matrix lightViewProj)
+    {
+        //estos 3 parametros son basicos para trabajar todo tipo de shader que tenemos
+        efecto.Parameters["World"]?.SetValue(world);
+        efecto.Parameters["View"]?.SetValue(view);
+        efecto.Parameters["Projection"]?.SetValue(proj);
+        efecto.Parameters["LightViewProjection"].SetValue(lightViewProj);
+        //pero igual por si acaso les pongo la marga de precausion
+    }
     public const String kambient = "KAmbient", kdiffuse = "KDiffuse", kspecular = "KSpecular", shininess = "shininess";
     public static void loadKColorValues(Effect efecto, float kambient, float kdiffuse, float kspecular)
     {
         efecto.Parameters["KLuzAmbiental"]?.SetValue(kambient);
-        efecto.Parameters["KLuzDifusa"].SetValue(kdiffuse);
+        efecto.Parameters["KLuzDifusa"]?.SetValue(kdiffuse);
         efecto.Parameters["KSpecular"]?.SetValue(kspecular);
     }
     public static void loadShaderLigthColors(Effect efecto, Color  ambiente, Color difuso, Color especular)

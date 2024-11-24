@@ -74,14 +74,31 @@ namespace Escenografia
                 mesh.Draw();
             }
         }
-        public void LlenarGbuffer(Matrix view, Matrix Proj)
+        public void LlenarGbuffer(Matrix view, Matrix Proj, Matrix lightViewProj)
         {
             //aclaramos la tecnica a usar
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
             //cargamos las matrices para esto
-            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj);
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj, lightViewProj);
             //cargams las texturas (si las hubiera)
             MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            foreach(ModelMesh mesh in modelo.Meshes)
+            {
+                efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                                                    getWorldMatrix());
+                mesh.Draw();
+            }
+        }
+
+        public void LlenarEfectsBuffer(Microsoft.Xna.Framework.Matrix view,
+                                            Microsoft.Xna.Framework.Matrix Proj,
+                                            Microsoft.Xna.Framework.Matrix lightViewProj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(),
+            view,
+            Proj,
+            lightViewProj);
             foreach(ModelMesh mesh in modelo.Meshes)
             {
                 efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
@@ -417,6 +434,7 @@ class FullScreenCuad
     public RenderTarget2D normals;
     public RenderTarget2D albedo;
     public RenderTarget2D especular;
+    public RenderTarget2D ShadowMap;
 
     public FullScreenCuad(GraphicsDevice screen)
     {
@@ -448,6 +466,7 @@ class FullScreenCuad
         normals   = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
         albedo    = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
         especular = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+        ShadowMap = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Single, DepthFormat.Depth24);
 
         device = screen;
     }
@@ -459,6 +478,7 @@ class FullScreenCuad
         effect.Parameters["normal"]?.SetValue(normals);
         effect.Parameters["albedo"]?.SetValue(albedo);
         effect.Parameters["especular"]?.SetValue(especular);
+        effect.Parameters["shadowMap"]?.SetValue(ShadowMap);
         this.effect = effect;
     }
 

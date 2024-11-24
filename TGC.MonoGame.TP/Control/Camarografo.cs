@@ -7,14 +7,15 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Control
 {
-    class Camarografo
+    public class Camarografo
     {
-        public Control.Camara camaraAsociada;
+        public Camara camaraAsociada;
+        public Camara camaraLuz;
         private Matrix projeccion;
-        private bool teclaOprimida;
         private float nearPLane, farPLane;
 
         private bool ortographicMode = false;
+        public luzConica AmbientLight;
 
         public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float AspectRatio, float minVista, float maxVista)
         {
@@ -22,7 +23,13 @@ namespace Control
             farPLane = maxVista;
             camaraAsociada = new Camara(posicion, puntoDeFoco);
             projeccion = camaraAsociada.getPerspectiveProjectionMatrix(MathF.PI / 4f, AspectRatio, minVista, maxVista);
-            teclaOprimida = false;
+            AmbientLight = new luzConica(
+                                new Vector3(0f, 0.5f, 1f) * 1,
+                                -new Vector3(200f, 500f, 200f),
+                                Color.IndianRed,
+                                0f,
+                                1f);
+            camaraLuz = new Camara(AmbientLight.posicion, puntoDeFoco);
         }
         public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float width, float height,float minVista, float maxVista)
         {
@@ -30,7 +37,6 @@ namespace Control
             farPLane = maxVista;
             camaraAsociada = new Camara(posicion, puntoDeFoco);
             projeccion = camaraAsociada.getOrtographic(width, height, nearPLane, farPLane);
-            teclaOprimida = false;
             ortographicMode = true;
         }
 
@@ -45,6 +51,8 @@ namespace Control
             projeccion = camaraAsociada.getPerspectiveProjectionMatrix(MathF.PI / 4, aspectRatio, nearPLane, farPLane);
         }
 
+        public Matrix GetLigthViewProj() => camaraLuz.getViewMatrix() * projeccion;
+
         public Matrix getViewMatrix()
         {
             return ortographicMode ? camaraAsociada.getIsometricView() : camaraAsociada.getViewMatrix();
@@ -58,6 +66,7 @@ namespace Control
         public void setPuntoAtencion(Vector3 PuntoAtencion)
         {
             camaraAsociada.PuntoAtencion = PuntoAtencion;
+            camaraLuz.PuntoAtencion = PuntoAtencion;
         }
 
     }

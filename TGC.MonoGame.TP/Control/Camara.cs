@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 //si quieren hacer algo como tener dos camara, una mas cerca del auto o algo parecido
 namespace Control
 {
-    class Camara
+    public class Camara
     {
         public Vector3 posicion;
         private Vector3 puntoAtencion;
@@ -53,13 +53,14 @@ namespace Control
         //para obtener la vision de la camara
         public Matrix getViewMatrix()
         {
-            return Matrix.CreateLookAt(posicion, puntoAtencion, Vector3.Up);
+            Vector3 front = Vector3.Normalize(PuntoAtencion - posicion);
+            Vector3 derechaCamara = Vector3.Cross(front, Vector3.Up);
+            Vector3 arribaCamara =  Vector3.Cross(derechaCamara, puntoAtencion);
+            return Matrix.CreateLookAt(posicion,puntoAtencion, arribaCamara);
         }
         public Matrix getIsometricView()
         {//para tener la vista isometrica
-            return Matrix.CreateLookAt(posicion, puntoAtencion, Vector3.Up) *
-                    Matrix.CreateRotationZ(MathF.PI / 4) *
-                    Matrix.CreateRotationX(MathF.PI / 6);
+            return Matrix.CreateLookAt(posicion, puntoAtencion, Vector3.Up);
         }
     }
 }

@@ -199,16 +199,31 @@ namespace Escenografia
             MonoHelper.loadShaderLigthColors(efecto, Color.BurlyWood, Color.LightCyan, Color.IndianRed);      
         }
         //se usa en la primera mitad de draw
-        public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix proj)
+        public new void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view,
+                                Microsoft.Xna.Framework.Matrix proj,
+                                Microsoft.Xna.Framework.Matrix lightViewProj)
         {
             //aclaramos que tecnica estamos ussando
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
             //cargamos las primeras partes del shader 
-            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj);
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj, lightViewProj);
                                     //cargamos las texturas necesarias
             MonoHelper.loadShaderTextures(efecto, terrenoTextureDiffuse, null, null, null);
             MonoHelper.loadShaderLigthColors(efecto, Color.SandyBrown, Color.LawnGreen, Color.White);
             //aplicamos el primer pass, que carga todo en el GBuffer
+            efecto.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = efecto.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
+        }
+        public new void LlenarEfectsBuffer(Microsoft.Xna.Framework.Matrix view,
+                                            Microsoft.Xna.Framework.Matrix Proj,
+                                            Microsoft.Xna.Framework.Matrix lightViewProj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(),
+            view,
+            Proj,
+            lightViewProj);
             efecto.CurrentTechnique.Passes[0].Apply();
             GraphicsDevice device = efecto.GraphicsDevice;
             device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
