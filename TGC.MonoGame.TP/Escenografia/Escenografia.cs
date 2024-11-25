@@ -5,6 +5,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Escenografia
 {
@@ -71,6 +74,38 @@ namespace Escenografia
                 mesh.Draw();
             }
         }
+        public void LlenarGbuffer(Matrix view, Matrix Proj, Matrix lightViewProj)
+        {
+            //aclaramos la tecnica a usar
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            //cargamos las matrices para esto
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj, lightViewProj);
+            //cargams las texturas (si las hubiera)
+            MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            foreach(ModelMesh mesh in modelo.Meshes)
+            {
+                efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                                                    getWorldMatrix());
+                mesh.Draw();
+            }
+        }
+
+        public void LlenarEfectsBuffer(Microsoft.Xna.Framework.Matrix view,
+                                            Microsoft.Xna.Framework.Matrix Proj,
+                                            Microsoft.Xna.Framework.Matrix lightViewProj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(),
+            view,
+            Proj,
+            lightViewProj);
+            foreach(ModelMesh mesh in modelo.Meshes)
+            {
+                efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                                                    getWorldMatrix());
+                mesh.Draw();
+            }
+        }
     }
     /// <summary>
     /// Esta es la clase que te permite generar las figuras primitivas
@@ -86,6 +121,7 @@ namespace Escenografia
         private Color color;
         private int numeroTriangulos;
         private BodyReference cuerpoFisico;
+        public Vector3 pos;
         public BodyHandle handlerCuerpo;
         public StaticHandle staticHandle;
     
@@ -360,7 +396,16 @@ namespace Escenografia
                 device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length /3);
             }
         }
-
+        public void LlenarGbuffer(Camarografo cam)
+        {
+            effect.CurrentTechnique = effect.Techniques["DeferredShading"];
+            MonoHelper.loadShaderMatrices(effect, getWorldMatrix(), cam.getViewMatrix(), cam.getProjectionMatrix(), cam.GetLigthViewProj());
+            //aplicamos el primer pass, que carga todo en el GBuffer
+            effect.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = effect.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
+        }
+        public Matrix getWorldMatrix() => Matrix.CreateFromQuaternion(cuerpoFisico.Pose.Orientation) * Matrix.CreateTranslation(pos);
         public void dibujar(Camarografo camarografo, Matrix world)
         {
             effect.Parameters["Projection"].SetValue(camarografo.getProjectionMatrix());
@@ -378,7 +423,7 @@ namespace Escenografia
         {
             Vector3 dims = maxV - minV;
             TypedIndex figura = AyudanteSimulacion.simulacion.Shapes.Add(new BepuPhysics.Collidables.Box(dims.X,dims.Y,dims.Z));
-            handlerCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose(posicion.ToNumerics()), 1f, figura, 1f);
+            handlerCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose(posicion.ToNumerics()), 5000, figura, 1f);
             cuerpoFisico = AyudanteSimulacion.simulacion.Bodies.GetBodyReference(handlerCuerpo);
             cuerpoFisico.Activity.SleepThreshold = -1f;
         }
@@ -387,4 +432,97 @@ namespace Escenografia
 
         } 
     }
+class FullScreenCuad
+{
+    private GraphicsDevice device;
+    private short[] indices;
+    private Effect effect;
+    private VertexPositionTexture[] vertices;
+    int numeroTriangulos;
+    // Guardo aqui todos los render targets intermedios
+    // GBuffer
+    public RenderTarget2D positions;
+    public RenderTarget2D normals;
+    public RenderTarget2D albedo;
+    public RenderTarget2D especular;
+    public RenderTarget2D ShadowMap;
+    public RenderTarget2D finalTarg;//este esta para aplicar los after efects y lo demas
+    private Effect finalBlender;
+    private Vector2 screenDims;
+
+    public FullScreenCuad(GraphicsDevice screen)
+    {
+        Vector3 vertice1 = new Vector3(-1, -1, 0),
+                vertice2 = new Vector3(1, -1, 0),
+                vertice3 = new Vector3(1, 1, 0), 
+                vertice4 = new Vector3(-1, 1, 0);
+
+        Vector2 esquina1 = new Vector2(0, 1),
+                esquina2 = new Vector2(1, 1),
+                esquina3 = new Vector2(1, 0),
+                esquina4 = new Vector2(0, 0);
+
+        vertices = new VertexPositionTexture[4];
+        vertices[0] = new VertexPositionTexture(vertice1, esquina1);
+        vertices[1] = new VertexPositionTexture(vertice2, esquina2);
+        vertices[2] = new VertexPositionTexture(vertice3, esquina3);
+        vertices[3] = new VertexPositionTexture(vertice4, esquina4);
+
+        indices = new short[] { 0, 2, 1, 0, 3, 2 }; // Corrected winding order
+
+        numeroTriangulos = 2;
+        
+        // Creando todos los targets con las configuraciones básicas
+        
+        int height = screen.Viewport.Bounds.Height;
+        int width = screen.Viewport.Bounds.Width;
+
+        positions = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24);
+        normals   = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+        albedo    = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+        especular = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+        ShadowMap = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Single, DepthFormat.Depth24);
+        finalTarg = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+
+        screenDims = new Vector2(width, height);
+        device = screen;
+    }
+
+    public void LoadTargets(Effect effect)
+    {
+        // Cargamos los targets en nuestro shader
+        effect.Parameters["position"]?.SetValue(positions);
+        effect.Parameters["normal"]?.SetValue(normals);
+        effect.Parameters["albedo"]?.SetValue(albedo);
+        effect.Parameters["especular"]?.SetValue(especular);
+        effect.Parameters["shadowMap"]?.SetValue(ShadowMap);
+        this.effect = effect;
+    }
+
+    private T[] mapLight<T>(List<luzConica> luces, Func<luzConica, T> getValue)
+    {
+        T[] ret = new T[luces.Count];
+        for (int i = 0; i < luces.Count; i++)
+            ret[i] = getValue(luces.ElementAt<luzConica>(i));
+        return ret;
+    }
+
+    public void Dibujar(GraphicsDevice screen, List<luzConica> luces, Matrix view)
+    {
+        
+        effect.CurrentTechnique = effect.Techniques["Lighting"];
+        MonoHelper.loadKColorValues(effect, 0.3f, 0.5f, 0.2f);
+        MonoHelper.loadShaderLigthColors(effect, Color.Black, Color.White, Color.White);
+        effect.Parameters["posicionesLuces"]?.SetValue(mapLight<Vector3>(luces, luz => luz.posicion));
+        effect.Parameters["direcciones"]?.SetValue(mapLight<Vector3>(luces, luz => luz.direccion));
+        effect.Parameters["projeccionVorde"]?.SetValue(mapLight<float>(luces, luz => luz.porcentajeDeProjeccionVorde));
+        effect.Parameters["colores"]?.SetValue(mapLight<Vector3>(luces, luz => luz.color));
+        effect.Parameters["numero_luces"]?.SetValue(luces.Count);
+        effect.Parameters["View"].SetValue(view);
+        effect.Parameters["screenDims"]?.SetValue(screenDims);
+        effect.CurrentTechnique.Passes[0].Apply();
+        screen.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
+    }
+}
+
 }

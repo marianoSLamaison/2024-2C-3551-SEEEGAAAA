@@ -11,6 +11,7 @@ using BepuUtilities;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices;
 using Microsoft.VisualBasic;
+using System.Collections.Generic;
 
 namespace Escenografia
 {
@@ -18,16 +19,14 @@ namespace Escenografia
     {
         private VertexPositionNormalTexture[] vertices;
         private int[] indices;
-        private Texture2D heightMapTexture;
         private Texture2D terrenoTextureDiffuse;
-        private Texture2D terrenoTextureNormal;
-        private Texture2D terrenoTextureHeight;
 
         StaticHandle handlerTerreno;
 
         private int width, height;
 
         public void SetEffect (Effect effect, ContentManager content){
+            //damos el objeto, luego damos sus texturas
             this.efecto = effect;
             this.ApplyTexturesToShader(content);
         }
@@ -75,12 +74,13 @@ namespace Escenografia
             }
         }
 
-        public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher){
-            var planeWidth = 500;
+        public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher, int ancho, int alto){
+            //var planeWidth = 500;
             var scale = 35;
-            Vector2 terrainPosition = new Vector2(1 - planeWidth, 1 - planeWidth) * scale * 0.5f;
+            //esto estaba multiplicado por scale antes
+            Vector2 terrainPosition = new Vector2(1 - ancho, 1 - alto) * 0.5f;
 
-            var planeMesh = DemoMeshHelper.CreateDeformedPlane(planeWidth, planeWidth,
+            var planeMesh = DemoMeshHelper.CreateDeformedPlane(500, 500,
                 (int vX, int vY) =>
                 {
                     // Alturas basadas en combinaciones de funciones seno y coseno
@@ -93,7 +93,7 @@ namespace Escenografia
 
                     // Sumar diferentes contribuciones para lograr más irregularidad
                     var totalHeight = octave1 + octave2 + octave3;
-
+                    //
                     var vertexPosition = new Vector2(vX * scale, vY * scale) + terrainPosition;
 
                     // Devolver la posición del vértice con la altura calculada
@@ -149,7 +149,7 @@ namespace Escenografia
                 //vertices[i].Normal = Vector3.One * 0.8f;
             }
             
-            AyudanteSimulacion.agregarCuerpoEstatico(_simulacion, new RigidPose(new Vector3(0, -15, 0).ToNumerics()), _simulacion.Shapes.Add(planeMesh));
+            AyudanteSimulacion.agregarCuerpoEstatico(_simulacion, new RigidPose(new Vector3(0, 0, 0).ToNumerics()), _simulacion.Shapes.Add(planeMesh));
             //handlerTerreno = _simulacion.Statics.Add(new StaticDescription(new Vector3(0, -15, 0).ToNumerics(), _simulacion.Shapes.Add(planeMesh)));
         }
 
@@ -185,6 +185,48 @@ namespace Escenografia
                 GraphicsDevice device = efecto.GraphicsDevice;
                 device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
             }
+        }
+        //se usa durante el load
+        public void setEffect2(Effect efecto, ContentManager content)
+        {//para cargar el efecto del terreno
+            this.efecto = efecto;
+            terrenoTextureDiffuse = content.Load<Texture2D>("Models/Terreno/"+"greenTerrainDiffuse_3");
+                        //cargamos los kvalues y los colores basicos del escenario para blinphong
+
+            Vector3 ambient = Color.BlueViolet.ToVector3(), difuseColor = Color.Peru.ToVector3(), specularColor = Color.DimGray.ToVector3();
+            //esto es asi para poder tener diferentes valores K en diferentes objetos
+            MonoHelper.loadKColorValues(efecto, 0.7f, 0.8f, 0.3f);
+            MonoHelper.loadShaderLigthColors(efecto, Color.BurlyWood, Color.LightCyan, Color.IndianRed);      
+        }
+        //se usa en la primera mitad de draw
+        public new void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view,
+                                Microsoft.Xna.Framework.Matrix proj,
+                                Microsoft.Xna.Framework.Matrix lightViewProj)
+        {
+            //aclaramos que tecnica estamos ussando
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            //cargamos las primeras partes del shader 
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj, lightViewProj);
+                                    //cargamos las texturas necesarias
+            MonoHelper.loadShaderTextures(efecto, terrenoTextureDiffuse, null, null, null);
+            MonoHelper.loadShaderLigthColors(efecto, Color.SandyBrown, Color.LawnGreen, Color.White);
+            //aplicamos el primer pass, que carga todo en el GBuffer
+            efecto.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = efecto.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
+        }
+        public new void LlenarEfectsBuffer(Microsoft.Xna.Framework.Matrix view,
+                                            Microsoft.Xna.Framework.Matrix Proj,
+                                            Microsoft.Xna.Framework.Matrix lightViewProj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(),
+            view,
+            Proj,
+            lightViewProj);
+            efecto.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = efecto.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
         }
 
         public void dibujarSombras(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection){

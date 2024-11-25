@@ -15,10 +15,15 @@ namespace Escenografia
     {
         float scale;
         public BodyReference refACuerpo;
+        public Vector3 Position {get {return new Vector3(refACuerpo.Pose.Position.X,
+                                                        refACuerpo.Pose.Position.Y,
+                                                        refACuerpo.Pose.Position.Z); }}
 
         public Cono(Vector3 posicion){
             this.posicion = posicion;
         }
+
+
         public override Matrix getWorldMatrix()
         {
            //Console.WriteLine("Cono:" + refACuerpo.Pose.Position);
@@ -56,6 +61,31 @@ namespace Escenografia
                     meshPart.Effect = efecto;
                 }
             }
+        }
+
+        public void loadApariencia(Model modelo, Effect efecto)
+        {
+            this.modelo = modelo;
+            this.efecto = efecto;
+            /*
+            efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+            efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.5f, 0.2f, 0.15f));
+            efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.9f, 0.7f, 0.3f));
+            efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+            efecto.Parameters["KAmbient"]?.SetValue(0.4f);
+            efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efecto.Parameters["KSpecular"]?.SetValue(0.25f);
+            efecto.Parameters["shininess"]?.SetValue(32.0f);
+            foreach ( ModelMesh mesh in modelo.Meshes )
+            {
+                foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efecto;
+                }
+            }
+            */
         }
 
         public void CrearCollider(BufferPool bufferPool, Simulation simulation, Vector3 posicion)

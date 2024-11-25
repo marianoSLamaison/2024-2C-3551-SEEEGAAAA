@@ -45,6 +45,16 @@ namespace Utils
                 ret.Add(func(item));
             return ret;
         }
+
+        public static T Sum<T>(List<T> list, Func<T, T, T> func, T zero)
+        {
+            T acumulator = zero;
+            foreach(T elem in list)
+            {
+                acumulator = func(acumulator, elem);
+            }
+            return acumulator;
+        }
         public static void map<T>( T[] lista, Action<T> func)
         {
             foreach(T item in lista)

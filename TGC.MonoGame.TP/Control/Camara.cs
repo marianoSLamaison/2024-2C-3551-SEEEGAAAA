@@ -40,10 +40,38 @@ namespace Control
             this.posicion = posicion;
             this.puntoAtencion = puntoAtencion;
         }
+
+        public Matrix getPerspectiveProjectionMatrix(float FOV, float aspectRatio, float nearPlane, float farPlane)
+        {
+            return Matrix.CreatePerspectiveFieldOfView(FOV, aspectRatio, nearPlane, farPlane);
+        }
+
+        public Matrix getOrtographic(float width, float height, float nearPlane, float farPlane)
+        {
+            return Matrix.CreateOrthographic(width, height, nearPlane, farPlane);
+        }
         //para obtener la vision de la camara
         public Matrix getViewMatrix()
         {
+            return Matrix.CreateLookAt(posicion,puntoAtencion, Vector3.Up);
+        }
+        public Matrix getIsometricView()
+        {//para tener la vista isometrica
             return Matrix.CreateLookAt(posicion, puntoAtencion, Vector3.Up);
+        }
+        public void rotatePuntoAtencion(float angle)
+        {
+            Vector3 newPa = puntoAtencion - Vector3.UnitY * puntoAtencion.Y;
+            Vector3 posPro = posicion - Vector3.UnitY * posicion.Y;
+            Vector3 PaRelativo = newPa - posPro;
+            PaRelativo = Vector3.Transform(PaRelativo, Matrix.CreateRotationY(angle));
+            PaRelativo += posPro;
+            PaRelativo.Y = puntoAtencion.Y;
+            puntoAtencion = PaRelativo;
+        }
+        public void setPuntoDeAtencion(Vector3 punto)
+        {
+            puntoAtencion = punto;
         }
     }
 }

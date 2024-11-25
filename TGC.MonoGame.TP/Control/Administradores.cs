@@ -10,11 +10,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Design;
 using Microsoft.Xna.Framework.Graphics;
+using TGC.MonoGame.TP;
 
 namespace Control
 {
-    public class AdministradorNPCs 
+    class AdministradorNPCs 
     {
+        
+    #region IAs
         //leer ese ejmplo si que dio muchas ideas AJAJ
     private class IA//para el manejo de los autos
     {
@@ -101,7 +104,7 @@ namespace Control
             }
         }
 
-
+    #endregion
         Random RNG = new Random();
         private Effect [] efectos;
         private Model[] modelos;
@@ -234,24 +237,65 @@ namespace Control
             ret = Vector2.Transform(Vector2.UnitX, Matrix.CreateRotationZ(RNG.NextSingle() * MathF.Tau));
             return ret * radioVerdadero;
         }
-        public void load(String [] efectos, String [] modelos, ContentManager content)
+        public void load(Effect efecto, String [] modelos, Texture2D[] texturas, ContentManager content)
         {
             foreach( IA auto in autos )
             {//designamos modelos y efectos al azar, si necesitan que esten juntos, habria que dise
             //diseñar alguna sestructura que tenga a los dos para tener el modelo y la estruct juntos,
             //y pasar eso
-                String dEffecto = efectos[0];
-                String dModelo = modelos[0];
-                auto.GetAuto().loadModel(dModelo, dEffecto, content);
-                auto.GetAuto().loadSonido("SonidoAutoMuerto", content);
+
+                String dModelo = modelos[RNG.Next() % modelos.Length];
+                Model modelo = content.Load<Model>(dModelo);
+
+                auto.GetAuto().CargarModelo(efecto, modelo, texturas);
+            }
+        }
+        public void LlenarGbuffer(Camarografo camarografo)
+        {
+            Matrix view = camarografo.getViewMatrix(),
+            proj = camarografo.getProjectionMatrix(),
+            ligthViewProj = camarografo.GetLigthViewProj();
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
+            AutoNPC autoR;
+            foreach( IA auto in autos )
+            {
+                autoR = auto.GetAuto(); 
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume) )
+                    auto.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
+            }
+            foreach( AgresiveIA atacante in atacantes )
+            {
+                autoR = atacante.GetAuto();
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume))
+                    atacante.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
+
+//                String dEffecto = efectos[0];
+//                String dModelo = modelos[0];
+//                auto.GetAuto().loadModel(dModelo, dEffecto, content);
+//                auto.GetAuto().loadSonido("SonidoAutoMuerto", content);
+
             }
         }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
         {
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * projeccion);
+            AutoNPC autoR;
             foreach( IA auto in autos )
-                auto.GetAuto().dibujar(view, projeccion, shadowMap);
+            {
+                autoR = auto.GetAuto(); 
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume) )
+                    auto.GetAuto().dibujar(view, projeccion, shadowMap);
+            }
             foreach( AgresiveIA atacante in atacantes )
-                atacante.GetAuto().dibujar(view, projeccion, shadowMap);
+            {
+                autoR = atacante.GetAuto();
+                autoR.BoundingVolume.Center = autoR.Posicion;
+                if ( frustrumCamara.Intersects(autoR.BoundingVolume))
+                    atacante.GetAuto().dibujar(view, projeccion, shadowMap);
+            }
         }
         public void drawSombras(Matrix view, Matrix projeccion)
         {
@@ -368,10 +412,12 @@ namespace Control
             return true;
         }
     }
-    public class AdministradorConos
+    class AdministradorConos
     {
         static Random RNG = new Random();
         List<Cono> conos;
+        BoundingSphere BoundingVolume;
+        private const float EscalaDeConos = 20f;
         float alturaConos = 400f; // Altura fija para todos los conos
 
         public void generarConos(Vector3 centro, float radio, int numeroNPCs, float distanciaMinima)
@@ -384,7 +430,7 @@ namespace Control
             {
                 Vector3 puntoPlano = new Vector3(punto.X, alturaConos, punto.Y);
                 Cono nuevoCono = new Cono(puntoPlano + centro);
-                nuevoCono.SetScale(20f); // Ajustar escala de los conos
+                nuevoCono.SetScale(EscalaDeConos); // Ajustar escala de los conos
                 conos.Add(nuevoCono);
 
             }
@@ -500,13 +546,64 @@ namespace Control
 
         public void loadModelosConos(string direccionesModelos, string direccionesEfectos, ContentManager content, BufferPool bufferPool, Simulation simulacion)
         {
+            Model modeloComun = content.Load<Model>(direccionesModelos);
+            Effect efectoComun = content.Load<Effect>(direccionesEfectos);
+            //OK lo chequee mono es listo, chequea si el modelo ya existe y si si lo hace
+            //al llamar muchas veces a load, solamente devuelve el valor pedido.
+            //no vuelvo a confiar en IAs nunca mas...
+
+            /*NOTA Chequear de poner algo como esto para setear diferentes valores para el shader
+            #region Setup de el efecto y el modelo comunes a los conos
+            efectoComun.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+            efectoComun.Parameters["ambientColor"]?.SetValue(new Vector3(0.5f, 0.2f, 0.15f));
+            efectoComun.Parameters["diffuseColor"]?.SetValue(new Vector3(0.9f, 0.7f, 0.3f));
+            efectoComun.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+            efectoComun.Parameters["KAmbient"]?.SetValue(0.4f);
+            efectoComun.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efectoComun.Parameters["KSpecular"]?.SetValue(0.25f);
+            efectoComun.Parameters["shininess"]?.SetValue(32.0f);
+            #endregion
+            */
+            foreach ( ModelMesh mesh in modeloComun.Meshes )
+            {
+                foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efectoComun;
+                }
+            }
+            //generamos una bounding box que encapsula al cono normal
+            //luego solo la transofrmamos para chequear con cada cono
+            BoundingVolume = MonoHelper.GenerarBoundingSphere(modeloComun, EscalaDeConos * 2.5f);
+
             // Cargar modelos de conos
             foreach (Cono cono in conos)
             {
-                cono.loadModel(direccionesModelos, direccionesEfectos, content);
+                //cono.loadModel(direccionesModelos, direccionesEfectos, content);
+                //de esta manera solo hay un modelo cargado en memoria relamente, simplemente esta siendo dibujado todo el rato igual
+                cono.loadApariencia(modeloComun, efectoComun);
                 cono.CrearCollider(bufferPool, simulacion, cono.posicion);
             }
         }
+
+        public void LlenarGbuffer( Control.Camarografo juan)
+        {
+            Matrix view = juan.getViewMatrix(),
+            proj = juan.getProjectionMatrix(),
+            ligthViewProj = juan.GetLigthViewProj();
+            BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
+            //chequear si los conos estan en el frustrum
+            foreach(Cono cono in conos)
+            {
+                //como es una bounding sphere da igual que los conos esten rotados, 
+                //solo tenemos que moverla de lugar
+                BoundingVolume.Center = cono.posicion;
+                if (frustrumCamara.Intersects(BoundingVolume))
+                    cono.LlenarGbuffer(view, proj, ligthViewProj);
+            }
+        }
+
 
         public void drawConos(Matrix view, Matrix projection, BoundingFrustum frustum)
         {
@@ -611,6 +708,7 @@ namespace Control
                 bala.dibujar(view, projection, color);
             }
         }
+
     }
 }
 

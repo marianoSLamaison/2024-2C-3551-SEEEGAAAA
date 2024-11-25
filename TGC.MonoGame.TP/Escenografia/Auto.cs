@@ -89,10 +89,12 @@ namespace Escenografia
         protected Texture2D AOTexture;
         protected Texture2D emissionTexture;
 
-        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-85f, 35, 145f); // Ajusta según tu modelo
-        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(85f, 35, 145f);
-        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-85f, 35, -145f);
-        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(85f, 35, -145f);
+        //para referencia el auto contiene las dimensiones 300 ancho, 500 largo y mas o menos 100 alto
+
+        protected Vector3 posicionRuedaDelanteraIzquierda => new Vector3(-75f, -36, 150f); // Ajusta según tu modelo
+        protected Vector3 posicionRuedaDelanteraDerecha => new Vector3(75f, -36, 150f);
+        protected Vector3 posicionRuedaTraseraIzquierda => new Vector3(-75f, -36, -150f);
+        protected Vector3 posicionRuedaTraseraDerecha => new Vector3(75f, -36, -150f);
 
 
 
@@ -335,11 +337,27 @@ namespace Escenografia
                     refACuerpo.Velocity.Linear += new System.Numerics.Vector3(0f, 1000f, 0f);
                 }
             } else {
-                if ( refACuerpo.Velocity.Linear.Y < 0.5f)
+                if ( refACuerpo.Velocity.Linear.Y < 0.05f)
                     estaSaltando = false;
+                if ( Keyboard.GetState().IsKeyDown(Keys.A) )
+                {
+                    refACuerpo.Velocity.Angular += orientacion.Forward.ToNumerics() * velocidadAngular * deltaTime;
+                }
+                else if ( Keyboard.GetState().IsKeyDown(Keys.D))
+                {
+                    refACuerpo.Velocity.Angular -= orientacion.Forward.ToNumerics() * velocidadAngular * deltaTime;
+                }
+                else if ( Keyboard.GetState().IsKeyDown(Keys.W))
+                {
+                    refACuerpo.Velocity.Angular -= orientacion.Left.ToNumerics() * velocidadAngular * deltaTime;
+                }
+                else if ( Keyboard.GetState().IsKeyDown(Keys.S))
+                {
+                    refACuerpo.Velocity.Angular -= orientacion.Left.ToNumerics() * velocidadAngular * deltaTime;
+                }else{
+                    refACuerpo.Velocity.Angular *= 0.80f;
+                }
             }
-
-            
         }
 
     public void SumarPuntos(int puntosSumados){
@@ -350,20 +368,21 @@ namespace Escenografia
 
         var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
-        //var boxMainShape = new Box(280f, 100f, 500f);
-        var boxMainShape = new Capsule(100, 400f);
-        
-        var capsuleMainLocalPose = new RigidPose(new Vector3(0f,100f,0f).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+        var boxMainShape = new Box(300f, 100f, 500f);
+        //var boxMainShape = new Capsule(100, 400f);
+        //Esta cosa estaba rotando la caja y dejandono como si estuviese caida
+        //Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics()
+        var capsuleMainLocalPose = new RigidPose(new Vector3(0f,100f,0f).ToNumerics());
         //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics());
 
-        var ruedaShape = new Cylinder(35, 35);
+        var ruedaShape = new Cylinder(17.5f, 35);
         var ruedaDelanteraIzquierdaLocalPose = new RigidPose(posicionRuedaDelanteraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
         var ruedaDelanteraDerechaLocalPose = new RigidPose(posicionRuedaDelanteraDerecha.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
         var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
         var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
 
         compoundBuilder.Add(boxMainShape, capsuleMainLocalPose, 5f);
-        compoundBuilder.Add(ruedaShape, ruedaDelanteraIzquierdaLocalPose, .5f);
+        compoundBuilder.Add(ruedaShape, ruedaDelanteraIzquierdaLocalPose,.5f);
         compoundBuilder.Add(ruedaShape, ruedaDelanteraDerechaLocalPose, .5f);
         compoundBuilder.Add(ruedaShape, ruedaTraseraIzquierdaLocalPose, .5f);
         compoundBuilder.Add(ruedaShape, ruedaTraseraDerechaLocalPose, .5f);
@@ -394,7 +413,7 @@ namespace Escenografia
         efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
 
         efecto.Parameters["KAmbient"]?.SetValue(0.4f);
-        efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+        efecto.Parameters["KDiffuse"]?.SetValue(1.0f);
         efecto.Parameters["KSpecular"]?.SetValue(0.25f);
         efecto.Parameters["shininess"]?.SetValue(4.0f);
 
@@ -405,12 +424,30 @@ namespace Escenografia
                 meshPart.Effect = efecto;
             }
         }
+    }
 
-        //efecto.Parameters["SamplerType+NormalTexture"].SetValue(normalTexture);
-        //efecto.Parameters["SamplerType+MetallicTexture"].SetValue(metallicTexture);
-        //efecto.Parameters["SamplerType+RoughnessTexture"].SetValue(roughnessTexture);
-        //efecto.Parameters["SamplerType+AOTexture"].SetValue(aoTexture);
-        //efecto.Parameters["SamplerType+EmissionTexture"].SetValue(emissionTexture);
+    public void CargarModelo(Effect efecto, Model modelo, Texture2D[] texturas )
+    {
+        this.efecto = efecto;
+        this.modelo = modelo;
+        baseColorTexture = texturas[0];
+        normalTexture = texturas[1];
+        metallicTexture = texturas[2];
+        roughnessTexture = texturas[3];
+        AOTexture = texturas[4];
+        emissionTexture = texturas[5];
+
+        //this.ApplyTexturesToShader();
+
+        // Asignar el shader a cada parte del modelo
+        foreach (ModelMesh mesh in modelo.Meshes)
+        {   
+            //Console.WriteLine(mesh.Name);
+            foreach (ModelMeshPart meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = efecto;
+            }
+        }
     }
 
     public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
@@ -441,19 +478,68 @@ namespace Escenografia
                 }
             }
         }
+
+        public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            }
+
         public void loadSonido(string direccionSonidoMisil, string direccionSonidoMetralleta, string direccionSonidoPowerUps,  ContentManager contManager){
             sonidoMetralleta = contManager.Load<SoundEffect>(direccionSonidoMetralleta);
             sonidoMisil = contManager.Load<SoundEffect>(direccionSonidoMisil);
             sonidoPowerUp = contManager.Load<SoundEffect>(direccionSonidoPowerUps);
         }
 
-        /// <summary>
-        /// Este metodo se encarga de dibujar no solo el auto, si no tambien cada una de sus ruedas
-        /// individualmente
-        /// </summary>
-        /// <param name="view"></param>
-        /// <param name="projection"></param>
-        /// <param name="color"></param>
+
+            efecto.Parameters["View"].SetValue(view);
+            // le cargamos el como quedaria projectado en la pantalla
+            efecto.Parameters["Projection"].SetValue(projection);
+            //seteamos aqui las texturas
+            MonoHelper.loadShaderTextures(efecto, baseColorTexture, metallicTexture, AOTexture, roughnessTexture);
+
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
@@ -508,14 +594,14 @@ namespace Escenografia
                 mesh.Draw();    
             }
         }
-        public void dibujarSombras(Matrix view, Matrix projection){
+        public void dibujarSombras(Matrix ligthView, Matrix projection){
             efecto.CurrentTechnique = efecto.Techniques["DepthPass"];
-
-            efecto.Parameters["View"].SetValue(view);
+            //cargamos la view en el shader
+            efecto.Parameters["View"].SetValue(ligthView);
             // le cargamos el como quedaria projectado en la pantalla
             efecto.Parameters["Projection"].SetValue(projection);
-
-            efecto.Parameters["LightViewProjection"]?.SetValue(view * projection);
+            //setea este parametro, si es que no a sido eliminado por HLSL (denuevo)
+            efecto.Parameters["LightViewProjection"]?.SetValue(ligthView * projection);
 
             foreach( ModelMesh mesh in modelo.Meshes)
             {
@@ -560,8 +646,59 @@ namespace Escenografia
                 mesh.Draw();    
             }
         }
+        public void LlenarEfectsBuffer(Camarografo camarografo)
+        {
 
+            efecto.CurrentTechnique = efecto.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(),
+            camarografo.getViewMatrix(),
+            camarografo.getProjectionMatrix(),
+            camarografo.GetLigthViewProj());
+            MonoHelper.loadShaderLigthColors(efecto, Color.DarkBlue, Color.LightYellow, Color.White);
+            MonoHelper.loadKColorValues(efecto, 0.3f, 0.05f, 0.7f);
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
 
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
     }
     
     class AutoNPC : Auto
@@ -571,15 +708,120 @@ namespace Escenografia
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
 
+        public BoundingSphere BoundingVolume;
+
+        public void LlenarGbuffer(Matrix view, Matrix proj, Matrix lightViewProj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj, lightViewProj);
+            MonoHelper.loadShaderTextures(efecto, baseColorTexture, metallicTexture, AOTexture, roughnessTexture);
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
+        public void LlenarEfectsBuffer(Matrix view, Matrix proj, Matrix lightViewProj)
+        {
+            efecto.CurrentTechnique = efecto.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(),
+            view,
+            proj,
+            lightViewProj);
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
+
+
         private SoundEffect sonidoAutoMuerto;
 
         private bool muerto = false;
+
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
 
             efecto.Parameters["shadowMap"]?.SetValue(shadowMap);
             efecto.Parameters["shadowMapSize"]?.SetValue(Vector2.One * 16384);
+            MonoHelper.loadKColorValues(efecto, 1f, 0.7f, 0.2f);
+            efecto.Parameters["brillantes"]?.SetValue(0.3f);
 
             efecto.Parameters["View"].SetValue(view);
             // le cargamos el como quedaria projectado en la pantalla
@@ -703,9 +945,8 @@ namespace Escenografia
         {
             this.velocidadAngular = vAngular;
         }
-        public void anguloDeGiro(float angulo){
 
-        }
+
         public void ApplyTexturesToShader()
         {
             efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
@@ -733,6 +974,33 @@ namespace Escenografia
             }
 
         }
+    }
+
+    public void CargarModelo(Effect efecto, Model modelo, Texture2D[] texturas )
+    {
+        this.efecto = efecto;
+        this.modelo = modelo;
+        baseColorTexture = texturas[0];
+        normalTexture = texturas[1];
+        metallicTexture = texturas[2];
+        roughnessTexture = texturas[3];
+        AOTexture = texturas[4];
+        emissionTexture = texturas[5];
+        //si no quitamos eso, la cosa va a sobre escribir las texturas
+        //this.ApplyTexturesToShader();
+
+        // Asignar el shader a cada parte del modelo
+        foreach (ModelMesh mesh in modelo.Meshes)
+        {   
+            //Console.WriteLine(mesh.Name);
+            foreach (ModelMeshPart meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = efecto;
+            }
+        }
+        BoundingVolume = MonoHelper.GenerarBoundingSphere(modelo, 1.8f);
+    }
+
 
         public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
             //asignamos el modelo deseado
@@ -759,6 +1027,9 @@ namespace Escenografia
                     meshPart.Effect = efecto;
                 }
             }
+            //generamos una Bounding box para optimizar el juego un poco
+            //estas cosas tienen demaciados poligonos
+            BoundingVolume = MonoHelper.GenerarBoundingSphere(modelo);
         }
 
         public void loadSonido(string direccionSonido, ContentManager contManager){
@@ -807,12 +1078,14 @@ namespace Escenografia
         }
 
         public float DarAceleracion(float fuerz) => refACuerpo.LocalInertia.InverseMass * fuerz;
+
         public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial, Dictionary<int, object> bodyHandleTags){
+
 
             var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
             //var boxMainShape = new Box(280f, 100f, 500f);
-            var boxMainShape = new Capsule(100, 400f);
+            var capsuleMainShape = new Capsule(100, 400f);
             
             var capsuleMainLocalPose = new RigidPose(new Vector3(0,100f,0).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
             //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics());
@@ -823,7 +1096,7 @@ namespace Escenografia
             var ruedaTraseraIzquierdaLocalPose = new RigidPose(posicionRuedaTraseraIzquierda.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
             var ruedaTraseraDerechaLocalPose = new RigidPose(posicionRuedaTraseraDerecha.ToNumerics(), Quaternion.CreateFromRotationMatrix(Matrix.CreateRotationZ(MathF.PI/2)).ToNumerics());
 
-            compoundBuilder.Add(boxMainShape, capsuleMainLocalPose, 5f);
+            compoundBuilder.Add(capsuleMainShape, capsuleMainLocalPose, 5f);
             compoundBuilder.Add(ruedaShape, ruedaDelanteraIzquierdaLocalPose, .5f);
             compoundBuilder.Add(ruedaShape, ruedaDelanteraDerechaLocalPose, .5f);
             compoundBuilder.Add(ruedaShape, ruedaTraseraIzquierdaLocalPose, .5f);

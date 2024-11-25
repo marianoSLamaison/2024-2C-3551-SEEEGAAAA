@@ -9,33 +9,54 @@ namespace Control
 {
     public class Camarografo
     {
-        public Control.Camara camaraAsociada;
+        public Camara camaraAsociada;
+        public Camara camaraLuz;
         private Matrix projeccion;
-        private Vector2 FontPos;
-        private SpriteFont Font;
-        private bool deboDibujarDatos;
-        private bool teclaOprimida;
+        private float nearPLane, farPLane;
+
+        private bool ortographicMode = false;
+        public luzConica AmbientLight;
 
         public BoundingFrustum frustum;
 
         public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float AspectRatio, float minVista, float maxVista)
         {
-            camaraAsociada = new Control.Camara(posicion, puntoDeFoco);
-            projeccion = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, AspectRatio, minVista, maxVista);
-            deboDibujarDatos = false;
-            teclaOprimida = false;
-
+            nearPLane = minVista;
+            farPLane = maxVista;
+            camaraAsociada = new Camara(posicion, puntoDeFoco);
+            projeccion = camaraAsociada.getPerspectiveProjectionMatrix(MathF.PI / 4f, AspectRatio, minVista, maxVista);
+            AmbientLight = new luzConica(
+                                new Vector3(0f, 0.5f, 1f) * 5000,
+                                -new Vector3(0f, 0.5f, 1f),
+                                Color.IndianRed,
+                                0f,
+                                1f);
+            camaraLuz = new Camara(AmbientLight.posicion, puntoDeFoco);
         }
+        public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float width, float height,float minVista, float maxVista)
+        {
+            nearPLane = minVista;
+            farPLane = maxVista;
+            camaraAsociada = new Camara(posicion, puntoDeFoco);
+            projeccion = camaraAsociada.getOrtographic(width, height, nearPLane, farPLane);
+            ortographicMode = true;
+        }
+
+        public void turnIsometric(float width, float heigth)
+        {
+            projeccion = camaraAsociada.getOrtographic(width, heigth, nearPLane, farPLane);
+            ortographicMode = true;
+        }
+
+        public void turnPerspective(float aspectRatio) 
+        {
+            projeccion = camaraAsociada.getPerspectiveProjectionMatrix(MathF.PI / 4, aspectRatio, nearPLane, farPLane);
+        }
+
+
+        public Matrix GetLigthViewProj() => camaraLuz.getViewMatrix() * projeccion;
 
         public Matrix getViewMatrix()
-        {
-            return camaraAsociada.getViewMatrix();
-        }
-
-        public Matrix getProjectionMatrix()
-        {
-            return projeccion;
-        }
 
         public BoundingFrustum GetFrustum(){
             // Combinar las matrices de vista y proyección
@@ -47,39 +68,27 @@ namespace Control
         }
 
         public void GetInputs()
-        {
-            if (Font == null)
-                throw new System.Exception("No puedo escribir sin una fuente");
-            if (Keyboard.GetState().IsKeyDown(Keys.O) && !teclaOprimida)
-            {
-                deboDibujarDatos = !deboDibujarDatos;
-                teclaOprimida = true;
-            }
-            if (Keyboard.GetState().IsKeyUp(Keys.O) && teclaOprimida)
-                teclaOprimida = false;
 
+        {
+            return ortographicMode ? camaraAsociada.getIsometricView() : camaraAsociada.getViewMatrix();
+        }
+
+        public Matrix getProjectionMatrix()
+        {
+            return projeccion;
         }
 
         public void setPuntoAtencion(Vector3 PuntoAtencion)
         {
             camaraAsociada.PuntoAtencion = PuntoAtencion;
+            camaraLuz.setPuntoDeAtencion(PuntoAtencion);
+        }
+        public void rotatePuntoAtencion(float angle)
+        {
+            camaraAsociada.rotatePuntoAtencion(angle);
+            camaraLuz.rotatePuntoAtencion(angle);
         }
 
-        public void DrawDatos(SpriteBatch batch)
-        {
-            if (deboDibujarDatos && Font != null)
-            {
-                batch.Begin();
-                string output = "Información de la cámara";
-                batch.DrawString(Font, output, Vector2.Zero, Color.LightGreen);
-                batch.End();
-            }
-        }
-
-        public void loadTextFont(string CarpetaEfectos, ContentManager contManager)
-        {
-            Font = contManager.Load<SpriteFont>(CarpetaEfectos + "debugFont");
-        }
-    } 
+    }
 
 }
