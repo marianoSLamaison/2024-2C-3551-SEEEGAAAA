@@ -69,5 +69,9 @@ namespace Control
             PaRelativo.Y = puntoAtencion.Y;
             puntoAtencion = PaRelativo;
         }
+        public void setPuntoDeAtencion(Vector3 punto)
+        {
+            puntoAtencion = punto;
+        }
     }
 }

@@ -66,7 +66,7 @@ namespace Control
         public void setPuntoAtencion(Vector3 PuntoAtencion)
         {
             camaraAsociada.PuntoAtencion = PuntoAtencion;
-            camaraLuz.PuntoAtencion = PuntoAtencion;
+            camaraLuz.setPuntoDeAtencion(PuntoAtencion);
         }
         public void rotatePuntoAtencion(float angle)
         {

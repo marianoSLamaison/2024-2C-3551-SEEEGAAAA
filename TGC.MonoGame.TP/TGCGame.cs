@@ -43,6 +43,7 @@ namespace TGC.MonoGame.TP
         private AdminUtileria Escenario;
         private BufferPool bufferPool;
         private ThreadDispatcher ThreadDispatcher;
+        private Primitiva cuboTesteo;
         RenderTarget2D shadowMap;
         private CASOS estadoActualJuego;//controla que se muestra y que logica se corre
 
@@ -50,6 +51,7 @@ namespace TGC.MonoGame.TP
 
         private AdministradorNPCs adminNPCs;
         private FullScreenCuad ScreenCuad;//para dibujar todo lo preprocesado
+        private Cuadro MenuInicio;
         private const float ALTURA_ESCENARIO = 700f;
         private const float LONGITUD_ESCENARIO = 10000f;
         private const float NEAR_PLANE = 10f, FAR_PLANE = 10000f;
@@ -78,6 +80,7 @@ namespace TGC.MonoGame.TP
             rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
             GraphicsDevice.RasterizerState = rasterizerState; 
             MonoHelper.Initialize(GraphicsDevice);
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
             ScreenCuad = new FullScreenCuad(GraphicsDevice);//para ya inicializar todo
             //para poder iniciar desde estados distintos
             //TODO: 
@@ -106,8 +109,14 @@ namespace TGC.MonoGame.TP
             Escenario = new AdminUtileria(LONGITUD_ESCENARIO, ALTURA_ESCENARIO, 26f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
             adminNPCs = new AdministradorNPCs();
             adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
-            InicializarJuego(CASOS.JUEGO);
-
+            //inicializamos la cosa que dibujaa todos los menues
+            MenuInicio = new Cuadro(SpriteBatch, GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            MenuInicio.loadBotones(new fRectangle(0.4f, 0.62f, 0.2f, 0.2f));
+            InicializarJuego(CASOS.MENU_INICIAL);
+        
+            //cuboTesteo = Primitiva.Prisma(-new Vector3(1,1,1) * 1000, new Vector3(1,1,1) * 200);
+            //cuboTesteo.setearCuerpoPrisma(-new Vector3(1,1,1), new Vector3(1,1,1),
+              //          (new Vector3(0f, 0.5f, 1f) * 5000).Length() * 0.5f * Vector3.Normalize(-new Vector3(0f, 0.5f, 1f)) + new Vector3(0f, 0.5f, 1f) * 5000);
             #endregion   
 
             base.Initialize();
@@ -184,6 +193,8 @@ namespace TGC.MonoGame.TP
             auto.Misil.loadModel(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "DeferredShadows", Content);
             auto.Metralleta.loadModel(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "DeferredShadows", Content);
             adminNPCs.load(renderer, modelos, texturasParaAutos, Content);
+            MenuInicio.Load(Content);
+            //cuboTesteo.loadPrimitiva(GraphicsDevice, renderer, Color.Violet);
             base.LoadContent();
         }
 
@@ -222,6 +233,7 @@ namespace TGC.MonoGame.TP
             auto.Mover((float)gameTime.ElapsedGameTime.TotalSeconds);
             //Console.WriteLine(camarografo.getProjectionMatrix() + "\n\n" + auto.Posicion);
             camarografo.setPuntoAtencion(auto.Posicion);
+            //cuboTesteo.pos = Vector3.Lerp(camarografo.camaraLuz.PuntoAtencion, camarografo.camaraLuz.posicion, MathF.Pow(MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds), 2));
             _simulacion.Timestep(1f/60f, ThreadDispatcher);
         }
 
@@ -262,6 +274,7 @@ namespace TGC.MonoGame.TP
                                                 Vector3.Left * LONGITUD_ESCENARIO / 5f + Vector3.Up * ALTURA_ESCENARIO, 
                                                 GraphicsDevice.Viewport.AspectRatio, 
                                                 NEAR_PLANE, FAR_PLANE);
+            
         }
         private void InicializarCasoJuego()
         {
@@ -307,6 +320,7 @@ namespace TGC.MonoGame.TP
             camarografo.rotatePuntoAtencion(MathF.Tau / 30f * Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
             if ( Keyboard.GetState().IsKeyDown(Keys.Enter))
                 CambiarCaso(CASOS.JUEGO);
+            
             _simulacion.Timestep(1/30f);
             
         }
@@ -346,18 +360,32 @@ namespace TGC.MonoGame.TP
             auto.Metralleta.dibujar(camarografo.getViewMatrix(),camarografo.getProjectionMatrix(), Color.Red);
             adminNPCs.draw(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), shadowMap);
             #endregion
-            Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;           
+            Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
         }
         private void DibujarMenuInicial(GameTime gameTime)
         {
+            //tenemos que hacer esto por que si no el sprite batch vuelve todo transparente
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.BlendState = BlendState.Opaque;
+
+            GraphicsDevice.SetRenderTargets(ScreenCuad.ShadowMap);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+
+            Escenario.LlenarEfectsBuffer(camarografo);
+
             GraphicsDevice.SetRenderTargets(ScreenCuad.positions, ScreenCuad.normals, ScreenCuad.albedo, ScreenCuad.especular);
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
             Escenario.LlenarGbuffer(camarografo);
             //mandamos todo el render al ultimo target, donde mesclaremos todo
             GraphicsDevice.SetRenderTarget(null);
-            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Red, 1f, 0);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
             List<luzConica> lucesEnEscena = new List<luzConica>{ camarografo.AmbientLight };
             ScreenCuad.Dibujar(GraphicsDevice, lucesEnEscena, camarografo.getViewMatrix());
+
+            MenuInicio.Write();
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            base.Draw(gameTime);
         }
 
         private void DibujarScreenCuad(GameTime gameTime)
@@ -377,6 +405,7 @@ namespace TGC.MonoGame.TP
             Escenario.LlenarGbuffer(camarografo);
             generadorConos.LlenarGbuffer(camarografo);
             adminNPCs.LlenarGbuffer(camarografo);
+            //cuboTesteo.LlenarGbuffer(camarografo);
 
             auto.LlenarGbuffer(camarografo.getViewMatrix(), camarografo.getProjectionMatrix());
             #endregion
@@ -389,6 +418,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Red, 1f, 0);
             List<luzConica> lucesEnEscena = new List<luzConica>{ camarografo.AmbientLight };
             ScreenCuad.Dibujar(GraphicsDevice, lucesEnEscena, camarografo.getViewMatrix());
+            
             #endregion
         }
         private void Dibujar( GameTime gameTime )

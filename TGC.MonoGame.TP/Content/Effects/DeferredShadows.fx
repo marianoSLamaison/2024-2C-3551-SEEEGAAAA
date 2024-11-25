@@ -12,6 +12,7 @@ uniform float KLuzAmbiental;
 uniform float KLuzDifusa;
 uniform float KSpecular;
 uniform float brillantes;//esto es particular de cada objeto que alla
+uniform float2 screenDims;
 
 ///////////TEXTURAS BASICAS////////
 uniform texture2D baseTexture;
@@ -163,27 +164,31 @@ struct Depth_VSinput
 struct Depth_VSoutput
 {
     float4 position : SV_Position;
-    float4 projPos  : TEXCOORD0;//la posicion en espacio projeccion
+    float4 posEspacioPantalla  : TEXCOORD0;//la posicion en espacio projeccion
 };
 
 struct Depth_PSoutput
 {
-    float4 shadowLightDist : SV_Target0;
+    float4 Profundidad : SV_Target0;
 };
 
 Depth_VSoutput DepthPass_VS(in Depth_VSinput input)
 {
     Depth_VSoutput output = (Depth_VSoutput)0;
     float4 worldPos = mul(input.position, World);
+    float4 viewPos = mul(worldPos, View);
     output.position = mul(worldPos, LightViewProjection);
-    output.projPos = output.position;
+    output.posEspacioPantalla = output.position;
     return output;
 }
 
 Depth_PSoutput DepthPass_PS(in Depth_VSoutput input)
 {//escribimos la profundidad en el target
+//NOTA esta es la profundidad con respecto de la camara normal
+//no de la luz
     Depth_PSoutput output = (Depth_PSoutput)0;
-    output.shadowLightDist.r = input.projPos.z / input.projPos.w;
+    float Profundidad = input.posEspacioPantalla.z / input.posEspacioPantalla.w;
+    output.Profundidad = float4(Profundidad, Profundidad, Profundidad, 1.0);
     return output;
 }
 
@@ -209,7 +214,9 @@ PSoutput GBuffer_PS(in VSoutput input)
     output.position = input.position;
     output.normal = input.normal;//remapeamos por el tema de como guardan los colores
     output.albedo = tex2D(textureSampler, input.textCoord) * (1 - KLuzDifusa ) + float4(diffuseColor,0) * KLuzDifusa;
+    output.albedo.w = 1;
     output.especular.r = tex2D(metallicSampler, input.textCoord).r  + brillantes;//todo lo que afecte el brillo de la cosa
+    output.especular.w = 1;
     return output;
 }
 
@@ -230,13 +237,22 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
     float4 normalV = tex2D(normalSampler, input.textCoord); 
     float4 albedoV = tex2D(albedoSampler, input.textCoord); 
     float  especularV = tex2D(especularSampler, input.textCoord).r;
-    float  shadowDist = tex2D(shadowMapSampler, input.textCoord).r;//sacamos la minima distancia registrada a la luz
-    float4 LigthProjPos = mul(worlPos, LightViewProjection);  
-    float  distanceToLight = LigthProjPos.z / LigthProjPos.w;//sacamos la distancia a la luz de nuestro punto
+    float  epsiloDinamico = 0;
+
+
+    //la posicion en el espacio projectado de la luz
+    float3 posicionLuz = mul(worlPos, LightViewProjection).xyz / mul(worlPos, LightViewProjection).w;
+    //sacamos las coordenadas para leer y luego las normalizamos para no leer valores negativos
+    float2 coordenadasShadowMap = posicionLuz.xy * 0.5 + 0.5;
+    coordenadasShadowMap.y = 1 - coordenadasShadowMap.y;
+    //lo ultimo es para arreglar el tema de que las coordenadas en espacio si tienen sentido
+    float profundidadEnShadowMap = tex2D(shadowMapSampler, coordenadasShadowMap).r;
+
     ////////////////////////// 
     //Luz nuestraLuz; ////////////////Valores de coloracion 
     float4 direccionALuz; 
     float projeccion; 
+    float projLuzEnNormal;
     float3 LuzAmbiental; 
     float3 LuzDifusa;
     float3 LuzEspeculativa;
@@ -245,6 +261,8 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
     float3 currentLigthPos;
     float3 currentLigthDir;
     float3 finalColor = (float3)0; 
+    float2 unitScreen = 1 / screenDims;//para poder iterar el shadowmap
+    float  oscuridad;
 
     for ( int i=0; i<numero_luces; i++) 
     { 
@@ -256,10 +274,10 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         direccionALuz = float4(normalize(currentLigthPos - viewPos.xyz),0);
         direccionView = float4(normalize(-currentLigthPos), 0.0);// direccion a la camara ( recuerda estamos en espacio de view)
 
-
+        projLuzEnNormal = dot(normalV, direccionALuz);
         LuzAmbiental = ambientColor * 0.6 + colores[i] * 0.4;//los que llega desde el LuzAmbientale ( es una simplificacion )
-        LuzDifusa = dot(normalV, direccionALuz) * (albedoV.xyz*0.9);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
-        reflexion = 2.0 * normalV * dot(normalV, direccionALuz) - direccionALuz;
+        LuzDifusa = projLuzEnNormal * (albedoV.xyz*0.9);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
+        reflexion = 2.0 * normalV * projLuzEnNormal - direccionALuz;
         reflexion = normalize(reflexion);
         LuzEspeculativa = specularColor * pow(abs(dot(reflexion, direccionView)), especularV);//la luz LuzEspeculativa;que es reflejada directamente hasta la camara
         direccionALuz = normalize(float4(currentLigthPos - viewPos.xyz, 0.0)); //apunta desde este punto hasta la luz
@@ -269,12 +287,28 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         finalColor += LuzDifusa + KSpecular * saturate(LuzEspeculativa) + KLuzAmbiental * LuzAmbiental;
         //finalColor = float3(1,1,1);
         finalColor *= step(projeccionVorde[i], projeccion);//si es mayor que lo esperado, no lo afecta, caso contrario, lo vuelve 0
-        //finalColor *= step(distanceToLight, shadowDist);//si esta en sombra, solo le ponemos 0-
+        //si algo no esta mirando a la luz es por que no deberia estar en sombra probablemente
+        //los valores los saque de los samples de tgc para no andar tanteando a mano
+        epsiloDinamico = max( 0.00004 * ( 1 - projLuzEnNormal ), 0.00003);
         
-        finalColor = float3((distanceToLight) ,0,0);
+        oscuridad = 1.0;
+        for (int x=-1; x<1; x++)
+        {
+            for ( int y=-1; y<1; y++)
+            {
+                profundidadEnShadowMap = tex2D(shadowMapSampler, coordenadasShadowMap + float2(x, y) * unitScreen).r + epsiloDinamico;
+                oscuridad -= 1.0/9.0 * step(posicionLuz.z, profundidadEnShadowMap);
+            }
+        }
+
+        finalColor *= 1 - oscuridad;
+        //finalColor *= step(posicionLuz.z, profundidadEnShadowMap + epsiloDinamico);//si esta en sombra, solo le ponemos 0-
+        
+        //finalColor = float3((profundidadEnShadowMap) ,0,0);
     }
     //return normalV;
     return float4(finalColor,1.0);
+    //return shadowDist;
 }
         ///AJAJAJAJJAJAAJJ 
         /*

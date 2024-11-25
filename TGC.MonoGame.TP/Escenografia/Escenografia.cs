@@ -121,6 +121,7 @@ namespace Escenografia
         private Color color;
         private int numeroTriangulos;
         private BodyReference cuerpoFisico;
+        public Vector3 pos;
         public BodyHandle handlerCuerpo;
     
         public System.Numerics.Vector3 Posicion {get {return cuerpoFisico.Pose.Position;}}
@@ -394,7 +395,16 @@ namespace Escenografia
                 device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length /3);
             }
         }
-
+        public void LlenarGbuffer(Camarografo cam)
+        {
+            effect.CurrentTechnique = effect.Techniques["DeferredShading"];
+            MonoHelper.loadShaderMatrices(effect, getWorldMatrix(), cam.getViewMatrix(), cam.getProjectionMatrix(), cam.GetLigthViewProj());
+            //aplicamos el primer pass, que carga todo en el GBuffer
+            effect.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = effect.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
+        }
+        public Matrix getWorldMatrix() => Matrix.CreateFromQuaternion(cuerpoFisico.Pose.Orientation) * Matrix.CreateTranslation(pos);
         public void dibujar(Camarografo camarografo, Matrix world)
         {
             effect.Parameters["Projection"].SetValue(camarografo.getProjectionMatrix());
@@ -412,7 +422,7 @@ namespace Escenografia
         {
             Vector3 dims = maxV - minV;
             TypedIndex figura = AyudanteSimulacion.simulacion.Shapes.Add(new BepuPhysics.Collidables.Box(dims.X,dims.Y,dims.Z));
-            handlerCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose(posicion.ToNumerics()), 1f, figura, 1f);
+            handlerCuerpo = AyudanteSimulacion.agregarCuerpoDinamico(new RigidPose(posicion.ToNumerics()), 5000, figura, 1f);
             cuerpoFisico = AyudanteSimulacion.simulacion.Bodies.GetBodyReference(handlerCuerpo);
             cuerpoFisico.Activity.SleepThreshold = -1f;
         }
@@ -437,6 +447,7 @@ class FullScreenCuad
     public RenderTarget2D ShadowMap;
     public RenderTarget2D finalTarg;//este esta para aplicar los after efects y lo demas
     private Effect finalBlender;
+    private Vector2 screenDims;
 
     public FullScreenCuad(GraphicsDevice screen)
     {
@@ -461,16 +472,18 @@ class FullScreenCuad
         numeroTriangulos = 2;
         
         // Creando todos los targets con las configuraciones básicas
+        
         int height = screen.Viewport.Bounds.Height;
         int width = screen.Viewport.Bounds.Width;
 
-        positions = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
+        positions = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24);
         normals   = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
         albedo    = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
         especular = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
         ShadowMap = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Single, DepthFormat.Depth24);
         finalTarg = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
 
+        screenDims = new Vector2(width, height);
         device = screen;
     }
 
@@ -505,7 +518,7 @@ class FullScreenCuad
         effect.Parameters["colores"]?.SetValue(mapLight<Vector3>(luces, luz => luz.color));
         effect.Parameters["numero_luces"]?.SetValue(luces.Count);
         effect.Parameters["View"].SetValue(view);
-
+        effect.Parameters["screenDims"]?.SetValue(screenDims);
         effect.CurrentTechnique.Passes[0].Apply();
         screen.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length / 3);
     }
