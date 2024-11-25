@@ -35,10 +35,6 @@ namespace TGC.MonoGame.TP
 
         private GraphicsDeviceManager Graphics { get; }
         private SpriteBatch SpriteBatch { get; set; }
-        private Effect _basicShader;
-        private Effect _vehicleShader;
-        private Effect _terrenoShader;
-        private Microsoft.Xna.Framework.Matrix ligthViewProj;//esto siempre es igual por que el sol no se mueve
         private Simulation _simulacion;
         //Control.Camera camara;
         Control.Camarografo camarografo;
@@ -48,15 +44,10 @@ namespace TGC.MonoGame.TP
         private BufferPool bufferPool;
         private ThreadDispatcher ThreadDispatcher;
         RenderTarget2D shadowMap;
-        RenderTarget2D StaticShadowMap { get; set;}// para no tener que dibujar todo el rato el terreno entero
         private CASOS estadoActualJuego;//controla que se muestra y que logica se corre
 
         Luz luz;
 
-        private Primitiva cajaPowerUp1;
-        private Primitiva cajaPowerUp2;
-        private Primitiva cajaPowerUp3;
-        private Primitiva cajaPowerUp4;
         private AdministradorNPCs adminNPCs;
         private FullScreenCuad ScreenCuad;//para dibujar todo lo preprocesado
         private const float ALTURA_ESCENARIO = 700f;
@@ -82,26 +73,17 @@ namespace TGC.MonoGame.TP
 
         protected override void Initialize()
         {
-            // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-            // Apago el backface culling. (Lo acabo de prender)
-            // Esto se hace por un problema en el diseno del modelo del logo de la materia.
-            // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
-            #region Temas de graficos
-            //creamos el estado de rasterizacion
-            //que especifica datos de como dibujar la escena
+            //esto es independiente del tipo de inicializacion
             var rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
             GraphicsDevice.RasterizerState = rasterizerState; 
-
-            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, NEAR_PLANE, FAR_PLANE);
-            //camarografo = new Camarografo(new Vector3(1.5f, 1, 1) * 1000f,
-            //Vector3.Zero, 
-            //2000, 1500, 1, 10000);
-            shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
-            luz = new Luz(GraphicsDevice);
-            //para tener ya todo iniciado
             MonoHelper.Initialize(GraphicsDevice);
-            #endregion
+            ScreenCuad = new FullScreenCuad(GraphicsDevice);//para ya inicializar todo
+            //para poder iniciar desde estados distintos
+            //TODO: 
+            //agregar el shader de terreno a los muros
+            //ver por que el glitching en la pared
+            //modificar forma del auto para que toque el suelo
             bufferPool = new BufferPool();
 
             _simulacion = Simulation.Create(bufferPool, 
@@ -124,26 +106,11 @@ namespace TGC.MonoGame.TP
             Escenario = new AdminUtileria(LONGITUD_ESCENARIO, ALTURA_ESCENARIO, 26f, _simulacion);//el escenario tiene 100.000 unidades de lado es como 200 autos de largo
             adminNPCs = new AdministradorNPCs();
             adminNPCs.generarAutos(5, 7000f, _simulacion, bufferPool);
+            InicializarJuego(CASOS.JUEGO);
 
-            #endregion
-            #region cosas experimentales
-            cajaPowerUp1 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp2 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp3 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            cajaPowerUp4 = Primitiva.Prisma(new Vector3(50, 50, 50), -new Vector3(50, 50, 50));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
-            _simulacion.Statics.Add(new StaticDescription(new RigidPose(new System.Numerics.Vector3 (-6100,600,-6100)),_simulacion.Shapes.Add(new Box(100,100,100))));
+            #endregion   
 
-            ScreenCuad = new FullScreenCuad(GraphicsDevice);//para ya inicializar todo
-
-            #endregion
             base.Initialize();
-            //TODO: 
-            //agregar el shader de terreno a los muros
-            //ver por que el glitching en la pared
-            //modificar forma del auto para que toque el suelo
         }
 
         protected override void LoadContent()
@@ -267,7 +234,81 @@ namespace TGC.MonoGame.TP
                 break;
                 case CASOS.MENU_AYUDA:
                 break;
+                case CASOS.MENU_INICIAL:
+                MenuInicial(gameTime);
+                break;
             }
+        }
+
+        private void CambiarCaso(CASOS nuevoCaso)
+        {
+            if ( estadoActualJuego == CASOS.MENU_INICIAL && nuevoCaso == CASOS.JUEGO)
+            {
+                estadoActualJuego = CASOS.JUEGO;
+                InicializarCasoJuego();
+            }
+            else if ( estadoActualJuego == CASOS.JUEGO && nuevoCaso == CASOS.MENU_AYUDA)
+            {
+                estadoActualJuego = CASOS.MENU_AYUDA;
+            }
+            else if ( estadoActualJuego == CASOS.MENU_AYUDA && nuevoCaso == CASOS.JUEGO)
+            {
+                estadoActualJuego = CASOS.JUEGO;
+            }
+        }
+        private void InicializarCasoMenuInicial()
+        {
+            camarografo = new Control.Camarografo(new Vector3(0f, ALTURA_ESCENARIO + 300f, 0f),
+                                                Vector3.Left * LONGITUD_ESCENARIO / 5f + Vector3.Up * ALTURA_ESCENARIO, 
+                                                GraphicsDevice.Viewport.AspectRatio, 
+                                                NEAR_PLANE, FAR_PLANE);
+        }
+        private void InicializarCasoJuego()
+        {
+            // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
+            // Apago el backface culling. (Lo acabo de prender)
+            // Esto se hace por un problema en el diseno del modelo del logo de la materia.
+            // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
+            //creamos el estado de rasterizacion
+            //que especifica datos de como dibujar la escena
+            
+
+            camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,
+                                                Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 
+                                                NEAR_PLANE, FAR_PLANE);
+            //camarografo = new Camarografo(new Vector3(1.5f, 1, 1) * 1000f,
+            //Vector3.Zero, 
+            //2000, 1500, 1, 10000);
+            //shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
+            //luz = new Luz(GraphicsDevice);
+            //para tener ya todo iniciado
+            
+
+        }
+        private void InicializarJuego(CASOS casoDeInicio)
+        {
+            switch(casoDeInicio)
+            {
+                case CASOS.JUEGO:
+                InicializarCasoJuego();
+                break;
+                case CASOS.MENU_INICIAL:
+                InicializarCasoMenuInicial();
+                break;
+                case CASOS.MENU_AYUDA:
+                break;
+            }
+            estadoActualJuego = casoDeInicio;
+        }
+        private void MenuInicial(GameTime gameTime)
+        {
+            //para tener a la camara mirando a un punto particular
+            
+            camarografo.rotatePuntoAtencion(MathF.Tau / 30f * Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
+            if ( Keyboard.GetState().IsKeyDown(Keys.Enter))
+                CambiarCaso(CASOS.JUEGO);
+            _simulacion.Timestep(1/30f);
+            
         }
         private void DibujarJuego(GameTime gameTime)
         {
@@ -307,11 +348,18 @@ namespace TGC.MonoGame.TP
             #endregion
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;           
         }
-        
-        private void DibujarMenuInicial()
+        private void DibujarMenuInicial(GameTime gameTime)
         {
-            Vector3 puntoAntencionCamara = new Vector3(0f, ALTURA_ESCENARIO + 1000f, 0f);
+            GraphicsDevice.SetRenderTargets(ScreenCuad.positions, ScreenCuad.normals, ScreenCuad.albedo, ScreenCuad.especular);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+            Escenario.LlenarGbuffer(camarografo);
+            //mandamos todo el render al ultimo target, donde mesclaremos todo
+            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Red, 1f, 0);
+            List<luzConica> lucesEnEscena = new List<luzConica>{ camarografo.AmbientLight };
+            ScreenCuad.Dibujar(GraphicsDevice, lucesEnEscena, camarografo.getViewMatrix());
         }
+
         private void DibujarScreenCuad(GameTime gameTime)
         {
             //esto solo soporta hasta 4 render targes, a si que toca manejarlo a la antigua
@@ -325,14 +373,6 @@ namespace TGC.MonoGame.TP
             //primero hacemos el pass con tooodas las cosas de escena para dibujar sus BGbuffers
             GraphicsDevice.SetRenderTargets(ScreenCuad.positions, ScreenCuad.normals, ScreenCuad.albedo, ScreenCuad.especular);
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.BlanchedAlmond, 1f, 0);
-            //NOTA: Esta implementacion esta dejando conos y plataforma por igual a la merced de la luz de ambiente
-            //y las luces normales, despues agregar una manera de resolver el problema 
-            //un render target de 1x1 con un color solido tal vez podria ser una solucion
-            //si no, se podria intentar modificar el shader para pasarle un color y hacer un calculo
-            //simple con step para seleccionar el color si es que no esta lellendo nada desde memoria
-            //despues agrego Texturas a la plataforma, ya que ya quedo arreglada en teoria ( ahora es olo una pieza )
-            
-            
 
             Escenario.LlenarGbuffer(camarografo);
             generadorConos.LlenarGbuffer(camarografo);
@@ -360,7 +400,7 @@ namespace TGC.MonoGame.TP
                 DibujarScreenCuad(gameTime);
                 break;
                 case CASOS.MENU_INICIAL:
-                DibujarMenuInicial();
+                DibujarMenuInicial(gameTime);
                 break;
                 case CASOS.MENU_AYUDA:
                 break;

@@ -53,14 +53,21 @@ namespace Control
         //para obtener la vision de la camara
         public Matrix getViewMatrix()
         {
-            Vector3 front = Vector3.Normalize(PuntoAtencion - posicion);
-            Vector3 derechaCamara = Vector3.Cross(front, Vector3.Up);
-            Vector3 arribaCamara =  Vector3.Cross(derechaCamara, puntoAtencion);
-            return Matrix.CreateLookAt(posicion,puntoAtencion, arribaCamara);
+            return Matrix.CreateLookAt(posicion,puntoAtencion, Vector3.Up);
         }
         public Matrix getIsometricView()
         {//para tener la vista isometrica
             return Matrix.CreateLookAt(posicion, puntoAtencion, Vector3.Up);
+        }
+        public void rotatePuntoAtencion(float angle)
+        {
+            Vector3 newPa = puntoAtencion - Vector3.UnitY * puntoAtencion.Y;
+            Vector3 posPro = posicion - Vector3.UnitY * posicion.Y;
+            Vector3 PaRelativo = newPa - posPro;
+            PaRelativo = Vector3.Transform(PaRelativo, Matrix.CreateRotationY(angle));
+            PaRelativo += posPro;
+            PaRelativo.Y = puntoAtencion.Y;
+            puntoAtencion = PaRelativo;
         }
     }
 }

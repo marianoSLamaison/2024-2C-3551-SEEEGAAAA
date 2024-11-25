@@ -208,7 +208,7 @@ PSoutput GBuffer_PS(in VSoutput input)
     PSoutput output = (PSoutput)0;
     output.position = input.position;
     output.normal = input.normal;//remapeamos por el tema de como guardan los colores
-    output.albedo = tex2D(textureSampler, input.textCoord);
+    output.albedo = tex2D(textureSampler, input.textCoord) * (1 - KLuzDifusa ) + float4(diffuseColor,0) * KLuzDifusa;
     output.especular.r = tex2D(metallicSampler, input.textCoord).r  + brillantes;//todo lo que afecte el brillo de la cosa
     return output;
 }
@@ -257,8 +257,8 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         direccionView = float4(normalize(-currentLigthPos), 0.0);// direccion a la camara ( recuerda estamos en espacio de view)
 
 
-        LuzAmbiental = ambientColor;//los que llega desde el LuzAmbientale ( es una simplificacion )
-        LuzDifusa = dot(normalV, direccionALuz) * (diffuseColor*0.15 + albedoV.xyz*0.7 + colores[i] * 0.15);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
+        LuzAmbiental = ambientColor * 0.6 + colores[i] * 0.4;//los que llega desde el LuzAmbientale ( es una simplificacion )
+        LuzDifusa = dot(normalV, direccionALuz) * (albedoV.xyz*0.9);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
         reflexion = 2.0 * normalV * dot(normalV, direccionALuz) - direccionALuz;
         reflexion = normalize(reflexion);
         LuzEspeculativa = specularColor * pow(abs(dot(reflexion, direccionView)), especularV);//la luz LuzEspeculativa;que es reflejada directamente hasta la camara
@@ -266,12 +266,12 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         
         projeccion = dot(-direccionALuz.xyz, currentLigthDir);//lo ponemos en negativo, por que si no estaria apuntando desde el objeto hasta la luz
         //lo sumamos por que se supone debe dar mas vueltas que solo 1
-        finalColor += KLuzDifusa * LuzDifusa + KSpecular * saturate(LuzEspeculativa) + KLuzAmbiental * LuzAmbiental;
+        finalColor += LuzDifusa + KSpecular * saturate(LuzEspeculativa) + KLuzAmbiental * LuzAmbiental;
         //finalColor = float3(1,1,1);
         finalColor *= step(projeccionVorde[i], projeccion);//si es mayor que lo esperado, no lo afecta, caso contrario, lo vuelve 0
         //finalColor *= step(distanceToLight, shadowDist);//si esta en sombra, solo le ponemos 0-
         
-        finalColor = float3(abs(distanceToLight) ,0,0);
+        finalColor = float3((distanceToLight) ,0,0);
     }
     //return normalV;
     return float4(finalColor,1.0);

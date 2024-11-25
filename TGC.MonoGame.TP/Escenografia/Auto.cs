@@ -578,6 +578,8 @@ namespace Escenografia
             camarografo.getViewMatrix(),
             camarografo.getProjectionMatrix(),
             camarografo.GetLigthViewProj());
+            MonoHelper.loadShaderLigthColors(efecto, Color.DarkBlue, Color.LightYellow, Color.White);
+            MonoHelper.loadKColorValues(efecto, 0.3f, 0.05f, 0.7f);
             foreach( ModelMesh mesh in modelo.Meshes)
             {
                 if(mesh.Name == "Car")

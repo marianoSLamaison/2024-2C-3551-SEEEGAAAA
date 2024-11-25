@@ -435,6 +435,8 @@ class FullScreenCuad
     public RenderTarget2D albedo;
     public RenderTarget2D especular;
     public RenderTarget2D ShadowMap;
+    public RenderTarget2D finalTarg;//este esta para aplicar los after efects y lo demas
+    private Effect finalBlender;
 
     public FullScreenCuad(GraphicsDevice screen)
     {
@@ -467,6 +469,7 @@ class FullScreenCuad
         albedo    = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
         especular = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
         ShadowMap = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Single, DepthFormat.Depth24);
+        finalTarg = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
 
         device = screen;
     }

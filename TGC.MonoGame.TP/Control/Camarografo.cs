@@ -24,8 +24,8 @@ namespace Control
             camaraAsociada = new Camara(posicion, puntoDeFoco);
             projeccion = camaraAsociada.getPerspectiveProjectionMatrix(MathF.PI / 4f, AspectRatio, minVista, maxVista);
             AmbientLight = new luzConica(
-                                new Vector3(0f, 0.5f, 1f) * 1,
-                                -new Vector3(200f, 500f, 200f),
+                                new Vector3(0f, 0.5f, 1f) * 5000,
+                                -new Vector3(0f, 0.5f, 1f),
                                 Color.IndianRed,
                                 0f,
                                 1f);
@@ -68,6 +68,12 @@ namespace Control
             camaraAsociada.PuntoAtencion = PuntoAtencion;
             camaraLuz.PuntoAtencion = PuntoAtencion;
         }
+        public void rotatePuntoAtencion(float angle)
+        {
+            camaraAsociada.rotatePuntoAtencion(angle);
+            camaraLuz.rotatePuntoAtencion(angle);
+        }
+
 
     }
 
