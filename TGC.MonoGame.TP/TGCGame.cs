@@ -155,14 +155,10 @@ namespace TGC.MonoGame.TP
             staticHandleTags.Add(cajaPowerUp4.staticHandle.Value, "Caja");
             Plataforma.setGScale(15f*1.75f);
             
+            Escenario.CrearColliders(bufferPool, _simulacion);
             
             adminNPCs = new AdministradorNPCs();
             adminNPCs.generarAutos(2, 7000f, _simulacion, bufferPool, bodyHandleTags); //Baje la cantidad de autos (por las pruebas) y le paso el diccionario para agregar sus handlers
-            //cuboTesteo = Primitiva.Prisma(-new Vector3(1,1,1) * 1000, new Vector3(1,1,1) * 200);
-            //cuboTesteo.setearCuerpoPrisma(-new Vector3(1,1,1), new Vector3(1,1,1),
-              //          (new Vector3(0f, 0.5f, 1f) * 5000).Length() * 0.5f * Vector3.Normalize(-new Vector3(0f, 0.5f, 1f)) + new Vector3(0f, 0.5f, 1f) * 5000);
-
-
 
             base.Initialize();
         }
@@ -188,7 +184,7 @@ namespace TGC.MonoGame.TP
             */
             //cargamos las bases para la prueba
             //Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "BasicShader", Content);
-            //Escenario.CrearColliders(bufferPool, _simulacion);
+            
             //camarografo.loadTextFont(ContentFolderEffects, Content);
             //Nota importante:
             //como todos los elementos comparten shader, 
@@ -196,6 +192,8 @@ namespace TGC.MonoGame.TP
             //no durante el load
             //si lo hacen durante el load, van a sobre escribir la textura en el shader
             //y vas a tener algo como campo de pasto morado que se ve horrible
+
+
             String[] modelos = {ContentFolder3D + "Auto/RacingCar"};
             Texture2D[] texturasParaAutos = {
                 Content.Load<Texture2D>("Models/Auto/" + "Vehicle_basecolor_0"),
@@ -205,28 +203,32 @@ namespace TGC.MonoGame.TP
                 Content.Load<Texture2D>("Models/Auto/" + "Vehicle_ao"),
                 Content.Load<Texture2D>("Models/Auto/" + "Vehicle_emission")
             };
-
             Effect renderer = Content.Load<Effect>(ContentFolderEffects + "DeferredShadows");
 
             ScreenCuad.LoadTargets(renderer);//tenemos los targets cargados
+            
             Escenario.loadPlataformas(ContentFolder3D + "Plataforma/Plataformas", ContentFolderEffects + "DeferredShadows", Content);
             Escenario.loadTerreno(renderer, Content);
+            
             auto.loadModel(ContentFolder3D + "Auto/RacingCar", ContentFolderEffects + "DeferredShadows", Content);
+            
             generadorConos.loadModelosConos(ContentFolder3D + "Cono/Traffic Cone/Models and Textures/1", ContentFolderEffects + "DeferredShadows", Content, bufferPool, _simulacion);
             adminNPCs.load(renderer, modelos, texturasParaAutos, Content);
+            
+            auto.adminMisiles.loadMisiles(ContentFolder3D + "Misil/Misil", ContentFolderEffects + "BasicShader", Content);
+            auto.adminMetralleta.loadMetralleta(ContentFolder3D + "Bullet/sphere", ContentFolderEffects + "BasicShader", Content);
+
             MenuInicio.Load(Content);
+            
             cajaPowerUp1.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             cajaPowerUp2.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             cajaPowerUp3.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
-            cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);            
-            //cuboTesteo.loadPrimitiva(GraphicsDevice, renderer, Color.Violet);
-
+            cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
             
             fuente = Content.Load<SpriteFont>("debugFont");
 
             playingMusic = Content.Load<Song>("Danger Zone - Instrumental  TOP GUN");
             menuMusic = Content.Load<Song>("Gran Turismo 4 Soundtrack - Race Menu 2");
-
 
             base.LoadContent();
         }
@@ -262,8 +264,21 @@ namespace TGC.MonoGame.TP
         private void MenuAyuda(){}
         private void Juego(GameTime gameTime)
         {
+
+            if (MediaPlayer.State != MediaState.Playing)
+            {
+                MediaPlayer.IsRepeating = true; //Loop
+                MediaPlayer.Volume = 1f;     
+                MediaPlayer.Play(playingMusic);
+            }
             
             auto.Mover((float)gameTime.ElapsedGameTime.TotalSeconds);
+
+            auto.adminMisiles.ActualizarMisiles(gameTime);
+            auto.adminMetralleta.ActualizarMetralleta(gameTime);
+
+            adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds), new Vector2(auto.Posicion.X, auto.Posicion.Z));
+
             //Console.WriteLine(camarografo.getProjectionMatrix() + "\n\n" + auto.Posicion);
             camarografo.setPuntoAtencion(auto.Posicion);
             //cuboTesteo.pos = Vector3.Lerp(camarografo.camaraLuz.PuntoAtencion, camarografo.camaraLuz.posicion, MathF.Pow(MathF.Sin((float)gameTime.TotalGameTime.TotalSeconds), 2));
@@ -319,47 +334,9 @@ namespace TGC.MonoGame.TP
             //creamos el estado de rasterizacion
             //que especifica datos de como dibujar la escena
 
-/*
-            if (MediaPlayer.State != MediaState.Playing)
-            {
-                MediaPlayer.IsRepeating = true; //Loop
-                MediaPlayer.Volume = 1f;     
-                MediaPlayer.Play(playingMusic);
-            }
-            
-            auto.Mover(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds));
-            
-            
-
-            
-            auto.adminMisiles.ActualizarMisiles(gameTime);
-            auto.adminMetralleta.ActualizarMetralleta(gameTime);
-            */
-            //auto.Misil.ActualizarPowerUp(gameTime);
-            //auto.Metralleta.ActualizarPowerUp(gameTime);
-
             camarografo = new Control.Camarografo(new Vector3(1f,1f,1f) * 1000f,
                                                 Vector3.Zero, GraphicsDevice.Viewport.AspectRatio, 
                                                 NEAR_PLANE, FAR_PLANE);
-            //camarografo = new Camarografo(new Vector3(1.5f, 1, 1) * 1000f,
-            //Vector3.Zero, 
-            //2000, 1500, 1, 10000);
-            //shadowMap = new RenderTarget2D(GraphicsDevice,  4096,  4096, false, SurfaceFormat.Single, DepthFormat.Depth24);
-            //luz = new Luz(GraphicsDevice);
-            //para tener ya todo iniciado
-           
-/*
-            tiempoTranscurrido += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            adminNPCs.Update(Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds), new Vector2(auto.Posicion.X, auto.Posicion.Z));
-            luz.BuildView(auto.Posicion);
-            //para que el camarografo nos siga siempre
-            camarografo.setPuntoAtencion(auto.Posicion);
-            camarografo.GetInputs();
-            _simulacion.Timestep(1/60f, ThreadDispatcher);//por ahora corre en el mismo thread que todo lo demas
-            base.Update(gameTime);
-        }
-        */
 
         }
         private void InicializarJuego(CASOS casoDeInicio)
@@ -421,8 +398,6 @@ namespace TGC.MonoGame.TP
             
             generadorConos.drawConos(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.GetFrustum());
 
-
-
             //El trabajo de optimizarse se lo dejo a cada objeto, 
             //Debimos acordar estandares para los objetos antes
             Escenario.Dibujar(camarografo, shadowMap);
@@ -460,7 +435,6 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.SetRenderTargets(ScreenCuad.ShadowMap);
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
-
 
             Escenario.LlenarEfectsBuffer(camarografo);
 
