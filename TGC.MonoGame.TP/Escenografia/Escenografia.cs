@@ -112,7 +112,7 @@ namespace Escenografia
     /// triangulos, cuadrados, circulo, una mesh cuadrada, etc.
     /// No tenemos un poligono general, solo poligonos regulares. 
     /// </summary>
-    class Primitiva 
+    public class Primitiva 
     {
         private GraphicsDevice device;
         private short[] indices;
@@ -123,6 +123,7 @@ namespace Escenografia
         private BodyReference cuerpoFisico;
         public Vector3 pos;
         public BodyHandle handlerCuerpo;
+        public StaticHandle staticHandle;
     
         public System.Numerics.Vector3 Posicion {get {return cuerpoFisico.Pose.Position;}}
 

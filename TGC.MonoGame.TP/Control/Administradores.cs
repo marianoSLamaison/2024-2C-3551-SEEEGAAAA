@@ -26,11 +26,13 @@ namespace Control
         private float maxVelocity;
 
         public Vector2 direccion;
+
+        public float tiempoUltimaActualizacion;
         public IA(){}
-        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool)
+        public IA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, object> bodyHandleTags)
         {
             AutoControlado = new AutoNPC();
-            AutoControlado.CrearCollider(simulation, bufferPool, initPos);
+            AutoControlado.CrearCollider(simulation, bufferPool, initPos, bodyHandleTags);
             fuerzaMov = 251;//despues setear a un rango
             aceleracion = AutoControlado.DarAceleracion(fuerzaMov) / 2f;
             AutoControlado.velocidad = 0;
@@ -78,7 +80,7 @@ namespace Control
             public AgresiveIA(){
 
             }
-            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool) : base(initPos, simulation, bufferPool)
+            public AgresiveIA(Vector2 initPos, Simulation simulation, BufferPool bufferPool, Dictionary<int, object> bodyHandleTags) : base(initPos, simulation, bufferPool, bodyHandleTags)
             {
             }
             /*
@@ -108,39 +110,84 @@ namespace Control
         private Model[] modelos;
         List<IA> autos;
         List<AgresiveIA> atacantes;
-        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool)
-        {//los genero de esta manera para reducir espacios sin nada en los bordes del escenario
+        public void generarAutos(int numero, float radioArea, Simulation simulation, BufferPool bufferpool, Dictionary<int, object> bodyHandleTags)
+        {
             int autosGen = numero / 4;
             int autosSob = numero % 4;
             float subRadio = radioArea / 2f;
             float anguloRot = MathF.PI / 2;
-            Vector2 direccion_centro = Vector2.Normalize(new Vector2(1,1));
+            Vector2 direccion_centro = Vector2.Normalize(new Vector2(1, 1));
             Vector2 puntoTemp;
             List<Vector2> puntosAutos = new(numero);
             IA auto;
             autos = new(numero);
-            for (int i=0; i<4; i++)
+
+            for (int i = 0; i < 4; i++)
             {
-                if ( autosGen != 0 )
+                if (autosGen != 0)
                 {
-                    puntoTemp = Vector2.Transform(direccion_centro  * subRadio * MathF.Sqrt(2), Matrix.CreateRotationZ(anguloRot*i));
+                    puntoTemp = Vector2.Transform(direccion_centro * subRadio * MathF.Sqrt(2), Matrix.CreateRotationZ(anguloRot * i));
                     puntosAutos.AddRange(
-                        Utils.Commons.map<Vector2>(GenerarPuntosPoissonDisk(radioArea, 1000f, autosGen),
-                        (Vector) => {return Vector + puntoTemp;})
-                        );
+                        GenerarPuntosValidos(radioArea, 1000f, autosGen, puntoTemp, 1000f)
+                    );
                 }
             }
-            if ( autosSob != 0)
-                puntosAutos.AddRange(GenerarPuntosPoissonDisk(subRadio*(MathF.Sqrt(2) - 1), 1000, autosSob));
-            foreach( Vector2 punto in puntosAutos )
+
+            if (autosSob != 0)
             {
-                auto = new IA(punto, simulation, bufferpool);
-                autos.Add(auto);  
+                puntosAutos.AddRange(
+                    GenerarPuntosValidos(subRadio * (MathF.Sqrt(2) - 1), 1000f, autosSob, Vector2.Zero, 1000f)
+                );
             }
+
+            foreach (Vector2 punto in puntosAutos)
+            {
+                auto = new IA(punto, simulation, bufferpool, bodyHandleTags);
+                autos.Add(auto);
+            }
+
             atacantes = new(1);
         }
 
-        public void Update(float deltaTime)
+        // Método auxiliar para generar puntos válidos
+        private IEnumerable<Vector2> GenerarPuntosValidos(float radioArea, float distanciaMinima, int cantidad, Vector2 offset, float radioExclusion)
+        {
+            List<Vector2> puntosValidos = new();
+
+            while (puntosValidos.Count < cantidad)
+            {
+                // Generar nuevos puntos usando Poisson Disk
+                var nuevosPuntos = GenerarPuntosPoissonDisk(radioArea, distanciaMinima, cantidad - puntosValidos.Count)
+                    .Select(vector => vector + offset)
+                    .Where(vector => vector.Length() > radioExclusion);
+
+                puntosValidos.AddRange(nuevosPuntos);
+            }
+
+            return puntosValidos;
+        }
+
+        public void Update(float deltaTime, Vector2 posicionAutoJugador)
+        {
+            foreach (IA auto in autos)
+            {
+                auto.Update(deltaTime);
+
+                // Calcular dirección hacia el jugador
+                Vector2 direccionHaciaJugador = Vector2.Normalize(posicionAutoJugador - auto.GetPos());
+
+                auto.tiempoUltimaActualizacion += deltaTime;
+                // Aplicar la dirección al auto
+                if (auto.tiempoUltimaActualizacion > 0.2f)
+                {
+                    auto.SetDireccion(Vector2.Lerp(Vector2.Normalize(auto.direccion), Vector2.Normalize(direccionHaciaJugador), 0.25f));
+                    auto.tiempoUltimaActualizacion = 0;
+                }
+
+            }
+        }
+        /*
+         public void Update(float deltaTime)
         {
             //chequeamos si se puede o no colocar mas enemigos en pantalla
             const int maximoAts = 0;
@@ -177,6 +224,7 @@ namespace Control
             }
             
         }
+        */
 
         public Vector3 GetPosFitsCar()
         {
@@ -195,6 +243,7 @@ namespace Control
             {//designamos modelos y efectos al azar, si necesitan que esten juntos, habria que dise
             //diseñar alguna sestructura que tenga a los dos para tener el modelo y la estruct juntos,
             //y pasar eso
+
                 String dModelo = modelos[RNG.Next() % modelos.Length];
                 Model modelo = content.Load<Model>(dModelo);
 
@@ -221,6 +270,12 @@ namespace Control
                 autoR.BoundingVolume.Center = autoR.Posicion;
                 if ( frustrumCamara.Intersects(autoR.BoundingVolume))
                     atacante.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
+
+//                String dEffecto = efectos[0];
+//                String dModelo = modelos[0];
+//                auto.GetAuto().loadModel(dModelo, dEffecto, content);
+//                auto.GetAuto().loadSonido("SonidoAutoMuerto", content);
+
             }
         }
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
@@ -241,6 +296,13 @@ namespace Control
                 if ( frustrumCamara.Intersects(autoR.BoundingVolume))
                     atacante.GetAuto().dibujar(view, projeccion, shadowMap);
             }
+        }
+        public void drawSombras(Matrix view, Matrix projeccion)
+        {
+            foreach( IA auto in autos )
+                auto.GetAuto().dibujarSombras(view, projeccion);
+            foreach( AgresiveIA atacante in atacantes )
+                atacante.GetAuto().dibujarSombras(view, projeccion);
         }
 
         ////funciones robadas de generador de conos ( no las lei pero se que funcionan )
@@ -524,6 +586,7 @@ namespace Control
                 cono.CrearCollider(bufferPool, simulacion, cono.posicion);
             }
         }
+
         public void LlenarGbuffer( Control.Camarografo juan)
         {
             Matrix view = juan.getViewMatrix(),
@@ -540,17 +603,109 @@ namespace Control
                     cono.LlenarGbuffer(view, proj, ligthViewProj);
             }
         }
-        public void drawConos(Matrix view, Matrix projection)
+
+
+        public void drawConos(Matrix view, Matrix projection, BoundingFrustum frustum)
         {
-            BoundingFrustum frustrumCamara = new BoundingFrustum(view * projection);
-            // Dibujar todos los conos
             foreach (Cono cono in conos)
             {
-                //ajustamos la esfera comunal a la posicion del cono
-                BoundingVolume.Center = cono.Position;
-                //si esta visible, la dibujamos
-                if ( frustrumCamara.Intersects(BoundingVolume))
+                // Obtener la posición del cono desde su BodyReference
+                Vector3 position = cono.refACuerpo.Pose.Position;
+
+                // Construir el BoundingBox (De XNA) del cono
+                BoundingBox boundingBox = new BoundingBox(
+                    position - new Vector3(140 / 2, 150 / 2, 140 / 2), //Largo, Ancho y Alto de la Box del cono
+                    position + new Vector3(140 / 2, 150 / 2, 140 / 2)
+                );
+
+                // Verificar si el BoundingBox interseca con el frustum
+                if (frustum.Intersects(boundingBox))
+                {
                     cono.dibujar(view, projection, Color.Orange);
+                    //Console.WriteLine("Me dibuje");
+                }
+            }
+        }
+    }
+
+    public class AdminMisiles{
+        List<Misil> misiles;
+
+        public AdminMisiles(Simulation simulacion, Dictionary<int, object> bodyHandleTags){
+            
+            misiles = new List<Misil>();
+
+            for(int i = 0; i < 3; i++){
+                misiles.Add(new Misil());
+            }
+
+            foreach(Misil misil in misiles){
+                misil.CrearColliderMisil(simulacion, bodyHandleTags);
+            }
+
+        }
+
+        public void loadMisiles(string direccionModelo, string direccionEfecto, ContentManager contManager){
+            foreach(Misil misil in misiles){
+                misil.loadModel(direccionModelo, direccionEfecto, contManager);
+            }
+        }
+
+        public void DispararMisil(int misilDisparado, Matrix orientacion, Vector3 autoPosicion){
+            misiles[misilDisparado].ActivarPowerUp(orientacion, autoPosicion);
+        }
+
+        public void ActualizarMisiles(GameTime gametime){
+            foreach(Misil misil in misiles){
+                misil.ActualizarPowerUp(gametime);
+            }
+        }
+
+        public void dibujarMisiles(Matrix view, Matrix projection, Color color){
+            foreach(Misil misil in misiles){
+                misil.dibujar(view, projection, color);
+            }
+        }
+
+    }
+
+    public class AdminMetralleta{
+
+        List<Metralleta> balas;
+
+        public AdminMetralleta(Simulation simulacion, Dictionary<int, object> bodyHandleTags){
+            
+            balas = new List<Metralleta>();
+
+            for(int i = 0; i < 30; i++){
+                balas.Add(new Metralleta());
+            }
+
+            foreach(Metralleta bala in balas){
+                bala.CrearColliderMetralleta(simulacion, bodyHandleTags);
+            }
+
+        }
+
+        public void loadMetralleta(string direccionModelo, string direccionEfecto, ContentManager contManager){
+            foreach(Metralleta bala in balas){
+                bala.loadModel(direccionModelo, direccionEfecto, contManager);
+            }
+        }
+
+        public void DispararBala(int baladisparada, Matrix orientacion, Vector3 autoPosicion){
+            balas[baladisparada].ActivarPowerUp(orientacion, autoPosicion);
+        }
+
+        public void ActualizarMetralleta(GameTime gametime){
+            foreach(Metralleta bala in balas){
+                bala.ActualizarPowerUp(gametime);
+            }
+        }
+
+        public void dibujarBalas(Matrix view, Matrix projection, Color color){
+            foreach(Metralleta bala in balas){
+                bala.dibujar(view, projection, color);
             }
         }
 

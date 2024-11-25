@@ -14,7 +14,7 @@ using System.Data;
 using System.Collections.Generic;
 using BepuUtilities.Memory;
 
-abstract class PowerUp
+public abstract class PowerUp
 {
     public string tipoPowerUp;
     public float DuracionPowerUp; // Duración del power-up en segundos
@@ -26,7 +26,7 @@ abstract class PowerUp
     public virtual void ActivarPowerUp(AutoJugador auto){}
 }
 
-class Turbo : PowerUp
+public class Turbo : PowerUp
 {
     private float boostVelocidad;
     public Turbo()
@@ -61,7 +61,7 @@ class Turbo : PowerUp
     }
 }
 
-class Misil : PowerUp
+public class Misil : PowerUp
 {
     private int MunicionMisiles = 0;
     public Model modelo;
@@ -71,7 +71,7 @@ class Misil : PowerUp
     Vector3 posicionRelativaAlAuto = new Vector3(0, 150, 0);
 
     protected float fuerza;
-    protected BodyHandle handlerCuerpo;
+    public BodyHandle handlerCuerpo;
     protected BodyReference refACuerpo;
     public Matrix orientacionAutoSalida;
 
@@ -89,7 +89,7 @@ class Misil : PowerUp
         this.fuerza = 50f;
 
     }
-    public void CrearColliderMisil(Simulation _simulacion)
+    public void CrearColliderMisil(Simulation _simulacion, Dictionary<int, object> bodyHandleTags)
     {
         //var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
         var capsuleShape = new Capsule(30f, 120f); // Ajusta dimensiones
@@ -104,8 +104,10 @@ class Misil : PowerUp
         //compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
 
         // Agregar el cuerpo cinemático a la simulación
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
-        this.darCuerpo(handlerDeCuerpo);
+        handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
+        bodyHandleTags.Add(handlerCuerpo.Value, this);
+
+        this.darCuerpo(handlerCuerpo);
     }
 
     public void darCuerpo(BodyHandle handler)
@@ -173,6 +175,10 @@ class Misil : PowerUp
 */
     }
 
+    public void GuardarMisilEnMundo(){
+        refACuerpo.Pose.Position = System.Numerics.Vector3.UnitY * -10000f;
+    }
+
     public void loadModel(string direcionModelo, string direccionEfecto, ContentManager contManager)
     {    
         //asignamos el modelo deseado
@@ -214,7 +220,7 @@ class Misil : PowerUp
 
 
 
-class Metralleta : PowerUp
+public class Metralleta : PowerUp
 {
     private int municionMetralleta = 0;
     public Model modelo;
@@ -240,23 +246,20 @@ class Metralleta : PowerUp
         municionMetralleta = 2;
         this.fuerza = 50;
     }
-    public void CrearColliderMetralleta(Simulation _simulacion)
+    public void CrearColliderMetralleta(Simulation _simulacion, Dictionary<int, object> bodyHandleTags)
     {
-        //var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
-        var capsuleShape = new Capsule(30f, 120f); // Ajusta dimensiones
+        var capsuleShape = new Sphere(10f); // Ajusta dimensiones
         var capsuleLocalPose = 
             new RigidPose(System.Numerics.Vector3.UnitY * -10000f);
             //Quaternion.CreateFromYawPitchRoll(MathF.PI/2, 0, 0).ToNumerics());
 
         BodyInertia bodyInertia = capsuleShape.ComputeInertia(.5f);
 
-        //compoundBuilder.Add(capsuleShape, capsuleLocalPose, 5f);
-        // Llamada corregida: solo devuelve los hijos y el centro
-        //compoundBuilder.BuildKinematicCompound(out var compoundChildren, out var compoundCenter);
-
         // Agregar el cuerpo cinemático a la simulación
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
-        this.darCuerpo(handlerDeCuerpo);
+        handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(capsuleLocalPose, bodyInertia, _simulacion.Shapes.Add(capsuleShape), 0.01f));
+        bodyHandleTags.Add(handlerCuerpo.Value, this);
+
+        this.darCuerpo(handlerCuerpo);
     }
 
     public void darCuerpo(BodyHandle handler)
@@ -277,7 +280,6 @@ class Metralleta : PowerUp
         refACuerpo.Velocity.Linear = new Vector3(orientacionAutoSalida.Backward.X, orientacionAutoSalida.Backward.Y, orientacionAutoSalida.Backward.Z).ToNumerics() * 4000f;
         activado = true;
         DuracionPowerUp = 1;
-        Console.WriteLine("Metralleta activada");
     }
 
     public override void DesactivarPowerUp(AutoJugador auto)
@@ -302,6 +304,10 @@ class Metralleta : PowerUp
 
         activado = DuracionPowerUp >= 0;
         //Console.WriteLine(DuracionPowerUp);
+    }
+
+    public void GuardarBalaEnMundo(){
+        refACuerpo.Pose.Position = System.Numerics.Vector3.UnitY * -10000f;
     }
 
 

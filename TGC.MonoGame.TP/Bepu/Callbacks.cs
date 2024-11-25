@@ -6,6 +6,8 @@ using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
 using BepuPhysics.Constraints;
 using BepuUtilities;
+using System.Collections.Generic;
+using Escenografia;
 
 namespace TGC.MonoGame.Samples.Physics.Bepu;
 
@@ -122,24 +124,26 @@ public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
     }
 }
 
-public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
+public struct CustomNarrowPhaseCallbacks : INarrowPhaseCallbacks
 {
     private SpringSettings ContactSpringiness { get; set; }
     private float MaximumRecoveryVelocity { get; set; }
     private float FrictionCoefficient { get; set; }
+    private readonly Dictionary<int, object> bodyTags;
+    private readonly Dictionary<int, object> staticTags;
+    private AutoJugador auto;
 
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness) : this(contactSpringiness, 2f, 1f)
-    {
-    }
 
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity,
-        float frictionCoefficient)
+
+    public CustomNarrowPhaseCallbacks(SpringSettings contactSpringiness, Dictionary<int, object> _bodyTags, Dictionary<int, object> _staticTags, AutoJugador autoJugador)
     {
         ContactSpringiness = contactSpringiness;
-        MaximumRecoveryVelocity = maximumRecoveryVelocity;
-        FrictionCoefficient = frictionCoefficient;
+        MaximumRecoveryVelocity = 2f;
+        FrictionCoefficient = 1f;
+        bodyTags = _bodyTags;
+        staticTags = _staticTags;
+        auto = autoJugador;
     }
-
     public void Initialize(Simulation simulation)
     {
         //Use a default if the springiness value wasn't initialized... at least until struct field initializers are supported outside of previews.
@@ -171,6 +175,49 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
     public bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold,
         out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
     {
+
+        if (pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Static){
+            if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA) && objA is string tagA && tagA == "Auto" && 
+                staticTags.TryGetValue(pair.B.BodyHandle.Value, out object objB) && objB is string tagB && tagB == "Caja"){
+                    auto.RecogerPowerUp();
+            }
+        }
+
+        //SE COMPARAN LOS OBJETOS DE LOS DICCIONARIOS CON LOS PARES DE HANDLERS QUE COLISIONARON CON SUS VALUES (algunos son solo strings -como cajas de powerups- y otros son objetos, como los autos NPC)
+
+        if(pair.A.Mobility == CollidableMobility.Dynamic && pair.B.Mobility == CollidableMobility.Dynamic){
+            if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA2) && objA2 is Misil &&
+            bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB2) && objB2 is AutoNPC){
+                ((Misil)objA2).GuardarMisilEnMundo();
+                ((AutoNPC)objB2).QuitarVida(50, auto);
+                Console.WriteLine("QUITE VIDA");
+            }
+
+            if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB3) && objB3 is Misil &&
+            bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA3) && objA3 is AutoNPC){
+                ((Misil)objB3).GuardarMisilEnMundo();
+                ((AutoNPC)objA3).QuitarVida(50, auto);
+                Console.WriteLine("QUITE VIDA");
+            }
+
+            if(bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA4) && objA4 is Metralleta &&
+            bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB4) && objB4 is AutoNPC){
+                ((Metralleta)objA4).GuardarBalaEnMundo();
+                ((AutoNPC)objB4).QuitarVida(10, auto);
+                Console.WriteLine("QUITE 10 VIDA");
+            }
+
+            if(bodyTags.TryGetValue(pair.B.BodyHandle.Value, out object objB5) && objB5 is Metralleta &&
+            bodyTags.TryGetValue(pair.A.BodyHandle.Value, out object objA5) && objA5 is AutoNPC){
+                ((Metralleta)objB5).GuardarBalaEnMundo();
+                ((AutoNPC)objA5).QuitarVida(10, auto);
+                Console.WriteLine("QUITE 10 VIDA");
+            }
+
+        }
+
+        
+
         pairMaterial.FrictionCoefficient = FrictionCoefficient;
         pairMaterial.MaximumRecoveryVelocity = MaximumRecoveryVelocity;
         pairMaterial.SpringSettings = ContactSpringiness;

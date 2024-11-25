@@ -13,6 +13,19 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Danger Zone - Instrumental  TOP GUN.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Danger Zone - Instrumental  TOP GUN.wav
+
+#begin debugFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:debugFont.spritefont
+
 #begin Effects/BasicShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -50,12 +63,26 @@
 /processorParam:DebugMode=Auto
 /build:Effects/VehicleShader.fx
 
+
 #begin Fonts/MyMenuFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
 /build:Fonts/MyMenuFont.spritefont
+
+#begin Gran Turismo 4 Soundtrack - Race Menu 2.wav
+/importer:WavImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Gran Turismo 4 Soundtrack - Race Menu 2.wav
+
+#begin Laser Shot - Sound Effect.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Laser Shot - Sound Effect.wav
+
 
 #begin Models/Auto/RacingCar.fbx
 /importer:FbxImporter
@@ -526,6 +553,7 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/tgc-logo/tgc-logo.fbx
 
+
 #begin Sprites/bcg_fondo1.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -561,4 +589,47 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Sprites/msg_jugar.png
+
+#begin SonidoAutoMuerto.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoAutoMuerto.wav
+
+#begin SonidoMetralleta.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoMetralleta.wav
+
+#begin SonidoMisil.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoMisil.wav
+
+#begin SonidoPowerUps.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:SonidoPowerUps.wav
+
+#begin Sounds/SonidoMetralleta.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/SonidoMetralleta.wav;SonidoMetralleta.wav
+
+#begin Sounds/SonidoMisil.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/SonidoMisil.wav;SonidoMisil.wav
+
+#begin Sounds/SonidoPowerUps.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Sounds/SonidoPowerUps.wav;SonidoPowerUps.wav
+
 

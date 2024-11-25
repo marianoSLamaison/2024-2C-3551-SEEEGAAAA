@@ -17,6 +17,8 @@ namespace Control
         private bool ortographicMode = false;
         public luzConica AmbientLight;
 
+        public BoundingFrustum frustum;
+
         public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float AspectRatio, float minVista, float maxVista)
         {
             nearPLane = minVista;
@@ -51,9 +53,22 @@ namespace Control
             projeccion = camaraAsociada.getPerspectiveProjectionMatrix(MathF.PI / 4, aspectRatio, nearPLane, farPLane);
         }
 
+
         public Matrix GetLigthViewProj() => camaraLuz.getViewMatrix() * projeccion;
 
         public Matrix getViewMatrix()
+
+        public BoundingFrustum GetFrustum(){
+            // Combinar las matrices de vista y proyección
+            Matrix viewProjection = getViewMatrix() * getProjectionMatrix();
+
+            // Crear el frustum basado en la matriz combinada
+            frustum = new BoundingFrustum(viewProjection);
+            return frustum;
+        }
+
+        public void GetInputs()
+
         {
             return ortographicMode ? camaraAsociada.getIsometricView() : camaraAsociada.getViewMatrix();
         }
@@ -73,7 +88,6 @@ namespace Control
             camaraAsociada.rotatePuntoAtencion(angle);
             camaraLuz.rotatePuntoAtencion(angle);
         }
-
 
     }
 

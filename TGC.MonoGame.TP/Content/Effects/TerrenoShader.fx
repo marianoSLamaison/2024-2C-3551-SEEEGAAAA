@@ -106,9 +106,10 @@ float4 DepthPassPS(in DepthPassVertexShaderOutput input) : COLOR
 {
     //devolvemos a coordenadas normales todo
     //esto antes estaba como 
-    //float depth = input.ScreenSpacePosition.z / input.ScreenSpacePosition.w 
-    float3 depth = input.ScreenSpacePosition.xyz / input.ScreenSpacePosition.w;
-    return float4(depth, 1.0);
+    float depth = input.ScreenSpacePosition.z / input.ScreenSpacePosition.w;
+    //float3 depth = input.ScreenSpacePosition.xyz / input.ScreenSpacePosition.w;
+    return float4(depth, depth, depth, 1.0);
+    //return float4(depth, 1.0);
 }
 
 VertexShaderOutput VS(VertexShaderInput input)
@@ -154,12 +155,12 @@ float4 PS(VertexShaderOutput input) : COLOR
     //normales
     float3 normal = normalize(input.Normal.rgb);
 
-    float distanceToLight = length(lightPosition - input.WorldPosition.xyz);
-
-    //esto estaba multiplicando el argumento antes 0.000000000001
-    float dynamicEpsilon = saturate(distanceToLight * 0.000000000001);
     //sesgo de inclinacion
+
     float inclinationBias = max(dynamicEpsilon * (1.0 - dot(normal, input.ligthDirection.xyz)), maxEpsilon);
+
+    float inclinationBias = max(modulatedEpsilon * (1.0 - dot(normal, lightDirection)), maxEpsilon);
+
 
     //prfundidad del shadowMap
     float shadowMapDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates).x + inclinationBias;
@@ -186,8 +187,13 @@ float4 PS(VertexShaderOutput input) : COLOR
         for (int y = -1; y <= 1; y++)
         {
             float pcfDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates + float2(x, y) * texelSize).r + inclinationBias;
+
             notInShadow -= step(lightSpacePosition.z, pcfDepth + epsilon) / 9.0;
             //Preguntar a nacho despues
+
+       
+            notInShadow += step(lightSpacePosition.z, pcfDepth) / 9.0;
+
         }
 
     // Calculate the specular light

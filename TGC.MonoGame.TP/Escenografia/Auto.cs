@@ -10,6 +10,8 @@ using Escenografia;
 using System;
 using System.Collections.Generic;
 using BepuUtilities.Memory;
+using System.Security.Cryptography;
+using Microsoft.Xna.Framework.Audio;
 
 
 
@@ -29,7 +31,7 @@ namespace Escenografia
     /// <summary>
     /// Lo separe de Escenografia 3D para poder tener la Posicion ligada a nuestro objeto
     /// </summary>
-    abstract class Auto 
+    public abstract class Auto 
     {
         //ralacionadas con movimiento
 
@@ -72,6 +74,7 @@ namespace Escenografia
         protected float revolucionDeRuedas;
 
         public float velocidad = 500000f;
+        public int vida = 100;
 
 
      ///////Cosas de textureo//////////////   
@@ -125,7 +128,7 @@ namespace Escenografia
 
     }
 
-    class AutoJugador : Auto
+    public class AutoJugador : Auto
     {   
         float RotUp, RotFront, RotSide;
         
@@ -139,9 +142,19 @@ namespace Escenografia
         float comportamientoDeVelocidad;
         public TypedIndex referenciaAFigura;
         public float escalarDeVelocidad = 150f;
-        public ConstraintHandle constraintHandle;
+        public BodyHandle handlerDeCuerpo;
         public float anteriorFuerzaBuscada = 0f;
         public float anteriorVelocidadBuscada = 0f;
+
+        public bool powerUpActivo = false;
+
+        public int score = 0;
+
+        public AdminMisiles adminMisiles;
+        public AdminMetralleta adminMetralleta;
+        public SoundEffect sonidoMetralleta;
+        public SoundEffect sonidoMisil;
+        public SoundEffect sonidoPowerUp;    
 
         public Misil Misil;
         public Metralleta Metralleta;
@@ -168,24 +181,56 @@ namespace Escenografia
         public override Matrix getWorldMatrix() =>  orientacion * Matrix.CreateTranslation(Posicion);
 
         private float duracionTurbo = 0f;  // Variable para controlar la duración del turbo
+        private int cantidadMisiles = 0;
+        private int cantidadBalas = 0;
         private bool turboActivo = false; 
+        private bool teclaMAnterior = false;
+
+        private float tiempoEntreDisparos = 0.15f; // 200 ms entre disparos
+        private float tiempoDesdeUltimoDisparo = 0f;
 
         
         public void RecogerPowerUp(PowerUp powerUp)
         {
             powerUp.ActivarPowerUp(orientacion, refACuerpo.Pose.Position);   
         }
-        
+
+        public void RecogerPowerUp(){
+            if(!powerUpActivo){
+                Console.WriteLine("Agarré un powerup");
+                sonidoPowerUp.Play();
+                
+                var random = RandomNumberGenerator.GetInt32(3);
+
+                powerUpActivo = true;
+
+                switch (random){
+                    case 0: //Turbo
+                        turboActivo = true;
+                        escalarDeVelocidad *= 2;
+                        duracionTurbo = 15;
+                        break;
+                    case 1:
+                        cantidadMisiles = 3;
+                        break;
+                    case 2:
+                        cantidadBalas = 30;
+                        break;
+                }
+                
+            }
+        }
+
         /// <summary>
         /// Este metodo tomara los imputs del jugador y seteara las variables necesarias
         /// para mover el mismo con el metodo mover
         /// </summary>
         override public void Mover(float deltaTime)
         {
-                //Console.WriteLine(refACuerpo.Pose.Position);
-                if ( !estaSaltando )
-                {
-                
+            //Console.WriteLine(refACuerpo.Pose.Position);
+            if ( !estaSaltando )
+            {
+            
                 float vAngularInst = velocidadAngular * deltaTime;
                 float velocidadGRuedas = vAngularInst * 2.00f;//es solo un poco mas rapida que el giro del auto
                 //si estamos en la 
@@ -198,7 +243,15 @@ namespace Escenografia
 
                 if (turboActivo)
                 {
-                    refACuerpo.ApplyLinearImpulse(orientacion.Backward.ToNumerics() * escalarDeVelocidad * 5f); // Turbo multiplicador
+                    if(duracionTurbo > 0){
+                        duracionTurbo -= deltaTime;
+                    }else{
+                        turboActivo = false;
+                        escalarDeVelocidad /= 2;
+                        powerUpActivo = false;
+                        Console.WriteLine("Se acabo el turbo");
+                    }
+
                 }
 
 
@@ -237,25 +290,31 @@ namespace Escenografia
                     RotUp -= vAngularInst * sentidoMov;
                 }
 
-                if (Keyboard.GetState().IsKeyDown(Keys.T))
+                bool teclaMPresionada = Keyboard.GetState().IsKeyDown(Keys.M);
+                if (teclaMPresionada && !teclaMAnterior && cantidadMisiles > 0)
                 {
-                    //Turbo turbo = new Turbo();
-                    turboActivo = true;
-                    //RecogerPowerUp(turbo);
-                    //escalarDeVelocidad = 300f;
+                    int misilDisparado = 3 - cantidadMisiles;
+                    adminMisiles.DispararMisil(misilDisparado, orientacion, refACuerpo.Pose.Position);
+                    sonidoMisil.Play();
+                    cantidadMisiles--;
+
+                    if (cantidadMisiles == 0) powerUpActivo = false;
                 }
-                else{
-                    turboActivo= false;
+                teclaMAnterior = teclaMPresionada;
+
+                tiempoDesdeUltimoDisparo += deltaTime;
+
+                if(Keyboard.GetState().IsKeyDown(Keys.N) && cantidadBalas > 0 && tiempoDesdeUltimoDisparo >= tiempoEntreDisparos){
+                    int baladisparada = 30 - cantidadBalas;
+                    adminMetralleta.DispararBala(baladisparada, orientacion, refACuerpo.Pose.Position);
+                    sonidoMetralleta.Play();
+                    cantidadBalas--;
+
+                    tiempoDesdeUltimoDisparo = 0f;
+
+                    if (cantidadBalas == 0) powerUpActivo = false;
                 }
-                if (Keyboard.GetState().IsKeyDown(Keys.M))
-                {
-                    RecogerPowerUp(Misil);
-                }
-                else if(Keyboard.GetState().IsKeyDown(Keys.P))
-                {
-                    
-                    RecogerPowerUp(Metralleta);
-                }
+                
                 //evitamos que las ruedas den una vuelta entera
                 rotacionRuedasDelanteras = Convert.ToSingle(Math.Clamp(rotacionRuedasDelanteras, -Math.PI/4f, Math.PI/4f));
                 //para no tener el problema de estar girando por siempre a un mismo lado
@@ -301,6 +360,10 @@ namespace Escenografia
             }
         }
 
+    public void SumarPuntos(int puntosSumados){
+        score += puntosSumados;
+    }
+
     public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool){
 
         var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
@@ -327,7 +390,9 @@ namespace Escenografia
         compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
         compoundBuilder.Reset();
 
-        BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        handlerCuerpo.Value = 95;
+        handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+        
         this.darCuerpo(handlerDeCuerpo);
 
     }
@@ -401,6 +466,8 @@ namespace Escenografia
 
             this.ApplyTexturesToShader();
 
+            loadSonido("SonidoMisil", "SonidoMetralleta", "SonidoPowerUps",  contManager);
+
             // Asignar el shader a cada parte del modelo
             foreach (ModelMesh mesh in modelo.Meshes)
             {   
@@ -411,9 +478,18 @@ namespace Escenografia
                 }
             }
         }
+
         public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
         {
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            }
+
+        public void loadSonido(string direccionSonidoMisil, string direccionSonidoMetralleta, string direccionSonidoPowerUps,  ContentManager contManager){
+            sonidoMetralleta = contManager.Load<SoundEffect>(direccionSonidoMetralleta);
+            sonidoMisil = contManager.Load<SoundEffect>(direccionSonidoMisil);
+            sonidoPowerUp = contManager.Load<SoundEffect>(direccionSonidoPowerUps);
+        }
+
 
             efecto.Parameters["View"].SetValue(view);
             // le cargamos el como quedaria projectado en la pantalla
@@ -628,8 +704,10 @@ namespace Escenografia
     class AutoNPC : Auto
     {
 
+        public BodyHandle handlerCuerpo;
         private float anguloCorreccion;
         private float MaxRuedaRotacion;
+
         public BoundingSphere BoundingVolume;
 
         public void LlenarGbuffer(Matrix view, Matrix proj, Matrix lightViewProj)
@@ -730,6 +808,12 @@ namespace Escenografia
                 mesh.Draw();    
             }
         }
+
+
+        private SoundEffect sonidoAutoMuerto;
+
+        private bool muerto = false;
+
         public void dibujar(Matrix view, Matrix projection, RenderTarget2D shadowMap)
         {
             efecto.CurrentTechnique = efecto.Techniques["AutoTechnique"];
@@ -784,9 +868,62 @@ namespace Escenografia
                                                         wheelWorld); // pos ultimo
                 }
                 mesh.Draw();    
-            }
+            }  
         }
         
+        public void dibujarSombras(Matrix view, Matrix projection){
+            efecto.CurrentTechnique = efecto.Techniques["DepthPass"];
+
+            efecto.Parameters["View"].SetValue(view);
+            // le cargamos el como quedaria projectado en la pantalla
+            efecto.Parameters["Projection"].SetValue(projection);
+
+            efecto.Parameters["LightViewProjection"]?.SetValue(view * projection);
+
+            foreach( ModelMesh mesh in modelo.Meshes)
+            {
+                if(mesh.Name == "Car")
+                    efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                    //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                    getWorldMatrix());
+
+                if (mesh.Name.StartsWith("Wheel"))
+                {
+                    Vector3 posicionRueda = Vector3.Zero;
+                    float rotacionYRueda = 0f;
+
+                    // Determinar la posición de la rueda según su nombre
+                    if (mesh.Name == "WheelB") {// Rueda delantera izquierda
+                        posicionRueda = posicionRuedaDelanteraIzquierda;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelA"){ // Rueda delantera derecha
+                        posicionRueda = posicionRuedaDelanteraDerecha;
+                        rotacionYRueda = rotacionRuedasDelanteras;
+                    }
+                    else if (mesh.Name == "WheelD") {
+                        // Rueda trasera izquierda
+                        posicionRueda = posicionRuedaTraseraIzquierda;
+                        rotacionYRueda = 0;
+                    }
+                    else if (mesh.Name == "WheelC"){ // Rueda trasera derecha
+                        posicionRueda = posicionRuedaTraseraDerecha;
+                        rotacionYRueda = 0;
+                    }
+                    // Calcular la matriz de transformación para la rueda
+                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                                        Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
+        
+                    efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
+                                                        Matrix.CreateRotationY(rotacionYRueda ) * // segundo la rotamos sobre el plano XZ
+                                                        mesh.ParentBone.Transform * // luego la hacemos heredar la transformacion del padre
+                                                        //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
+                                                        wheelWorld); // pos ultimo
+                }
+                mesh.Draw();    
+            }
+        }
+
         public override Matrix getWorldMatrix()
         {
             return orientacion * Matrix.CreateTranslation(Posicion);
@@ -809,34 +946,33 @@ namespace Escenografia
             this.velocidadAngular = vAngular;
         }
 
-    
-    public void ApplyTexturesToShader()
-    {
-        //Thake that OOP >:D Nobody needs you when you have Ctrl + c and Ctrl + v
-        efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
-        efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
-        efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
-        efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
-        
-        
 
-        efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
-
-        efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
-        efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.75f, 0.75f, 0.75f));
-        efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
-
-        efecto.Parameters["KAmbient"]?.SetValue(0.4f);
-        efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
-        efecto.Parameters["KSpecular"]?.SetValue(0.25f);
-        efecto.Parameters["shininess"]?.SetValue(4.0f);
-
-        foreach ( ModelMesh mesh in modelo.Meshes )
+        public void ApplyTexturesToShader()
         {
-            foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+            efecto.Parameters["baseTexture"].SetValue(baseColorTexture);
+            efecto.Parameters["metallicTexture"]?.SetValue(metallicTexture);
+            efecto.Parameters["AOTexture"]?.SetValue(AOTexture);
+            efecto.Parameters["normalTexture"]?.SetValue(normalTexture);
+
+            efecto.Parameters["lightPosition"]?.SetValue(new Vector3(7000,3000,2000));
+
+            efecto.Parameters["ambientColor"]?.SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+            efecto.Parameters["diffuseColor"]?.SetValue(new Vector3(0.75f, 0.75f, 0.75f));
+            efecto.Parameters["specularColor"]?.SetValue(new Vector3(1f, 1f, 1f));
+
+            efecto.Parameters["KAmbient"]?.SetValue(0.4f);
+            efecto.Parameters["KDiffuse"]?.SetValue(1.5f);
+            efecto.Parameters["KSpecular"]?.SetValue(0.25f);
+            efecto.Parameters["shininess"]?.SetValue(4.0f);
+
+            foreach ( ModelMesh mesh in modelo.Meshes )
             {
-                meshPart.Effect = efecto;
+                foreach ( ModelMeshPart meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efecto;
+                }
             }
+
         }
     }
 
@@ -865,7 +1001,8 @@ namespace Escenografia
         BoundingVolume = MonoHelper.GenerarBoundingSphere(modelo, 1.8f);
     }
 
-    public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
+
+        public override void loadModel(string direccionModelo, string direccionEfecto, ContentManager contManager){
             //asignamos el modelo deseado
             modelo = contManager.Load<Model>(direccionModelo);
             //mismo caso para el efecto
@@ -895,42 +1032,62 @@ namespace Escenografia
             BoundingVolume = MonoHelper.GenerarBoundingSphere(modelo);
         }
 
+        public void loadSonido(string direccionSonido, ContentManager contManager){
+            sonidoAutoMuerto = contManager.Load<SoundEffect>(direccionSonido);
+        }
+
         public void  Mover( float fuerzaAAplicar, float deltaTime)
         {//la logica de a donde moverse, se maneja en otro lado, a qui solo nos movemos
-            float scuareLimit = (velocidad * velocidad) * 100f;
-            //aceleramos solo lo que se necesite
-            if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
-                refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
-            const float epsilon = 0.01f;
-            float VAInstantanea = velocidadAngular * deltaTime;
-            //para alinear el auto
-            if (anguloCorreccion > epsilon || anguloCorreccion < -epsilon)
-            {
-                VAInstantanea *= MathF.Sign(anguloCorreccion);
-                refACuerpo.Velocity.Angular += Vector3.UnitY.ToNumerics() * VAInstantanea ;
-                anguloCorreccion -= VAInstantanea;
+
+            if(!muerto){
+                float scuareLimit = (velocidad * velocidad) * 100f;
+                //aceleramos solo lo que se necesite
+                if ( refACuerpo.Velocity.Linear.LengthSquared() < scuareLimit )
+                    refACuerpo.ApplyLinearImpulse(direccion.ToNumerics() * fuerzaAAplicar);
+                const float epsilon = 0.01f;
+                float VAInstantanea = velocidadAngular * deltaTime;
+                //para alinear el auto
+                if (anguloCorreccion > epsilon || anguloCorreccion < -epsilon)
+                {
+                    VAInstantanea *= MathF.Sign(anguloCorreccion);
+                    refACuerpo.Velocity.Angular += Vector3.UnitY.ToNumerics() * VAInstantanea ;
+                    anguloCorreccion -= VAInstantanea;
+                }
+                //si estamos mirando hacia abajo
+                if ( Vector3.Dot(Vector3.UnitY, orientacion.Up) < 0.85f)
+                    refACuerpo.Velocity.Angular += Vector3.Cross(orientacion.Up, Vector3.UnitY).ToNumerics() * VAInstantanea * 2f;
+                //para ajustar las ruedas delanteras de a poco
+                if ( MathF.Sign(rotacionRuedasDelanteras) < MathF.Sign(MaxRuedaRotacion) )
+                    rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
+                
+                revolucionDeRuedas += VAInstantanea * 3f;
+                revolucionDeRuedas = revolucionDeRuedas > MathF.Tau ? 0f : revolucionDeRuedas;
+                refACuerpo.Velocity.Angular *= 0.98f;
             }
-            //si estamos mirando hacia abajo
-            if ( Vector3.Dot(Vector3.UnitY, orientacion.Up) < 0.85f)
-                refACuerpo.Velocity.Angular += Vector3.Cross(orientacion.Up, Vector3.UnitY).ToNumerics() * VAInstantanea * 2f;
-            //para ajustar las ruedas delanteras de a poco
-            if ( MathF.Sign(rotacionRuedasDelanteras) < MathF.Sign(MaxRuedaRotacion) )
-                rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
-            
-            revolucionDeRuedas += VAInstantanea * 3f;
-            revolucionDeRuedas = revolucionDeRuedas > MathF.Tau ? 0f : revolucionDeRuedas;
-            refACuerpo.Velocity.Angular *= 0.98f;
-            
+        }
+
+        public void QuitarVida(int vidaQuitada, AutoJugador auto){
+            vida -= vidaQuitada;
+
+            if(vida <= 0){
+                muerto = true;
+                refACuerpo.Pose.Position = System.Numerics.Vector3.One * 1000000f;
+                auto.SumarPuntos(10);
+                sonidoAutoMuerto.Play();
+            }
         }
 
         public float DarAceleracion(float fuerz) => refACuerpo.LocalInertia.InverseMass * fuerz;
-        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial){
+
+        public void CrearCollider(Simulation _simulacion, BufferPool _bufferpool, Vector2 posicionInicial, Dictionary<int, object> bodyHandleTags){
+
+
             var compoundBuilder = new CompoundBuilder(_bufferpool, _simulacion.Shapes, 3);
 
             //var boxMainShape = new Box(280f, 100f, 500f);
             var capsuleMainShape = new Capsule(100, 400f);
             
-            var capsuleMainLocalPose = new RigidPose(new Vector3(posicionInicial.X,100f,posicionInicial.Y).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
+            var capsuleMainLocalPose = new RigidPose(new Vector3(0,100f,0).ToNumerics(), Quaternion.CreateFromYawPitchRoll(0f, MathF.PI/2, 0f).ToNumerics());
             //var capsuleMainLocalPose = new RigidPose(new Vector3(0f,120f,0f).ToNumerics());
 
             var ruedaShape = new Cylinder(35, 35);
@@ -948,8 +1105,11 @@ namespace Escenografia
             compoundBuilder.BuildDynamicCompound(out var compoundChildren, out var compoundInertia, out var compoundCenter);
             compoundBuilder.Reset();
 
-            BodyHandle handlerDeCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + System.Numerics.Vector3.UnitY * 1000f, compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
-            this.darCuerpo(handlerDeCuerpo);
+            handlerCuerpo = _simulacion.Bodies.Add(BodyDescription.CreateDynamic(compoundCenter + new System.Numerics.Vector3(posicionInicial.X, 1000f, posicionInicial.Y) , compoundInertia, _simulacion.Shapes.Add(new Compound(compoundChildren)), 0.01f));
+            //Cambie la pose de la generacion del collider por que no se generaba donde queríamos
+            
+            bodyHandleTags.Add(handlerCuerpo.Value, this);
+            this.darCuerpo(handlerCuerpo);
         }
 
         public override void Mover(float fuerzaAAplicar)
