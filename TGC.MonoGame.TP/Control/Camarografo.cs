@@ -56,8 +56,6 @@ namespace Control
 
         public Matrix GetLigthViewProj() => camaraLuz.getViewMatrix() * projeccion;
 
-        public Matrix getViewMatrix()
-
         public BoundingFrustum GetFrustum(){
             // Combinar las matrices de vista y proyección
             Matrix viewProjection = getViewMatrix() * getProjectionMatrix();
@@ -67,8 +65,7 @@ namespace Control
             return frustum;
         }
 
-        public void GetInputs()
-
+        public Matrix getViewMatrix()
         {
             return ortographicMode ? camaraAsociada.getIsometricView() : camaraAsociada.getViewMatrix();
         }

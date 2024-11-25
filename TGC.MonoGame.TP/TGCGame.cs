@@ -46,8 +46,6 @@ namespace TGC.MonoGame.TP
         RenderTarget2D shadowMap;
         private CASOS estadoActualJuego;//controla que se muestra y que logica se corre
 
-        Luz luz;
-
         private AdministradorNPCs adminNPCs;
 
         private FullScreenCuad ScreenCuad;//para dibujar todo lo preprocesado
@@ -64,7 +62,8 @@ namespace TGC.MonoGame.TP
         private Song playingMusic;
         private Song menuMusic;
         private float Puntuacion = 0f;
-         
+
+        private Primitiva cajaPowerUp1, cajaPowerUp2,cajaPowerUp3,cajaPowerUp4;
         private SpriteFont fuente; // Fuente para el texto
 
 
@@ -220,10 +219,10 @@ namespace TGC.MonoGame.TP
 
             MenuInicio.Load(Content);
             
-            cajaPowerUp1.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
-            cajaPowerUp2.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
-            cajaPowerUp3.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
-            cajaPowerUp4.loadPrimitiva(GraphicsDevice, _basicShader, Color.DarkGreen);
+            cajaPowerUp1.loadPrimitiva(GraphicsDevice, renderer, Color.DarkGreen);
+            cajaPowerUp2.loadPrimitiva(GraphicsDevice, renderer, Color.DarkGreen);
+            cajaPowerUp3.loadPrimitiva(GraphicsDevice, renderer, Color.DarkGreen);
+            cajaPowerUp4.loadPrimitiva(GraphicsDevice, renderer, Color.DarkGreen);
             
             fuente = Content.Load<SpriteFont>("debugFont");
 
@@ -365,7 +364,9 @@ namespace TGC.MonoGame.TP
             _simulacion.Timestep(1/30f);
             
         }
+        /*
         private void DibujarJuego(GameTime gameTime)
+
         {
             #region DibujadoDeSombras
 
@@ -427,6 +428,7 @@ namespace TGC.MonoGame.TP
             #endregion
             Timer += ((float)gameTime.TotalGameTime.TotalSeconds) % 1f;
         }
+        */
         private void DibujarMenuInicial(GameTime gameTime)
         {
             //tenemos que hacer esto por que si no el sprite batch vuelve todo transparente

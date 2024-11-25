@@ -479,17 +479,16 @@ namespace Escenografia
             }
         }
 
-        public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
-        {
+
+    public void loadSonido(string direccionSonidoMisil, string direccionSonidoMetralleta, string direccionSonidoPowerUps,  ContentManager contManager){
+        sonidoMetralleta = contManager.Load<SoundEffect>(direccionSonidoMetralleta);
+        sonidoMisil = contManager.Load<SoundEffect>(direccionSonidoMisil);
+        sonidoPowerUp = contManager.Load<SoundEffect>(direccionSonidoPowerUps);
+    }
+
+    public void LlenarGbuffer(Microsoft.Xna.Framework.Matrix view, Microsoft.Xna.Framework.Matrix projection)
+    {
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
-            }
-
-        public void loadSonido(string direccionSonidoMisil, string direccionSonidoMetralleta, string direccionSonidoPowerUps,  ContentManager contManager){
-            sonidoMetralleta = contManager.Load<SoundEffect>(direccionSonidoMetralleta);
-            sonidoMisil = contManager.Load<SoundEffect>(direccionSonidoMisil);
-            sonidoPowerUp = contManager.Load<SoundEffect>(direccionSonidoPowerUps);
-        }
-
 
             efecto.Parameters["View"].SetValue(view);
             // le cargamos el como quedaria projectado en la pantalla
@@ -594,6 +593,7 @@ namespace Escenografia
                 mesh.Draw();    
             }
         }
+        
         public void dibujarSombras(Matrix ligthView, Matrix projection){
             efecto.CurrentTechnique = efecto.Techniques["DepthPass"];
             //cargamos la view en el shader
@@ -809,7 +809,6 @@ namespace Escenografia
             }
         }
 
-
         private SoundEffect sonidoAutoMuerto;
 
         private bool muerto = false;
@@ -974,7 +973,7 @@ namespace Escenografia
             }
 
         }
-    }
+    
 
     public void CargarModelo(Effect efecto, Model modelo, Texture2D[] texturas )
     {

@@ -157,13 +157,13 @@ float4 PS(VertexShaderOutput input) : COLOR
 
     //sesgo de inclinacion
 
-    float inclinationBias = max(dynamicEpsilon * (1.0 - dot(normal, input.ligthDirection.xyz)), maxEpsilon);
+    //float inclinationBias = max(dynamicEpsilon * (1.0 - dot(normal, input.ligthDirection.xyz)), maxEpsilon);
 
-    float inclinationBias = max(modulatedEpsilon * (1.0 - dot(normal, lightDirection)), maxEpsilon);
+
 
 
     //prfundidad del shadowMap
-    float shadowMapDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates).x + inclinationBias;
+    float shadowMapDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates).x + 0.0005;
 	
     // Get the texture texel
     float4 texelColor = tex2D(textureSampler, input.TextureCoordinates * 0.001);
@@ -186,7 +186,7 @@ float4 PS(VertexShaderOutput input) : COLOR
     for (int x = -1; x <= 1; x++)
         for (int y = -1; y <= 1; y++)
         {
-            float pcfDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates + float2(x, y) * texelSize).r + inclinationBias;
+            float pcfDepth = tex2D(shadowMapSampler, shadowMapTextureCoordinates + float2(x, y) * texelSize).r + 0.055555;
 
             notInShadow -= step(lightSpacePosition.z, pcfDepth + epsilon) / 9.0;
             //Preguntar a nacho despues
