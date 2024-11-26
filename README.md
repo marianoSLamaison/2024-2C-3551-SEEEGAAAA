@@ -8,7 +8,18 @@
 
 ## Descripción
 
-Proyecto plantilla para los trabajos prácticos de la asignatura electiva [Técnicas de Gráficos por Computadora](http://tgc-utn.github.io/) (TGC) en la carrera de Ingeniería en Sistemas de Información. Universidad Tecnológica Nacional, Facultad Regional Buenos Aires (UTN-FRBA).
+Tecla           | Accion
+-----           | -----
+W               | Acelerar
+A               | Girar a la Izquierda
+S               | Marcha atras
+D               | Girar a la Derecha
+N               | Disparar Metralleta
+M               | Disparar Misiles
+P               | Pausa
+Espacio         | Saltar
+Backspace       | Salir del juego
+
 
 ## Configuración del entorno de desarrollo
 
@@ -20,21 +31,23 @@ Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com
 
 ## Integrantes
 
+TGC, Tgcito  |  Apellido, Nombre
+------------ | -------------
+| ![Foto Esteban](https://github.com/user-attachments/assets/e37849d7-47df-4d14-a07c-1f6a727a44c2)             | Hurtado, Esteban            |
+| ![Foto_Ignacio_Pereda (1)](https://github.com/user-attachments/assets/7b217573-2836-46ef-b9f5-4a9c51f59270)  | Pereda, Ignacio             |
+| ![Foto_Marian (1)](https://github.com/user-attachments/assets/eb875dd8-3aee-432a-a06d-210581a31301)          | Lamaison, Mariano Sebastian |
 
-Hurtado Esteban
-<img src="https://github.com/user-attachments/assets/23dba738-5f9f-4e68-a61e-ceb7ac030124" height="500">   
-Ignacio Pereda
-<img src="https://github.com/user-attachments/assets/28e4b9b5-15a1-4f63-8053-f70ba45a2944" height="500"> 
-Mariano Sebastian Lamaison
-<img src="https://github.com/user-attachments/assets/5caa5232-2241-41ac-91ca-14b5afd2051f" height="500">
+
 
 ## Capturas
 
 ![Imagen 2](https://github.com/user-attachments/assets/66c182f3-73f7-4a68-98a7-b4c3514b05c6)
 ![Imagen Menu](https://github.com/user-attachments/assets/6aa08d22-2813-43e4-b843-1b87a23df703)
 ![Imagen Menu 2](https://github.com/user-attachments/assets/5a8f5234-46f8-4ad6-afe8-2edb2f43172e)
-![Derrota](https://github.com/user-attachments/assets/d44d98ce-3cee-4c24-9b30-d25d82f635c9)
 ![image](https://github.com/user-attachments/assets/4aac91a0-d3a2-4e55-828b-c8c71ab334d8)
+![Derrota](https://github.com/user-attachments/assets/d44d98ce-3cee-4c24-9b30-d25d82f635c9)
+![Victoria](https://github.com/user-attachments/assets/085d85e7-93ed-4129-9895-95def3e5d707)
+
 
 ## Game Play
 
