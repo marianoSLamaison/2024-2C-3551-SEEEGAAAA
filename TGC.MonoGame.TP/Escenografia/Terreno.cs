@@ -75,10 +75,11 @@ namespace Escenografia
         }
 
         public void CrearCollider(BufferPool bufferPool, Simulation _simulacion, ThreadDispatcher ThreadDispatcher, int ancho, int alto){
-            //var planeWidth = 500;
+            var planeWidth = 500;
             var scale = 35;
             //esto estaba multiplicado por scale antes
-            Vector2 terrainPosition = new Vector2(1 - ancho, 1 - alto) * 0.5f;
+            //Vector2 terrainPosition = new Vector2(1 - ancho, 1 - alto) * 0.5f;
+            Vector2 terrainPosition = new Vector2(1 - planeWidth, 1 - planeWidth) * scale * 0.5f;
 
             var planeMesh = DemoMeshHelper.CreateDeformedPlane(500, 500,
                 (int vX, int vY) =>
@@ -210,6 +211,9 @@ namespace Escenografia
                                     //cargamos las texturas necesarias
             MonoHelper.loadShaderTextures(efecto, terrenoTextureDiffuse, null, null, null);
             MonoHelper.loadShaderLigthColors(efecto, Color.SandyBrown, Color.LawnGreen, Color.White);
+            efecto.Parameters["escalarDeTextura"].SetValue(0.001f);
+            efecto.Parameters["enemigo"].SetValue(0f);
+
             //aplicamos el primer pass, que carga todo en el GBuffer
             efecto.CurrentTechnique.Passes[0].Apply();
             GraphicsDevice device = efecto.GraphicsDevice;

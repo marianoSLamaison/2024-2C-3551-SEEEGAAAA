@@ -158,11 +158,13 @@ namespace Escenografia
 
         public Misil Misil;
         public Metralleta Metralleta;
-        public AutoJugador(Vector3 direccion, float velocidadGiro, float fuerzaDireccional)
+        
+        public luzConica leftLight;
+        public luzConica rightLight;
+        public AutoJugador(Vector3 direccion, float velocidadGiro)
         {
             this.direccion = direccion;
             this.velocidadAngular = velocidadGiro;
-            this.fuerza = 50f;
         }
         public void setVelocidadGiro(float velocidadGiro)
         {
@@ -181,8 +183,8 @@ namespace Escenografia
         public override Matrix getWorldMatrix() =>  orientacion * Matrix.CreateTranslation(Posicion);
 
         private float duracionTurbo = 0f;  // Variable para controlar la duración del turbo
-        private int cantidadMisiles = 0;
-        private int cantidadBalas = 0;
+        public int cantidadMisiles = 0;
+        public int cantidadBalas = 0;
         private bool turboActivo = false; 
         private bool teclaMAnterior = false;
 
@@ -336,10 +338,13 @@ namespace Escenografia
                     estaSaltando = true;
                     refACuerpo.Velocity.Linear += new System.Numerics.Vector3(0f, 1000f, 0f);
                 }
-            } else {
+           }  
+           else {
                 if ( refACuerpo.Velocity.Linear.Y < 0.05f)
                     estaSaltando = false;
-                if ( Keyboard.GetState().IsKeyDown(Keys.A) )
+
+            
+          /*      if ( Keyboard.GetState().IsKeyDown(Keys.A) )
                 {
                     refACuerpo.Velocity.Angular += orientacion.Forward.ToNumerics() * velocidadAngular * deltaTime;
                 }
@@ -356,7 +361,7 @@ namespace Escenografia
                     refACuerpo.Velocity.Angular -= orientacion.Left.ToNumerics() * velocidadAngular * deltaTime;
                 }else{
                     refACuerpo.Velocity.Angular *= 0.80f;
-                }
+                }*/
             }
         }
 
@@ -495,13 +500,15 @@ namespace Escenografia
             efecto.Parameters["Projection"].SetValue(projection);
             //seteamos aqui las texturas
             MonoHelper.loadShaderTextures(efecto, baseColorTexture, metallicTexture, AOTexture, roughnessTexture);
+            efecto.Parameters["escalarDeTextura"].SetValue(1f);
+            efecto.Parameters["enemigo"].SetValue(0f);
 
             foreach( ModelMesh mesh in modelo.Meshes)
             {
                 if(mesh.Name == "Car")
                     efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
                     //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
-                    getWorldMatrix());
+                    Matrix.CreateTranslation(Vector3.Down * 125) * getWorldMatrix());
 
                 if (mesh.Name.StartsWith("Wheel"))
                 {
@@ -527,7 +534,8 @@ namespace Escenografia
                         rotacionYRueda = 0;
                     }
                     // Calcular la matriz de transformación para la rueda
-                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                    Matrix wheelWorld = Matrix.CreateTranslation(Vector3.Down * 125) *
+                                        orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
                                         Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
         
                     efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
@@ -661,7 +669,7 @@ namespace Escenografia
                 if(mesh.Name == "Car")
                     efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
                     //Matrix.CreateFromYawPitchRoll(0,-MathF.PI/2, 0) * 
-                    getWorldMatrix());
+                    Matrix.CreateTranslation(Vector3.Down * 125) * getWorldMatrix());
 
                 if (mesh.Name.StartsWith("Wheel"))
                 {
@@ -687,7 +695,7 @@ namespace Escenografia
                         rotacionYRueda = 0;
                     }
                     // Calcular la matriz de transformación para la rueda
-                    Matrix wheelWorld = orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
+                    Matrix wheelWorld = Matrix.CreateTranslation(Vector3.Down * 125) * orientacion * // cargamos su rotacion con respecto del eje XZ con respecto del auto
                                         Matrix.CreateTranslation(Posicion); // cargamos su posicion con respcto del auto
         
                     efecto.Parameters["World"].SetValue(Matrix.CreateRotationX(revolucionDeRuedas) * //primero la rotamos sobre su propio eje 
@@ -715,6 +723,9 @@ namespace Escenografia
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
             MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj, lightViewProj);
             MonoHelper.loadShaderTextures(efecto, baseColorTexture, metallicTexture, AOTexture, roughnessTexture);
+            efecto.Parameters["escalarDeTextura"].SetValue(1f);
+            efecto.Parameters["enemigo"].SetValue(0.2f);
+
             foreach( ModelMesh mesh in modelo.Meshes)
             {
                 if(mesh.Name == "Car")
@@ -1056,9 +1067,10 @@ namespace Escenografia
                 if ( Vector3.Dot(Vector3.UnitY, orientacion.Up) < 0.85f)
                     refACuerpo.Velocity.Angular += Vector3.Cross(orientacion.Up, Vector3.UnitY).ToNumerics() * VAInstantanea * 2f;
                 //para ajustar las ruedas delanteras de a poco
-                if ( MathF.Sign(rotacionRuedasDelanteras) < MathF.Sign(MaxRuedaRotacion) )
-                    rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
+                rotacionRuedasDelanteras += MathF.Sign(MaxRuedaRotacion) * VAInstantanea * 2f;
                 
+                rotacionRuedasDelanteras = Convert.ToSingle(Math.Clamp(rotacionRuedasDelanteras, -Math.PI/4f, Math.PI/4f));
+
                 revolucionDeRuedas += VAInstantanea * 3f;
                 revolucionDeRuedas = revolucionDeRuedas > MathF.Tau ? 0f : revolucionDeRuedas;
                 refACuerpo.Velocity.Angular *= 0.98f;

@@ -215,10 +215,24 @@ public class Misil : PowerUp
         }
 
     }
+
+    public void LlenarGbuffer(Matrix view, Matrix Proj, Matrix lightViewProj)
+        {
+            //aclaramos la tecnica a usar
+            efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            //cargamos las matrices para esto
+            MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj, lightViewProj);
+            //cargams las texturas (si las hubiera)
+            MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            efecto.Parameters["colorEntero"].SetValue(Color.Silver.ToVector3());
+            foreach(ModelMesh mesh in modelo.Meshes)
+            {
+                efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                                                    getWorldMatrix());
+                mesh.Draw();
+            }
+        }
 }
-
-
-
 
 public class Metralleta : PowerUp
 {
@@ -344,5 +358,23 @@ public class Metralleta : PowerUp
             }
         }
         
+    }
+
+    public void LlenarGbuffer(Matrix view, Matrix Proj, Matrix lightViewProj)
+    {
+        //aclaramos la tecnica a usar
+        efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+        //cargamos las matrices para esto
+        MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj, lightViewProj);
+        //cargams las texturas (si las hubiera)
+        MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+        efecto.Parameters["colorEntero"].SetValue(Color.Red.ToVector3());
+
+        foreach(ModelMesh mesh in modelo.Meshes)
+        {
+            efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
+                                                getWorldMatrix());
+            mesh.Draw();
+        }
     }
 }

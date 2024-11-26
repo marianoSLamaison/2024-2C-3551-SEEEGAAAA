@@ -20,8 +20,7 @@ uniform texture2D metallicTexture;  // Textura metálica
 uniform texture2D AOTexture;
 uniform texture2D roughnessTexture;
 
-float escalarDeTextura;
-float enemigo;
+float3 colorEntero;
 
 
 sampler2D textureSampler = sampler_state
@@ -216,7 +215,7 @@ PSoutput GBuffer_PS(in VSoutput input)
     PSoutput output = (PSoutput)0;
     output.position = input.position;
     output.normal = input.normal;//remapeamos por el tema de como guardan los colores
-    output.albedo = tex2D(textureSampler, input.textCoord * escalarDeTextura) * (1 - KLuzDifusa ) + float4(diffuseColor,0) * KLuzDifusa + float4(enemigo,0,enemigo,0);
+    output.albedo = float4(colorEntero, 1) * (1 - KLuzDifusa ) + float4(diffuseColor,1) * KLuzDifusa;
     output.albedo.w = 1;
     output.especular.r = tex2D(metallicSampler, input.textCoord).r  + brillantes;//todo lo que afecte el brillo de la cosa
     output.especular.w = 1;
@@ -277,9 +276,8 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         direccionALuz = float4(normalize(currentLigthPos - viewPos.xyz),0);
         direccionView = float4(normalize(-currentLigthPos), 0.0);// direccion a la camara ( recuerda estamos en espacio de view)
 
-        projLuzEnNormal = saturate(dot(normalV, direccionALuz));
+        projLuzEnNormal = dot(normalV, direccionALuz);
         LuzAmbiental = ambientColor * 0.6 + colores[i] * 0.4;//los que llega desde el LuzAmbientale ( es una simplificacion )
-        //LuzAmbiental += float3(0.1,0.1,0.1);
         LuzDifusa = projLuzEnNormal * (albedoV.xyz*0.9);//lus que es reflejada en la superficie del objeto, no necesariamente llega directo al ojo
         reflexion = 2.0 * normalV * projLuzEnNormal - direccionALuz;
         reflexion = normalize(reflexion);
@@ -293,9 +291,8 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         finalColor *= step(projeccionVorde[i], projeccion);//si es mayor que lo esperado, no lo afecta, caso contrario, lo vuelve 0
         //si algo no esta mirando a la luz es por que no deberia estar en sombra probablemente
         //los valores los saque de los samples de tgc para no andar tanteando a mano
-        epsiloDinamico = max( 0.000002 * ( 1 - projLuzEnNormal ),  0.0000008);
-        //epsiloDinamico = 0.0000008;
-
+        epsiloDinamico = max( 0.000001 * ( 1 - projLuzEnNormal ), 0.000002);
+        
         oscuridad = 1.0;
         for (int x=-1; x<1; x++)
         {
@@ -312,8 +309,6 @@ float4 LightPass_PS(in Light_VSoutput input) : COLOR0
         //finalColor = float3((profundidadEnShadowMap) ,0,0);
     }
     //return normalV;
-    finalColor = lerp(albedoV.xyz, finalColor, 0.7);
-
     return float4(finalColor,1.0);
     //return shadowDist;
 }

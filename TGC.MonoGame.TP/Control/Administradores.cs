@@ -184,6 +184,18 @@ namespace Control
                     auto.tiempoUltimaActualizacion = 0;
                 }
 
+                Vector3 minVelocity = new Vector3(-300f, -300f, -300f); // Límites inferiores
+                Vector3 maxVelocity = new Vector3(300f, 300f, 300f);    // Límites superiores
+
+                // Obtenemos la velocidad actual
+                var currentVelocity = auto.GetAuto().refACuerpo.Velocity.Linear;
+
+                // Clampeamos la velocidad actual
+                var clampedVelocity = Vector3.Clamp(currentVelocity, minVelocity, maxVelocity);
+
+                // Aplicamos la velocidad limitada de nuevo al cuerpo
+                auto.GetAuto().refACuerpo.Velocity.Linear = clampedVelocity.ToNumerics();
+
             }
         }
         /*
@@ -248,6 +260,7 @@ namespace Control
                 Model modelo = content.Load<Model>(dModelo);
 
                 auto.GetAuto().CargarModelo(efecto, modelo, texturas);
+                auto.GetAuto().loadSonido("SonidoAutoMuerto", content);
             }
         }
         public void LlenarGbuffer(Camarografo camarografo)
@@ -261,23 +274,26 @@ namespace Control
             {
                 autoR = auto.GetAuto(); 
                 autoR.BoundingVolume.Center = autoR.Posicion;
-                if ( frustrumCamara.Intersects(autoR.BoundingVolume) )
-                    auto.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
+                auto.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
             }
             foreach( AgresiveIA atacante in atacantes )
             {
                 autoR = atacante.GetAuto();
                 autoR.BoundingVolume.Center = autoR.Posicion;
-                if ( frustrumCamara.Intersects(autoR.BoundingVolume))
-                    atacante.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
-
-//                String dEffecto = efectos[0];
-//                String dModelo = modelos[0];
-//                auto.GetAuto().loadModel(dModelo, dEffecto, content);
-//                auto.GetAuto().loadSonido("SonidoAutoMuerto", content);
-
+                atacante.GetAuto().LlenarGbuffer(view, proj, ligthViewProj);
             }
         }
+
+        public void LlenarEfectsBuffer(Camarografo camarografo){
+            Matrix view = camarografo.getViewMatrix(),
+            proj = camarografo.getProjectionMatrix(),
+            ligthViewProj = camarografo.GetLigthViewProj();
+
+            foreach (IA auto in autos){
+                auto.GetAuto().LlenarEfectsBuffer(view, proj, ligthViewProj);
+            }
+        }
+
         public void draw(Matrix view, Matrix projeccion, RenderTarget2D shadowMap)
         {
             BoundingFrustum frustrumCamara = new BoundingFrustum(view * projeccion);
@@ -598,9 +614,24 @@ namespace Control
             {
                 //como es una bounding sphere da igual que los conos esten rotados, 
                 //solo tenemos que moverla de lugar
-                BoundingVolume.Center = cono.posicion;
-                if (frustrumCamara.Intersects(BoundingVolume))
+                Vector3 position = cono.refACuerpo.Pose.Position;
+
+                // Construir el BoundingBox (De XNA) del cono
+                BoundingBox boundingBox = new BoundingBox(
+                    position - new Vector3(140 / 2, 150 / 2, 140 / 2), //Largo, Ancho y Alto de la Box del cono
+                    position + new Vector3(140 / 2, 150 / 2, 140 / 2)
+                );
+
+                //BoundingVolume.Center = cono.posicion;
+                if (frustrumCamara.Intersects(boundingBox))
                     cono.LlenarGbuffer(view, proj, ligthViewProj);
+            }
+        }
+
+        public void LlenarEfectsBuffer(Camarografo camarografo){
+
+            foreach(Cono cono in conos){
+                cono.LlenarEfectsBuffer(camarografo.getViewMatrix(), camarografo.getProjectionMatrix(), camarografo.GetLigthViewProj());
             }
         }
 
@@ -667,6 +698,20 @@ namespace Control
             }
         }
 
+        public void LlenarGbuffer( Control.Camarografo juan)
+        {
+            Matrix view = juan.getViewMatrix(),
+            proj = juan.getProjectionMatrix(),
+            lightViewProj = juan.GetLigthViewProj();
+            //BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
+            
+            foreach(Misil misil in misiles)
+            {
+                misil.LlenarGbuffer(view, proj, lightViewProj);
+            }
+        }
+
+
     }
 
     public class AdminMetralleta{
@@ -706,6 +751,19 @@ namespace Control
         public void dibujarBalas(Matrix view, Matrix projection, Color color){
             foreach(Metralleta bala in balas){
                 bala.dibujar(view, projection, color);
+            }
+        }
+
+        public void LlenarGbuffer( Control.Camarografo juan)
+        {
+            Matrix view = juan.getViewMatrix(),
+            proj = juan.getProjectionMatrix(),
+            lightViewProj = juan.GetLigthViewProj();
+            //BoundingFrustum frustrumCamara = new BoundingFrustum(view * proj);
+            
+            foreach(Metralleta bala in balas)
+            {
+                bala.LlenarGbuffer(view, proj, lightViewProj);
             }
         }
 

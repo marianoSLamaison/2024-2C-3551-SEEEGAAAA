@@ -32,6 +32,7 @@ namespace Control
                                 0f,
                                 1f);
             camaraLuz = new Camara(AmbientLight.posicion, puntoDeFoco);
+            camaraLuz.camaraFija = true;
         }
         public Camarografo(Vector3 posicion, Vector3 puntoDeFoco, float width, float height,float minVista, float maxVista)
         {
@@ -78,7 +79,7 @@ namespace Control
         public void setPuntoAtencion(Vector3 PuntoAtencion)
         {
             camaraAsociada.PuntoAtencion = PuntoAtencion;
-            camaraLuz.setPuntoDeAtencion(PuntoAtencion);
+            camaraLuz.setPuntoDeAtencion(new Vector3(PuntoAtencion.X - 1000, 0, PuntoAtencion.Z - 1000));
         }
         public void rotatePuntoAtencion(float angle)
         {

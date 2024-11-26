@@ -20,8 +20,14 @@ namespace Control
         ThreadDispatcher threadDispatcher;
         public AdminUtileria(float ScuareSide, float desiredHeigth, float desiredScale, Simulation simulacion)
         {
+            var minLims = new Vector3(-6100f,400f,-6100f);
+            var maxLims = new Vector3(6100f,400f,6100f);
+            Vector3 dimensiones = maxLims - minLims;
+            limites = new Escenografia.LimBox(minLims, maxLims);
+
             //creamos un dos puntos que definen los limites del area total
             //cada 
+            /*
             float sqr2 = MathF.Sqrt(2);
             const float bRotation = MathF.PI / 2f;
             Vector3 esquina = new Vector3(sqr2, 0f, sqr2) * ScuareSide / 2f;
@@ -35,8 +41,16 @@ namespace Control
                     bRotation * 3f, Vector3.Transform(esquina, Microsoft.Xna.Framework.Matrix.CreateRotationY(bRotation * 2f)) + bHeigth),
                 new Escenografia.Plataforma(
                     0, Vector3.Transform(esquina, Microsoft.Xna.Framework.Matrix.CreateRotationY( bRotation * 3f)) + bHeigth)
+            };*/
+
+            objetosFijos = new List<Escenografia.Plataforma>
+            {
+                new Escenografia.Plataforma(3*MathF.PI / 2, minLims),
+                new Escenografia.Plataforma(MathF.PI, new Vector3(minLims.X + dimensiones.X, 400f, minLims.Z)),
+                new Escenografia.Plataforma(0,  new Vector3(minLims.X, 400f, minLims.Z + dimensiones.Z)),
+                new Escenografia.Plataforma(MathF.PI / 2, maxLims)
             };
-            Escenografia.Plataforma.setGScale(desiredScale);
+            Escenografia.Plataforma.setGScale(15 * 1.75f);
             suelo = new Terreno();
         }
 
@@ -46,6 +60,7 @@ namespace Control
         }
     private void SetParedes(Simulation simulacion)
     {
+        /*
         const float grosorPared = 500f;
         float ladoParedEjeZ = MathF.Abs(limites.maxVertice.X - limites.minVertice.X) + grosorPared;
         float ladoParedEjeX = MathF.Abs(limites.maxVertice.Z - limites.minVertice.Z) + grosorPared;
@@ -61,6 +76,20 @@ namespace Control
         simulacion.Statics.Add(new StaticDescription(poseParedEjeX2, paredEjeX));
         simulacion.Statics.Add(new StaticDescription(poseParedEjeZ1, paredEjeZ));
         simulacion.Statics.Add(new StaticDescription(poseParedEjeZ2, paredEjeZ));
+        */
+
+        var Pared1 = new Box(1, 1000000, 1000000);
+        // Add the plane to the simulation
+        AyudanteSimulacion.agregarCuerpoStatico(new RigidPose((Vector3.UnitX*8800).ToNumerics()), simulacion.Shapes.Add(Pared1));
+        var Pared2 = new Box(1, 1000000, 1000000);
+        // Add the plane to the simulation
+        AyudanteSimulacion.agregarCuerpoStatico(new RigidPose((Vector3.UnitX*-8800).ToNumerics()), simulacion.Shapes.Add(Pared2));
+        var Pared3 = new Box(1000000, 1000000, 1);
+        // Add the plane to the simulation
+        AyudanteSimulacion.agregarCuerpoStatico(new RigidPose((Vector3.UnitZ*8800).ToNumerics()), simulacion.Shapes.Add(Pared3));
+        var Pared4 = new Box(1000000, 1000000, 1);
+        // Add the plane to the simulation
+        AyudanteSimulacion.agregarCuerpoStatico(new RigidPose((Vector3.UnitZ*-8800).ToNumerics()), simulacion.Shapes.Add(Pared4));
     }
 
     public void SetTexturePlataform(Escenografia.Plataforma unaPlataforma, Texture2D unaTextura){
@@ -94,7 +123,7 @@ namespace Control
          (int)MathF.Abs(limites.maxVertice.Z - limites.minVertice.Z));
         
         //creamos las paredes
-        SetParedes(simulacion);;
+        SetParedes(simulacion);
     }
 
         public void Dibujar(Camarografo camarografo, RenderTarget2D shadowMap)
@@ -113,7 +142,7 @@ namespace Control
             suelo.LlenarGbuffer(view, proj, ligthViewProj);
             foreach(Plataforma obj in objetosFijos)
             {
-                obj.LlenarGbuffer(view, proj, ligthViewProj);
+                obj.LlenarGbufferPlataforma(view, proj, ligthViewProj);
             }
         }
         public void LlenarEfectsBuffer(Camarografo camarografo)

@@ -82,6 +82,8 @@ namespace Escenografia
             MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, Proj, lightViewProj);
             //cargams las texturas (si las hubiera)
             MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            efecto.Parameters["colorEntero"]?.SetValue(Color.Orange.ToVector3());
+
             foreach(ModelMesh mesh in modelo.Meshes)
             {
                 efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform * 
@@ -117,60 +119,97 @@ namespace Escenografia
         private GraphicsDevice device;
         private short[] indices;
         private Effect effect;
-        private VertexPositionColor[] vertices;
+        private VertexPositionTexture[] vertices;
         private Color color;
         private int numeroTriangulos;
         private BodyReference cuerpoFisico;
         public Vector3 pos;
         public BodyHandle handlerCuerpo;
         public StaticHandle staticHandle;
+        public RigidPose Pose;
+        public Texture2D basetexture;
     
         public System.Numerics.Vector3 Posicion {get {return cuerpoFisico.Pose.Position;}}
 
         public static Primitiva Prisma(Vector3 vMenor, Vector3 vMayor)
         {
             Primitiva ret = new Primitiva();
-            
-            ret.vertices = new VertexPositionColor[8];
 
-            var vertices = new VertexPositionNormalTexture[8];
-            Vector3 [] lVertices = new Vector3[8];
-            Vector3 dimensiones = vMayor - vMenor;
-            lVertices[0] = vMenor;
-            lVertices[1] = new Vector3(vMayor.X, vMenor.Y, vMenor.Z);
-            lVertices[2] = new Vector3(vMenor.X, vMayor.Y, vMenor.Z);
-            lVertices[3] = new Vector3(vMenor.X, vMenor.Y, vMayor.Z);
-            lVertices[4] = new Vector3(vMayor.X, vMayor.Y, vMenor.Z);
-            lVertices[5] = new Vector3(vMayor.X, vMenor.Y, vMayor.Z);
-            lVertices[6] = new Vector3(vMenor.X, vMayor.Y, vMayor.Z);
-            lVertices[7] = vMayor;
+            // Definir las posiciones de los vértices
+            Vector3[] lVertices = new Vector3[8];
+            lVertices[0] = vMenor;                              // (0, 0, 0)
+            lVertices[1] = new Vector3(vMayor.X, vMenor.Y, vMenor.Z);  // (1, 0, 0)
+            lVertices[2] = new Vector3(vMenor.X, vMayor.Y, vMenor.Z);  // (0, 1, 0)
+            lVertices[3] = new Vector3(vMenor.X, vMenor.Y, vMayor.Z);  // (0, 0, 1)
+            lVertices[4] = new Vector3(vMayor.X, vMayor.Y, vMenor.Z);  // (1, 1, 0)
+            lVertices[5] = new Vector3(vMayor.X, vMenor.Y, vMayor.Z);  // (1, 0, 1)
+            lVertices[6] = new Vector3(vMenor.X, vMayor.Y, vMayor.Z);  // (0, 1, 1)
+            lVertices[7] = vMayor;                              // (1, 1, 1)
 
-            // Vértices del prisma
-            ret.vertices[0] = new VertexPositionColor(lVertices[0], Color.DarkTurquoise);
-            ret.vertices[1] = new VertexPositionColor(lVertices[1], Color.DarkTurquoise);
-            ret.vertices[2] = new VertexPositionColor(lVertices[2], Color.DarkTurquoise);
-            ret.vertices[3] = new VertexPositionColor(lVertices[3], Color.DarkTurquoise);
-            ret.vertices[4] = new VertexPositionColor(lVertices[4], Color.DarkTurquoise);
-            ret.vertices[5] = new VertexPositionColor(lVertices[5], Color.DarkTurquoise);
-            ret.vertices[6] = new VertexPositionColor(lVertices[6], Color.DarkTurquoise);
-            ret.vertices[7] = new VertexPositionColor(lVertices[7], Color.DarkTurquoise);
+            // Vértices del prisma con coordenadas de textura por cara
+            ret.vertices = new VertexPositionTexture[]
+            {
+                // Cara frontal (+Z)
+                new VertexPositionTexture(lVertices[3], new Vector2(0, 1)), // Inferior izquierda
+                new VertexPositionTexture(lVertices[5], new Vector2(1, 1)), // Inferior derecha
+                new VertexPositionTexture(lVertices[7], new Vector2(1, 0)), // Superior derecha
+                new VertexPositionTexture(lVertices[6], new Vector2(0, 0)), // Superior izquierda
 
-        // Definir índices para los triángulos
-            ret.indices = new short[]
-            {     
-                0, 2, 3, 3, 6, 2,// Frente
-                1, 5, 4, 4, 7, 5,// Atrás
-                3, 5, 6, 6, 7, 5,// Izquierda
-                0, 1, 2, 2, 4, 1,// Derecha
-                0, 3, 1, 1, 5, 3,// Arriba
-                2, 6, 4, 4, 7, 6// Abajo
+                // Cara trasera (-Z)
+                new VertexPositionTexture(lVertices[0], new Vector2(0, 1)), // Inferior izquierda
+                new VertexPositionTexture(lVertices[1], new Vector2(1, 1)), // Inferior derecha
+                new VertexPositionTexture(lVertices[4], new Vector2(1, 0)), // Superior derecha
+                new VertexPositionTexture(lVertices[2], new Vector2(0, 0)), // Superior izquierda
+
+                // Cara izquierda (-X)
+                new VertexPositionTexture(lVertices[0], new Vector2(0, 1)), // Inferior izquierda
+                new VertexPositionTexture(lVertices[3], new Vector2(1, 1)), // Inferior derecha
+                new VertexPositionTexture(lVertices[6], new Vector2(1, 0)), // Superior derecha
+                new VertexPositionTexture(lVertices[2], new Vector2(0, 0)), // Superior izquierda
+
+                // Cara derecha (+X)
+                new VertexPositionTexture(lVertices[1], new Vector2(0, 1)), // Inferior izquierda
+                new VertexPositionTexture(lVertices[5], new Vector2(1, 1)), // Inferior derecha
+                new VertexPositionTexture(lVertices[7], new Vector2(1, 0)), // Superior derecha
+                new VertexPositionTexture(lVertices[4], new Vector2(0, 0)), // Superior izquierda
+
+                // Cara superior (+Y)
+                new VertexPositionTexture(lVertices[2], new Vector2(0, 1)), // Inferior izquierda
+                new VertexPositionTexture(lVertices[6], new Vector2(1, 1)), // Inferior derecha
+                new VertexPositionTexture(lVertices[7], new Vector2(1, 0)), // Superior derecha
+                new VertexPositionTexture(lVertices[4], new Vector2(0, 0)), // Superior izquierda
+
+                // Cara inferior (-Y)
+                new VertexPositionTexture(lVertices[0], new Vector2(0, 1)), // Inferior izquierda
+                new VertexPositionTexture(lVertices[1], new Vector2(1, 1)), // Inferior derecha
+                new VertexPositionTexture(lVertices[5], new Vector2(1, 0)), // Superior derecha
+                new VertexPositionTexture(lVertices[3], new Vector2(0, 0)), // Superior izquierda
             };
+
+            // Definir índices para las caras del prisma (ordenado correctamente en sentido antihorario)
+            ret.indices = new short[]
+            {
+                // Frente (+Z)
+                0, 2, 1, 0, 3, 2,
+                // Atrás (-Z)
+                4, 6, 5, 4, 7, 6,
+                // Izquierda (-X)
+                8, 9, 10, 8, 10, 11,
+                // Derecha (+X)
+                12, 13, 14, 12, 14, 15,
+                // Arriba (+Y)
+                16, 18, 17, 16, 19, 18,
+                // Abajo (-Y)
+                20, 21, 22, 20, 22, 23
+            };
+
+
             ret.numeroTriangulos = 12;
 
             return ret;
         }
 
-        public static Primitiva Cilindro(float radio, float altura, int segmentos = 16)
+        /*public static Primitiva Cilindro(float radio, float altura, int segmentos = 16)
         {
             Primitiva ret = new Primitiva();
             
@@ -375,20 +414,21 @@ namespace Escenografia
             }
             ret.numeroTriangulos = caras;
             return ret;
-        }
+        }*/
 
-        public void loadPrimitiva(GraphicsDevice device, Effect effect, Color color)
+        public void loadPrimitiva(GraphicsDevice device, Effect effect, Color color, ContentManager content)
         {
             this.device = device;
             this.effect = effect;
             this.color = color;
+            this.basetexture = content.Load<Texture2D>("Models/Cilindro/caja-madera-1");
         }
 
         public void dibujar(Camarografo camarografo, RigidPose pose)
         {
             effect.Parameters["Projection"].SetValue(camarografo.getProjectionMatrix());
             effect.Parameters["View"].SetValue(camarografo.getViewMatrix());
-            effect.Parameters["World"].SetValue(Matrix.CreateFromQuaternion(pose.Orientation) * Matrix.CreateTranslation(pose.Position));
+            effect.Parameters["World"].SetValue(getWorldMatrix());
             effect.Parameters["DiffuseColor"].SetValue(color.ToVector3());
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
@@ -399,13 +439,29 @@ namespace Escenografia
         public void LlenarGbuffer(Camarografo cam)
         {
             effect.CurrentTechnique = effect.Techniques["DeferredShading"];
+            effect.Parameters["colorEntero"]?.SetValue(color.ToVector3());
+            effect.Parameters["escalarDeTextura"].SetValue(1);
+            effect.Parameters["enemigo"].SetValue(0);
             MonoHelper.loadShaderMatrices(effect, getWorldMatrix(), cam.getViewMatrix(), cam.getProjectionMatrix(), cam.GetLigthViewProj());
+            MonoHelper.loadShaderTextures(effect, basetexture, null, null, null);
             //aplicamos el primer pass, que carga todo en el GBuffer
             effect.CurrentTechnique.Passes[0].Apply();
             GraphicsDevice device = effect.GraphicsDevice;
             device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
         }
-        public Matrix getWorldMatrix() => Matrix.CreateFromQuaternion(cuerpoFisico.Pose.Orientation) * Matrix.CreateTranslation(pos);
+
+        public void LlenarEfectsBuffer(Camarografo camarografo)
+        {
+            effect.CurrentTechnique = effect.Techniques["EffectsPass"];
+            MonoHelper.loadShaderMatrices(effect, getWorldMatrix(),
+            camarografo.getViewMatrix(),
+            camarografo.getProjectionMatrix(),
+            camarografo.GetLigthViewProj());
+            effect.CurrentTechnique.Passes[0].Apply();
+            GraphicsDevice device = effect.GraphicsDevice;
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0, vertices.Length, indices, 0, indices.Length/3);
+        }
+        public Matrix getWorldMatrix() => Matrix.CreateFromQuaternion(Pose.Orientation) * Matrix.CreateTranslation(Pose.Position);
         public void dibujar(Camarografo camarografo, Matrix world)
         {
             effect.Parameters["Projection"].SetValue(camarografo.getProjectionMatrix());
@@ -481,7 +537,7 @@ class FullScreenCuad
         normals   = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
         albedo    = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
         especular = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Vector4, DepthFormat.Depth24Stencil8);
-        ShadowMap = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Single, DepthFormat.Depth24);
+        ShadowMap = new RenderTarget2D(screen, width*4, height*4, false, SurfaceFormat.Single, DepthFormat.Depth24);
         finalTarg = new RenderTarget2D(screen, width, height, false, SurfaceFormat.Color, DepthFormat.None);
 
         screenDims = new Vector2(width, height);
@@ -512,7 +568,7 @@ class FullScreenCuad
         
         effect.CurrentTechnique = effect.Techniques["Lighting"];
         MonoHelper.loadKColorValues(effect, 0.3f, 0.5f, 0.2f);
-        MonoHelper.loadShaderLigthColors(effect, Color.Black, Color.White, Color.White);
+        MonoHelper.loadShaderLigthColors(effect, Color.LightBlue, Color.White, Color.White);
         effect.Parameters["posicionesLuces"]?.SetValue(mapLight<Vector3>(luces, luz => luz.posicion));
         effect.Parameters["direcciones"]?.SetValue(mapLight<Vector3>(luces, luz => luz.direccion));
         effect.Parameters["projeccionVorde"]?.SetValue(mapLight<float>(luces, luz => luz.porcentajeDeProjeccionVorde));
