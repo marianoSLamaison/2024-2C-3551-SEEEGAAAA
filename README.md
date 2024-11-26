@@ -20,18 +20,25 @@ Los recursos usados se almacenan utilizando [Git LFS](https://git-lfs.github.com
 
 ## Integrantes
 
-TGC, Tgcito  |  Apellido, Nombre
------------- | -------------
-| <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/robotgc.png" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
 
+
+TGC, Tgcito  |  Apellido, Nombre
+------------ | Hurtado Esteban
+| <img src="https://github.com/user-attachments/assets/23dba738-5f9f-4e68-a61e-ceb7ac030124" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+------------ | Ignacio Pereda
+| <img src="https://github.com/user-attachments/assets/28e4b9b5-15a1-4f63-8053-f70ba45a2944" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
+------------ | Mariano Sebastian Lamaison
+| <img src="https://github.com/user-attachments/assets/5caa5232-2241-41ac-91ca-14b5afd2051f" height="500"> | <img src="https://github.com/tgc-utn/tgc-utn.github.io/blob/master/images/trofeotp.png" height="500"> |
 ## Capturas
 
-![screenshot1](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot2](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot3](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot4](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
-![screenshot5](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
+
+![Imagen Menu](https://github.com/user-attachments/assets/6aa08d22-2813-43e4-b843-1b87a23df703)
+![Imagen Menu 2](https://github.com/user-attachments/assets/5a8f5234-46f8-4ad6-afe8-2edb2f43172e)
+![image](https://github.com/user-attachments/assets/4aac91a0-d3a2-4e55-828b-c8c71ab334d8)
+![Imagen 2](https://github.com/user-attachments/assets/66c182f3-73f7-4a68-98a7-b4c3514b05c6)
+![Derrota](https://github.com/user-attachments/assets/d44d98ce-3cee-4c24-9b30-d25d82f635c9)
+
 
 ## Game Play
-
-[![Watch the video](https://img.youtube.com/vi/pgEwUC0jvH4/0.jpg)](https://www.youtube.com/playlist?list=PLRM4L32DjvnazuMl8wZlbpEYL5Qh63ulG)
+https://youtu.be/CXzbqGHnzs4
+[![Watch the video](https://img.youtube.com/vi/pgEwUC0jvH4/0.jpg)]([https://www.youtube.com/playlist?list=PLRM4L32DjvnazuMl8wZlbpEYL5Qh63ulG](https://www.youtube.com/watch?v=CXzbqGHnzs4))
