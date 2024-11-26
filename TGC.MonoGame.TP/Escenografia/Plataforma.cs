@@ -273,11 +273,15 @@ namespace Escenografia
             }
 
         }
-        public void LlenarGbufferPlataforma(Matrix view, Matrix proj, Matrix lightViewProj)
+        public void LlenarGbufferPlataforma(Matrix view, Matrix proj, Matrix lightViewProj, Texture2D textura)
         {
             efecto.CurrentTechnique = efecto.Techniques["DeferredShading"];
+            efecto.Parameters["enemigo"].SetValue(0);
+            efecto.Parameters["escalarDeTextura"].SetValue(1);
             MonoHelper.loadShaderMatrices(efecto, getWorldMatrix(), view, proj, lightViewProj);
-            MonoHelper.loadShaderTextures(efecto, null, null, null, null);
+            MonoHelper.loadKColorValues(efecto, 0.3f, 0f, 0.3f);
+            MonoHelper.loadShaderLigthColors(efecto, Color.White, Color.DarkSlateGray, Color.White);
+            MonoHelper.loadShaderTextures(efecto, textura, null, null, null);
             foreach(ModelMesh mesh in modelo.Meshes)
             {
                 efecto.Parameters["World"].SetValue(mesh.ParentBone.Transform

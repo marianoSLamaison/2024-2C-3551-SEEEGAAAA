@@ -370,6 +370,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/Plataforma/Plataformas.fbx
 
+#begin Models/Plataforma/PlataformasColor.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/Plataforma/PlataformasColor.png
+
 #begin Models/Plataforma/WoodTexture.png
 /importer:TextureImporter
 /processor:TextureProcessor

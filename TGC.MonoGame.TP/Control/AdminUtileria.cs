@@ -17,6 +17,7 @@ namespace Control
         Escenografia.LimBox limites;
         private List<Plataforma> objetosFijos;
         Terreno suelo;
+        Texture2D plataformasColor;
         ThreadDispatcher threadDispatcher;
         public AdminUtileria(float ScuareSide, float desiredHeigth, float desiredScale, Simulation simulacion)
         {
@@ -98,7 +99,7 @@ namespace Control
     public void loadPlataformas(string direcionModelo, string direccionEfecto, ContentManager contManager)
     {
         if (objetosFijos.Count > 4) throw new Exception("Esto era un metodo de prueba");
-        
+        plataformasColor = contManager.Load<Texture2D>("Models/Plataforma/PlataformasColor");
         Effect efecto = contManager.Load<Effect>(direccionEfecto);
         Model modelo = contManager.Load<Model>(direcionModelo);
 
@@ -142,7 +143,7 @@ namespace Control
             suelo.LlenarGbuffer(view, proj, ligthViewProj);
             foreach(Plataforma obj in objetosFijos)
             {
-                obj.LlenarGbufferPlataforma(view, proj, ligthViewProj);
+                obj.LlenarGbufferPlataforma(view, proj, ligthViewProj, plataformasColor);
             }
         }
         public void LlenarEfectsBuffer(Camarografo camarografo)
