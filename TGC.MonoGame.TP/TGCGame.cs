@@ -80,7 +80,7 @@ namespace TGC.MonoGame.TP
             Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 
-            Graphics.ToggleFullScreen();
+            //Graphics.ToggleFullScreen();
             // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
             // Carpeta raiz donde va a estar toda la Media.
             Content.RootDirectory = "Content";
@@ -450,7 +450,7 @@ namespace TGC.MonoGame.TP
             
             Escenario.LlenarEfectsBuffer(camarografo);
             auto.LlenarEfectsBuffer(camarografo);
-            generadorConos.LlenarEfectsBuffer(camarografo);
+            //generadorConos.LlenarEfectsBuffer(camarografo);
             //adminNPCs.LlenarEfectsBuffer(camarografo);
 
             //primero hacemos el pass con tooodas las cosas de escena para dibujar sus BGbuffers
@@ -458,7 +458,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.BlanchedAlmond, 1f, 0);
 
             Escenario.LlenarGbuffer(camarografo);
-            generadorConos.LlenarGbuffer(camarografo);
+            //generadorConos.LlenarGbuffer(camarografo);
             //adminNPCs.LlenarGbuffer(camarografo);
             //auto.adminMetralleta.LlenarGbuffer(camarografo);
             //auto.adminMisiles.LlenarGbuffer(camarografo);
